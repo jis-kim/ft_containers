@@ -12,7 +12,6 @@
 #include <memory>
 
 namespace ft {
-template <class T, class Allocator>
 
 /* vector synopsis in LLVM vector
 
@@ -121,9 +120,44 @@ initializer_list<value_type> il);
 };
 */
 
-class vector {
- private:
+template <class T, class Allocator = std::allocator<T> >
+struct vector_base {
+ protected:
+  typedef T value_type;
+  typedef Allocator allocator_type;
+  typedef typename allocator_type::reference reference;
+  typedef typename allocator_type::const_reference const_reference;
+  typedef allocator_type::pointer pointer;
+  typedef allocator_type::const_pointer const_pointer;
+
+  allocator_type alloc;
+  pointer begin;
+  pointer end;
+  pointer space;
+
+  vector_base(const& Allocator allocator, typename Allocator::size_type n) {
+    alloc.allocate(n);
+    alloc.construct(n);
+  }
+};
+
+template <class T, class Allocator = std::allocator<T> >
+class vector : private vector_base<T, Allocator> {
  public:
+  typedef T value_type;
+  typedef Allocator allocator_type;
+  typedef typename allocator_type::reference reference;
+  typedef typename allocator_type::const_reference const_reference;
+  typedef allocator_type::pointer pointer;
+  typedef allocator_type::const_pointer const_pointer;
+
+  // typedef implementation-defined iterator;
+  // typedef implementation-defined const_iterator;
+  // typedef std::reverse_iterator<iterator> reverse_iterator;
+  // typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+  typedef ptrdiff_t difference_type;
+  typedef size_t size_type;
 };
 
 }  // namespace ft
