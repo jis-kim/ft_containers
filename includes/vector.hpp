@@ -1,7 +1,7 @@
 /**
  * @file vector.hpp
  * @author jiskim
- * @brief
+ * @brief vector container
  * @date 2022-11-12
  *
  * @copyright Copyright (c) 2022
@@ -9,6 +9,7 @@
 
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
+#include <iterator>
 #include <memory>
 
 namespace ft {
@@ -135,9 +136,10 @@ struct vector_base {
   pointer end;
   pointer space;
 
-  vector_base(const& Allocator allocator, typename Allocator::size_type n) {
-    alloc.allocate(n);
-    alloc.construct(n);
+  vector_base(const& alocator_type allocator,
+              typename allocator_type::size_type n)
+      : alloc(allocator) {
+    ;
   }
 };
 
