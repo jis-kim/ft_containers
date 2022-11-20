@@ -15,17 +15,17 @@
 
 namespace ft {
 
-// SECTION : iterator base class
-// don't have any funtionality of iterator
-template <typename Category, class T, class Distance = ptrdiff_t,
-          class Pointer = T*, class Reference = T&>
-struct iterator {
-  typedef T value_type;
-  typedef Distance diffrence_type;
-  typedef Pointer pointer;
-  typedef Reference reference;
-  typedef Category iterator_category;
-};
+//// SECTION : iterator base class
+//// don't have any funtionality of iterator
+// template <typename Category, class T, class Distance = ptrdiff_t,
+//           class Pointer = T*, class Reference = T&>
+// struct iterator {
+//   typedef T value_type;
+//   typedef Distance diffrence_type;
+//   typedef Pointer pointer;
+//   typedef Reference reference;
+//   typedef Category iterator_category;
+// };
 
 // SECTION : iterator_traits
 template <typename Iterator>

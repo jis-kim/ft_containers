@@ -17,18 +17,34 @@
 namespace ft {
 
 // SECTION : vector iterator
-template <class T>
-struct vector_iterator {
+// Random access iterator
+template <typename T>
+class vector_iterator {
+ private:
+  T current_;
+
+ public:
   typedef typename iterator_traits<T>::difference_type difference_type;
   typedef typename iterator_traits<T>::value_type value_type;
   typedef typename iterator_traits<T>::pointer pointer;
   typedef typename iterator_traits<T>::reference reference;
   typedef typename iterator_traits<T>::iterator_category iterator_category;
+
+  vector_iterator(void) {}
+  vector_iterator(const vector_iterator<T> rhs) {}
+  reference operator=(const vector_iterator<T> rhs) {}
+  ~vector_iterator(void) {}
 };
 
+template <typename T>
+bool operator==(const vector_iterator<T>& x, const vector_iterator<T>& y) {}
+
+template <typename T>
+bool operator!=(const vector_iterator<T>& x, const vector_iterator<T>& y) {}
+
 // SECTION : vector base
-template <typename T, class Allocator = std::allocator<T> >
-struct vector_base {
+template <typename T, typename Allocator = std::allocator<T> >
+class vector_base {
  protected:
   typedef T value_type;
   typedef Allocator allocator_type;
@@ -48,6 +64,7 @@ struct vector_base {
         begin(alloc.allocate(n)),
         end(begin),
         space(begin + n) {}
+
   ~vector_base(void) {
     alloc.destroy(begin);
     alloc.deallocate(begin);
@@ -86,7 +103,7 @@ class vector : private vector_base<T, Allocator> {
     }
   }
 
-  template <class InputIterator>
+  template <typename InputIterator>
   vector(InputIterator first, InputIterator last,
          const allocator_type& alloc = allocator_type())
       : vector_base(alloc, last - first) {
@@ -176,7 +193,7 @@ class vector : private vector_base<T, Allocator> {
   // SECTION : modifiers
   // BASIC
   // if [first, last) is not valid UB
-  template <class InputIterator>
+  template <typename InputIterator>
   void assign(InputIterator first, InputIterator last) {}
   void assign(size_type n, const value_type& val) {}
 
@@ -193,7 +210,7 @@ class vector : private vector_base<T, Allocator> {
   // BASIC otherwise
   iterator insert(iterator position, const value_type& val) {}
   void insert(iterator position, size_type n, const value_type& val) {}
-  template <class InputIterator>
+  template <typename InputIterator>
   void insert(iterator position, InputIterator first, InputIterator last) {}
 
   // NOTHROW removed elements include the last element
@@ -216,27 +233,27 @@ class vector : private vector_base<T, Allocator> {
 // SECTION : non-member function
 // SECTION : relational operators
 // NOTHROW if the type of elements supports operations
-template <class T, class Alloc>
+template <typename T, typename Alloc>
 bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 
-template <class T, class Alloc>
+template <typename T, typename Alloc>
 bool operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 
-template <class T, class Alloc>
+template <typename T, typename Alloc>
 bool operator<(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 
-template <class T, class Alloc>
+template <typename T, typename Alloc>
 bool operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 
-template <class T, class Alloc>
+template <typename T, typename Alloc>
 bool operator>(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 
-template <class T, class Alloc>
+template <typename T, typename Alloc>
 bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 
 // NOTHROW allocator in both vectors compare equal
 // otherwise UB
-template <class T, class Alloc>
+template <typename T, typename Alloc>
 void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {}
 
 }  // namespace ft
