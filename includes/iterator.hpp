@@ -7,16 +7,17 @@
  * @copyright Copyright (c) 2022
  */
 
-#ifndef ITERATOR_TRAITS_HPP
-#define ITERATOR_TRAITS_HPP
+#ifndef ITERATOR_HPP
+#define ITERATOR_HPP
 
-#include <iterator>
+#include <cstddef>   // ptrdiff_t
+#include <iterator>  // std::random_access_iterator_tag
 
 namespace ft {
 
-// SECTOIN : iterator base class
+// SECTION : iterator base class
 // don't have any funtionality of iterator
-template <class Category, class T, class Distance = ptrdiff_t,
+template <typename Category, class T, class Distance = ptrdiff_t,
           class Pointer = T*, class Reference = T&>
 struct iterator {
   typedef T value_type;
@@ -27,9 +28,8 @@ struct iterator {
 };
 
 // SECTION : iterator_traits
-template <class Iterator>
-class iterator_traits {
- public:
+template <typename Iterator>
+struct iterator_traits {
   typedef typename Iterator::difference_type difference_type;
   typedef typename Iterator::value_type value_type;
   typedef typename Iterator::pointer pointer;
@@ -37,7 +37,7 @@ class iterator_traits {
   typedef typename Iterator::iterator_category iterator_category;
 };
 
-template <class T>
+template <typename T>
 class iterator_traits<T*> {
  public:
   typedef ptrdiff_t difference_type;
@@ -47,7 +47,7 @@ class iterator_traits<T*> {
   typedef std::random_access_iterator_tag iterator_category;
 };
 
-template <class T>
+template <typename T>
 class iterator_traits<const T*> {
  public:
   typedef ptrdiff_t difference_type;
@@ -59,4 +59,4 @@ class iterator_traits<const T*> {
 
 }  // namespace ft
 
-#endif
+#endif  // ITERATOR_HPP
