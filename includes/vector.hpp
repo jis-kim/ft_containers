@@ -18,29 +18,100 @@ namespace ft {
 
 // SECTION : vector iterator
 // Random access iterator
-template <typename T>
+// T is pointer of elements
+template <typename Iter>
 class vector_iterator {
  private:
-  T current_;
+  Iter current_;  // pointer of elements
 
  public:
-  typedef typename iterator_traits<T>::difference_type difference_type;
-  typedef typename iterator_traits<T>::value_type value_type;
-  typedef typename iterator_traits<T>::pointer pointer;
-  typedef typename iterator_traits<T>::reference reference;
-  typedef typename iterator_traits<T>::iterator_category iterator_category;
+  typedef iterator_traits<Iter> traits_type;
+
+  typedef typename traits_type::difference_type difference_type;
+  typedef typename traits_type::value_type value_type;
+  typedef typename traits_type::pointer pointer;
+  typedef typename traits_type::reference reference;
+  typedef typename traits_type::iterator_category iterator_category;
+
+  typedef vector_iterator self;
 
   vector_iterator(void) {}
-  vector_iterator(const vector_iterator<T> rhs) {}
-  reference operator=(const vector_iterator<T> rhs) {}
+  vector_iterator(const Iter& current) : current_(current) {}
+  //  이게 왜 없지
+  //  builtin 써도 상관 없을 수도? deep copy 가 더 이상한 듯
+  // vector_iterator(const vector_iterator<T> rhs) : current_(rhs.current_) {}
+  //  vector_iterator& operator=(const vector_iterator<T> rhs) {}
   ~vector_iterator(void) {}
+
+  reference operator*(void) const { return *current_; }
+  pointer operator->(void) const { return current_; }
+
+  self& operator++(void) {
+    ++current_;
+    return *this;
+  }
+  self operator++(int) { return vector_iterator(current_++); }
+
+  self& operator--(void) {
+    --current_;
+    return *this;
+  }
+  self operator--(int) { return vector_iterator(current_--); }
+
+  // NOTE : 이 둘은 iterator + n 의 경우고 n + iterator 도 가능해야 한다.
+  self operator+(difference_type n) const { return vector_base(current_ + n); }
+  self operator-(difference_type n) const { return vector_base(current_ - n); }
+
+  self& operator+=(difference_type n) {
+    current_ += n;
+    return *this;
+  }
+  self& operator-=(difference_type n) {
+    current -= n;
+    return *this;
+  }
+  reference operator[](difference_type n) const { return current_[n]; }
+
+  // access to value
+  const Iter& base(void) const { return current_; }
 };
 
-template <typename T>
-bool operator==(const vector_iterator<T>& x, const vector_iterator<T>& y) {}
+// template <typename T>
+// typename vector_iterator<T>::self operator+(
+//     const vector_iterator<T>::diffrence_type n,
+//     const vector::iterator<T>& iter) {}
 
-template <typename T>
-bool operator!=(const vector_iterator<T>& x, const vector_iterator<T>& y) {}
+// SECTION : comparison operators
+
+template <typename T, typename U>
+bool operator==(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
+  return lhs.base() == rhs.base();
+}
+
+template <typename T, typename U>
+bool operator!=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
+  return lhs.base() != rhs.base();
+}
+
+template <typename T, typename U>
+bool operator<(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
+  return lhs.base() < rhs.base();
+}
+
+template <typename T, typename U>
+bool operator>(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
+  return lhs.base() > rhs.base();
+}
+
+template <typename T, typename U>
+bool operator<=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
+  return lhs.base() <= rhs.base();
+}
+
+template <typename T, typename U>
+bool operator>=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
+  return lhs.base() >= rhs.base();
+}
 
 // SECTION : vector base
 template <typename T, typename Allocator = std::allocator<T> >
@@ -48,10 +119,10 @@ class vector_base {
  protected:
   typedef T value_type;
   typedef Allocator allocator_type;
-  typedef typename allocator_type::reference reference;
-  typedef typename allocator_type::const_reference const_reference;
-  typedef allocator_type::pointer pointer;
-  typedef allocator_type::const_pointer const_pointer;
+  typedef typename allocator_type::reference reference;              // T&
+  typedef typename allocator_type::const_reference const_reference;  // const T&
+  typedef allocator_type::pointer pointer;                           // T*
+  typedef allocator_type::const_pointer const_pointer;               // const T*
 
   allocator_type alloc;
   pointer begin;

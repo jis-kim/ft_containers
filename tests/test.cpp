@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -9,6 +10,14 @@
 // int main() {
 //   std::cout << std::endl;
 //   operator<<(std::cout, "hihi");  // argument
+
+// test class for assignment operator
+template <typename T>
+struct A {
+  T a;
+
+  // operator void *() { return NULL; }
+};
 
 int main(void) {
   std::vector<int> a;
@@ -34,4 +43,30 @@ int main(void) {
   hihi.push_back(11);
   std::cout << "after push back capacity, size : " << hihi.capacity() << ", "
             << hihi.size() << '\n';
+
+  A<int> ta;
+  A<int> tb;
+
+  ta.a = 10;
+  tb = ta;
+
+  std::cout << "ta, tb " << ta.a << ", " << tb.a << '\n';
+  ta.a = 13;
+  std::cout << "ta, tb " << ta.a << ", " << tb.a << '\n';
+
+  A<int *> pa;
+  A<int *> pb;
+
+  int fortest = 123;
+  pa.a = &fortest;
+  pb = pa;
+  std::cout << "ta, tb " << pa.a << ", " << pb.a << '\n';
+  std::cout << "value : pa, pb " << *(pa.a) << ", " << *(pb.a) << '\n';
+  fortest = 345;
+  std::cout << "pa, pb " << pa.a << ", " << pb.a << '\n';
+  std::cout << "pa, pb " << *(pa.a) << ", " << *(pb.a) << '\n';
+
+  A<int> ca;
+  ca.a = 3;
+  std::cout << (void *)ca << '\n';
 }

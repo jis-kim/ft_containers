@@ -17,15 +17,15 @@ namespace ft {
 
 //// SECTION : iterator base class
 //// don't have any funtionality of iterator
-// template <typename Category, class T, class Distance = ptrdiff_t,
-//           class Pointer = T*, class Reference = T&>
-// struct iterator {
-//   typedef T value_type;
-//   typedef Distance diffrence_type;
-//   typedef Pointer pointer;
-//   typedef Reference reference;
-//   typedef Category iterator_category;
-// };
+template <typename Category, class T, class Distance = ptrdiff_t,
+          class Pointer = T*, class Reference = T&>
+struct iterator {
+  typedef T value_type;
+  typedef Distance diffrence_type;
+  typedef Pointer pointer;
+  typedef Reference reference;
+  typedef Category iterator_category;
+};
 
 // SECTION : iterator_traits
 template <typename Iterator>
@@ -34,9 +34,10 @@ struct iterator_traits {
   typedef typename Iterator::value_type value_type;
   typedef typename Iterator::pointer pointer;
   typedef typename Iterator::reference reference;
-  typedef typename Iterator::iterator_category iterator_category;
+  typedef typename Iterator::iterator_category iterator_category;  // 종류
 };
 
+// pointer 로 들어왔을 때도 작동해야 한다.
 template <typename T>
 class iterator_traits<T*> {
  public:
