@@ -16,7 +16,7 @@ template <typename T>
 struct A {
   T a;
 
-  // operator void *() { return NULL; }
+  operator void *() { return NULL; }
 };
 
 int main(void) {
@@ -69,4 +69,9 @@ int main(void) {
   A<int> ca;
   ca.a = 3;
   std::cout << (void *)ca << '\n';
+
+  std::vector<int>::iterator it = hihi.begin();
+
+  // if (it == it.base()) {
+  // }
 }

@@ -59,15 +59,19 @@ class vector_iterator {
   self operator--(int) { return vector_iterator(current_--); }
 
   // NOTE : 이 둘은 iterator + n 의 경우고 n + iterator 도 가능해야 한다.
-  self operator+(difference_type n) const { return vector_base(current_ + n); }
-  self operator-(difference_type n) const { return vector_base(current_ - n); }
+  self operator+(difference_type n) const {
+    return vector_iterator(current_ + n);
+  }
+  self operator-(difference_type n) const {
+    return vector_iterator(current_ - n);
+  }
 
   self& operator+=(difference_type n) {
     current_ += n;
     return *this;
   }
   self& operator-=(difference_type n) {
-    current -= n;
+    current_ -= n;
     return *this;
   }
   reference operator[](difference_type n) const { return current_[n]; }
@@ -76,6 +80,7 @@ class vector_iterator {
   const Iter& base(void) const { return current_; }
 };
 
+/*
 // template <typename T>
 // typename vector_iterator<T>::self operator+(
 //     const vector_iterator<T>::diffrence_type n,
@@ -121,15 +126,15 @@ class vector_base {
   typedef Allocator allocator_type;
   typedef typename allocator_type::reference reference;              // T&
   typedef typename allocator_type::const_reference const_reference;  // const T&
-  typedef allocator_type::pointer pointer;                           // T*
-  typedef allocator_type::const_pointer const_pointer;               // const T*
+  typedef typename allocator_type::pointer pointer;                  // T*
+  typedef typename allocator_type::const_pointer const_pointer;      // const T*
 
   allocator_type alloc;
   pointer begin;
   pointer end;
   pointer space;
 
-  vector_base(const& alocator_type allocator,
+  vector_base(const allocator_type& allocator,
               typename allocator_type::size_type n)
       : alloc(allocator),
         begin(alloc.allocate(n)),
@@ -150,8 +155,8 @@ class vector : private vector_base<T, Allocator> {
   typedef Allocator allocator_type;
   typedef typename allocator_type::reference reference;
   typedef typename allocator_type::const_reference const_reference;
-  typedef allocator_type::pointer pointer;
-  typedef allocator_type::const_pointer const_pointer;
+  typedef typename allocator_type::pointer pointer;
+  typedef typename allocator_type::const_pointer const_pointer;
 
   typedef vector_iterator<pointer> iterator;
   typedef vector_iterator<const_pointer> const_iterator;
@@ -326,6 +331,7 @@ bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 // otherwise UB
 template <typename T, typename Alloc>
 void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {}
+*/
 
 }  // namespace ft
 
