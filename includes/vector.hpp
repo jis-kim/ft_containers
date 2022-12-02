@@ -12,8 +12,6 @@
 
 #include <memory>
 
-#include "iterator.hpp"
-
 namespace ft {
 
 // SECTION : vector iterator
@@ -80,11 +78,16 @@ class vector_iterator {
   const Iter& base(void) const { return current_; }
 };
 
-/*
+// SECTION :
 // template <typename T>
 // typename vector_iterator<T>::self operator+(
-//     const vector_iterator<T>::diffrence_type n,
-//     const vector::iterator<T>& iter) {}
+//    const typename vector_iterator<T>::diffrence_type n,
+//    const ft::vector::iterator<T>& iter) {}
+
+template <typename T, typename U>
+T operator+(const T& lhs, const U& rhs) {
+  return lhs.base() + rhs;
+}
 
 // SECTION : comparison operators
 
@@ -306,7 +309,7 @@ class vector : private vector_base<T, Allocator> {
   allocator_type get_allocator(void) const {}
 };
 
-// SECTION : non-member function
+// SECTION : non-member function of vector operator
 // SECTION : relational operators
 // NOTHROW if the type of elements supports operations
 template <typename T, typename Alloc>
@@ -331,7 +334,6 @@ bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 // otherwise UB
 template <typename T, typename Alloc>
 void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {}
-*/
 
 }  // namespace ft
 

@@ -55,6 +55,4 @@ int main(void) {
   tmp = &tmp[-2];
   std::cout << "\ntmp(2) + 1 : " << *(tmp + 1) << "\n";
   // std::cout << "\n1 + tmp(3)" << *(1 + tmp) << '\n';
-
-  std::vector<int>::iterator std_it = array;
 }
