@@ -12,6 +12,8 @@
 
 #include <memory>
 
+#include "iterator.hpp"
+
 namespace ft {
 
 // SECTION : vector iterator
@@ -35,10 +37,7 @@ class vector_iterator {
 
   vector_iterator(void) {}
   vector_iterator(const Iter& current) : current_(current) {}
-  //  이게 왜 없지
-  //  builtin 써도 상관 없을 수도? deep copy 가 더 이상한 듯
-  // vector_iterator(const vector_iterator<T> rhs) : current_(rhs.current_) {}
-  //  vector_iterator& operator=(const vector_iterator<T> rhs) {}
+
   ~vector_iterator(void) {}
 
   reference operator*(void) const { return *current_; }
@@ -56,7 +55,7 @@ class vector_iterator {
   }
   self operator--(int) { return vector_iterator(current_--); }
 
-  // NOTE : 이 둘은 iterator + n 의 경우고 n + iterator 도 가능해야 한다.
+  // NOTE : 이 경우는 iterator + n 의 경우고 n + iterator 도 가능해야 한다.
   self operator+(difference_type n) const {
     return vector_iterator(current_ + n);
   }
@@ -78,19 +77,21 @@ class vector_iterator {
   const Iter& base(void) const { return current_; }
 };
 
-// SECTION :
-// template <typename T>
-// typename vector_iterator<T>::self operator+(
-//    const typename vector_iterator<T>::diffrence_type n,
-//    const ft::vector::iterator<T>& iter) {}
+// SECTION : arithmetic operator
+template <typename T>
+vector_iterator<T> operator+(
+    const typename vector_iterator<T>::difference_type n,
+    const vector_iterator<T>& iter) {
+  return vector_iterator<T>(iter + n);
+}
 
 template <typename T, typename U>
-T operator+(const T& lhs, const U& rhs) {
-  return lhs.base() + rhs;
+typename vector_iterator<T>::difference_type operator-(
+    const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
+  return lhs.base() - rhs.base();
 }
 
 // SECTION : comparison operators
-
 template <typename T, typename U>
 bool operator==(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
   return lhs.base() == rhs.base();
@@ -132,25 +133,27 @@ class vector_base {
   typedef typename allocator_type::pointer pointer;                  // T*
   typedef typename allocator_type::const_pointer const_pointer;      // const T*
 
-  allocator_type alloc;
-  pointer begin;
-  pointer end;
-  pointer space;
+  allocator_type alloc_;
+  pointer begin_;
+  pointer end_;
+  pointer end_cap_;
 
   vector_base(const allocator_type& allocator,
               typename allocator_type::size_type n)
-      : alloc(allocator),
-        begin(alloc.allocate(n)),
-        end(begin),
-        space(begin + n) {}
+      : alloc_(allocator),
+        begin_(alloc_.allocate(n)),
+        end_(begin_),
+        end_cap_(begin_ + n) {}
 
   ~vector_base(void) {
-    alloc.destroy(begin);
-    alloc.deallocate(begin);
+    for (; begin_ != end_; ++begin_) {
+      alloc_.destroy(begin_);  // NOEXCEPT
+    }
+    alloc_.deallocate(begin_);  // NOEXCEPT
   }
 };
 
-// SECTION : real vector
+// SECTION : vector
 template <typename T, typename Allocator = std::allocator<T> >
 class vector : private vector_base<T, Allocator> {
  public:
@@ -163,71 +166,81 @@ class vector : private vector_base<T, Allocator> {
 
   typedef vector_iterator<pointer> iterator;
   typedef vector_iterator<const_pointer> const_iterator;
-  // typedef std::reverse_iterator<iterator> reverse_iterator;
-  // typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+
+  // TODO: reverse iterator custom implement
+  typedef std::reverse_iterator<iterator> reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
 
+  std::uninitialized_copy();
+
   // SECTION : public member functions
+  // SECTION : constructor
   // STRONG
-  explicit vector(const allocator_type& alloc = allocator_type())
-      : vector_base(alloc, size_type()) {}
+  explicit vector(const allocator_type& alloc_ = allocator_type())
+      : vector_base(alloc_, size_type()) {}
 
   explicit vector(size_type n, const value_type& val = value_type(),
-                  const allocator_type& alloc = allocator_type())
-      : vector_base(alloc, n) {
-    for (size_type i = 0; i < n; ++i) {
-      alloc.construct(begin + i, val);
-    }
+                  const allocator_type& alloc_ = allocator_type())
+      : vector_base(alloc_, n) {
+    std::uninitialized_fill(begin_, end_, val);
   }
 
+  // TODO : consider SFINAE
   template <typename InputIterator>
   vector(InputIterator first, InputIterator last,
-         const allocator_type& alloc = allocator_type())
-      : vector_base(alloc, last - first) {
-    for (InputIterator it = first; it < last; ++it) {
-    }
+         const allocator_type& alloc_ = allocator_type())
+      : vector_base(alloc_) {
+    // push_back()
+    // std::uninitialized_copy(first, last, begin);
   }
 
-  vector(const vector& x) : vector_base(alloc, x.size()) {
-    for (size_type i = 0; i < x.size(); i++) {
-      alloc.construct(begin + i, val);
-    }
+  vector(const vector& x) : vector_base(alloc_, x.size()) {
+    std::uninitialized_copy(begin_, end_, x.begin());
   }
 
   // SECTION: destructor
   // NOTHROW
+  /**
+   * @brief Destroy the vector object
+   * @complexity O(N) - N is size of vector
+   */
   ~vector(void) {}
 
   // BASIC
   vector& operator=(const vector& x) {}
 
   // SECTION : iterator
+  // NOTHROW
+  /**
+   * @brief return a random access iterator pointing first element.
+   *        if container is empty, return value should not be dereferenced.
+   * @return iterator
+   */
+  iterator begin(void) { return begin_; }
+  const_iterator begin(void) const { return begin_; }
 
   // NOTHROW
-  iterator begin(void) {}
-  const_iterator begin(void) const {}
+  iterator end(void) { return end_; }
+  const_iterator end(void) const { return end_; }
 
   // NOTHROW
-  iterator end(void) {}
-  const_iterator end(void) const {}
+  reverse_iterator rbegin(void) {}
+  const_reverse_iterator rbegin(void) const {}
 
   // NOTHROW
-  iterator rbegin(void) {}
-  const_iterator rbegin(void) const {}
-
-  // NOTHROW
-  iterator rend(void) {}
-  const_iterator rend(void) const {}
+  reverse_iterator rend(void) {}
+  const_reverse_iterator rend(void) const {}
 
   // SECTION : capacity
 
   // NOTHROW
-  size_type size(void) const {}
+  size_type size(void) const { return end_ - begin_; }
 
   // NOTHROW
-  size_type max_size(void) const {}
+  size_type max_size(void) const { return alloc_.max_size(); }
 
   // NOTHROW n <= size
   // STRONG n > size and reallocation required, type of elements is copyable
@@ -235,10 +248,10 @@ class vector : private vector_base<T, Allocator> {
   void resize(size_type n, value_type val = value_type()) {}
 
   // NOTHROW
-  size_type capacity(void) const {}
+  size_type capacity(void) const { return end_cap_ - begin_; }
 
   // NOTHROW
-  bool empty(void) const {}
+  bool empty(void) const { return begin_ == end_; }
 
   // STRONG n > size and reallocation required, type of elements is copyable
   // BASIC otherwise
@@ -248,26 +261,27 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW size > n
   // otherwise UB
-  reference operator[](size_type n) {}
-  const_reference operator[](size_type n) const {}
+  reference operator[](size_type n) { return begin_[n]; }
+  const_reference operator[](size_type n) const { return begin_[n]; }
 
   // STRONG
-  reference at(size_type n) {}
+  // It throws out_of_range if n is out of bounds.
+  reference at(size_type n) { if (n > ㅋ) }
   const_reference at(size_type n) const {}
 
   // NOTHROW container is not empty
   // otherwise UB
-  reference front(void) {}
-  const_reference front(void) const {}
+  reference front(void) { return *begin_; }
+  const_reference front(void) const { return *begin_; }
 
   // NOTHROW container is not empty
   // otherwise UB
-  reference back(void) {}
-  const_reference back(void) const {}
+  reference back(void) { return *(end_ - 1); }
+  const_reference back(void) const { return *(end_ - 1); }
 
   // NOTHROW
-  value_type* data() {}
-  const value_type* data() const {}
+  value_type* data(void) { return begin_; }
+  const value_type* data(void) const { return begin_; }
 
   // SECTION : modifiers
   // BASIC
@@ -284,7 +298,7 @@ class vector : private vector_base<T, Allocator> {
   // otherwise UB
   void pop_back(void) {}
 
-  // STRONG 1. insert single element at the end, no reallocations happen
+  // STRONG 1. insert single element at the end_, no reallocations happen
   // 2. reallocation happens & elements copyable
   // BASIC otherwise
   iterator insert(iterator position, const value_type& val) {}

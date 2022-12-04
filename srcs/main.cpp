@@ -74,7 +74,6 @@ int main(int argc, char** argv) {
       std::cerr << "Error: THIS VECTOR SHOULD BE EMPTY!!" << std::endl;
     }
   } catch (const std::exception& e) {
-    // NORMAL ! :P
   }
 
   for (int i = 0; i < COUNT; ++i) {

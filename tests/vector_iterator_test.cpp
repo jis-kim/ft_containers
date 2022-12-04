@@ -12,7 +12,7 @@ int main(void) {
       << "\n================= increment operator test =================\n";
   for (int i = 0; i < 5; ++i) {
     std::cout << "i is " << i << ", it is " << *it << '\n';
-    it++;
+    ++it;
   }
   --it;
 
@@ -20,7 +20,7 @@ int main(void) {
       << "\n================= decrement operator test =================\n";
   for (int i = 0; i < 5; ++i) {
     std::cout << "i is " << i << ", it is " << *it << '\n';
-    it--;
+    --it;
   }
   ++it;
 
@@ -32,7 +32,7 @@ int main(void) {
   std::cout << "\n================= original iterator =================\n";
   for (int i = 0; i < 5; ++i) {
     std::cout << "i is " << i << ", it is " << *it << '\n';
-    it++;
+    ++it;
   }
   it -= 5;
 
@@ -48,7 +48,7 @@ int main(void) {
   std::cout << "\ncopied to tmp (default copy constructor) \n\n";
   for (int i = 0; i < 5; ++i) {
     std::cout << "i is " << i << ", tmp is " << *tmp << '\n';
-    tmp++;
+    ++tmp;
   }
 
   std::cout << "\ntmp(5) - 3 : " << *(tmp - 3) << "\n";
@@ -58,13 +58,26 @@ int main(void) {
   std::cout << "\n3 + tmp(2) : " << *(2 + tmp) << '\n';
   *tmp = 1111;
 
-  it = &it[-1];
+  it = &it[-2];
 
   for (int i = 0; i < 5; ++i) {
-    std::cout << "i is " << i << ", tmp is " << *it << '\n';
-    it++;
+    std::cout << "i is " << i << ", it is " << *it << '\n';
+    ++it;
   }
+  --it;
 
+  ft::vector_iterator<int *> asit;
+  std::cout << "\nusing default assignment operator\n";
+  asit = tmp;
+
+  std::cout << "tmp base = " << tmp.base() << ", asit base = " << asit.base()
+            << "\n";
+  // copy constructor 와 assignment operator 는 제공되는 것을 사용한다.
+
+  std::cout << "\nsubstract operator test (iterator - iterator)\n";
+  std::cout << "it(4) - tmp(2) = " << it - tmp << '\n';
+
+  // SECTION : std::vector iterator test
   std::vector<int> vec = {1, 2, 3, 4, 5};
   std::cout << "\nvec is 1, 2, 3, 4, 5 \n";
 
