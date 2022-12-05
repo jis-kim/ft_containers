@@ -1,7 +1,7 @@
 /**
  * @file iterator_traits.hpp
  * @author jiskim
- * @brief
+ * @brief iterator traits
  * @date 2022-11-18
  *
  * @copyright Copyright (c) 2022

@@ -2,9 +2,9 @@
 CXX = c++
 
 WFLAGS = -Wall -Wextra -Werror
-STDFLAGS = -std=c++98 -pedantic
+STDFLAGS = -std=c++98 -pedantic -ferror-limit=50
 DEBUGFLAGS = -g3 -fsanitize=address
-LEAKSFLAGS = -g3 -fsanitize=leak
+LEAKSFLAGS = -g3
 
 ifdef DEBUG
 	CXXFLAGS = $(STDFLAGS) $(DEBUGFLAGS)
@@ -17,12 +17,12 @@ endif
 NAME = ft_containers
 
 INCS_DIR = ./includes/
-SRCS_DIR = ./srcs/
+SRCS_DIR = ./tests/
 
 SRCS = $(addprefix $(SRCS_DIR), $(SRCS_FILES))
 OBJS = $(SRCS:.cpp=.o)
 
-SRCS_FILES = main.cpp
+SRCS_FILES = vector_iterator_test.cpp
 OBJS_FILES = $(OBJS)
 
 COMPILE_MSG	= @echo $(BOLD)$(L_PURPLE) 📣 ${NAME} Compiled 🥳$(RESET)
@@ -32,22 +32,22 @@ COMPILE_MSG	= @echo $(BOLD)$(L_PURPLE) 📣 ${NAME} Compiled 🥳$(RESET)
 all : $(NAME) $(OBJS)
 
 $(NAME) : $(OBJS)
-	$(CXX) $(CXXFLAGS) $(OBJS) -o $@
+	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@
 
 %.o : %.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCS_DIR) -c $< -o $@
+	@$(CXX) $(CXXFLAGS) -I$(INCS_DIR) -c $< -o $@
 	@echo $(BOLD)$(L_GREEN) Compiling with $(CXXFLAGS) -I$(INCS_DIR) ...$(RESET)
 	@echo $(GREEN) [$(notdir $^)] to [$(notdir $@)] $(RESET)
 
 .PHONY : clean
 clean :
 	@rm -f $(OBJS)
-	@echo $(BOLD)$(L_RED) Objects 📁 removed 🗑️ $(RESET)
+	@echo $(BOLD)$(L_RED) 🗑️ Removed object files 📁$(RESET)
 
 .PHONY : fclean
 fclean : clean
 	@rm -f $(NAME)
-	@echo $(BOLD)$(L_PURPLE) $(NAME) 📚 removed 🗑️ $(RESET)
+	@echo $(BOLD)$(L_PURPLE) 🗑️ Removed $(NAME) 📚$(RESET)
 
 .PHONY : re
 re : fclean
@@ -62,7 +62,6 @@ debug :
 .PHONY : leaks
 leaks :
 	@make LEAKS=1
-
 
 
 ######################### Color #########################

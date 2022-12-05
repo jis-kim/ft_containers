@@ -1,7 +1,7 @@
 /**
  * @file reverse_iterator.hpp
  * @author jiskim
- * @brief
+ * @brief reverse direction to bidirectional or random access iterator
  * @date 2022-12-05
  *
  * @copyright Copyright (c) 2022
@@ -13,10 +13,11 @@
 #include "iterator.hpp"
 
 namespace ft {
-// TODO : 상속? cplusplus 는 iterator <- reverse_iterator 로
-// iterator 를 상속받는다.
 template <typename Iter>
 class reverse_iterator {
+ private:
+  Iter current_;
+
  public:
   typedef iterator_traits<Iter> traits_type;
 
@@ -41,6 +42,9 @@ class reverse_iterator {
    * ->
    * []
    */
+  // same as copy_constructor of base iterator
+
+  iterator_type base(void) const {}
 };
 
 // TODO : non-member
@@ -52,4 +56,5 @@ class reverse_iterator {
  */
 
 }  // namespace ft
+
 #endif  // REVERSE_ITERATOR_HPP

@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "iterator.hpp"
+#include "reverse_iterator.hpp"
 
 namespace ft {
 
@@ -156,6 +157,9 @@ class vector_base {
 // SECTION : vector
 template <typename T, typename Allocator = std::allocator<T> >
 class vector : private vector_base<T, Allocator> {
+ private:
+  typedef vector_base<T, Allocator> base_;
+
  public:
   typedef T value_type;
   typedef Allocator allocator_type;
@@ -168,37 +172,39 @@ class vector : private vector_base<T, Allocator> {
   typedef vector_iterator<const_pointer> const_iterator;
 
   // TODO: reverse iterator custom implement
-  typedef std::reverse_iterator<iterator> reverse_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef ft::reverse_iterator<iterator> reverse_iterator;
+  typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
 
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
 
-  std::uninitialized_copy();
-
   // SECTION : public member functions
   // SECTION : constructor
   // STRONG
-  explicit vector(const allocator_type& alloc_ = allocator_type())
-      : vector_base(alloc_, size_type()) {}
+  // default
+  explicit vector(const allocator_type& alloc = allocator_type())
+      : base_(alloc, size_type()) {}
 
+  // fill
   explicit vector(size_type n, const value_type& val = value_type(),
-                  const allocator_type& alloc_ = allocator_type())
-      : vector_base(alloc_, n) {
-    std::uninitialized_fill(begin_, end_, val);
+                  const allocator_type& alloc = allocator_type())
+      : base_(alloc, n) {
+    // std::uninitialized_fill(begin_, end_, val);
   }
 
   // TODO : consider SFINAE
-  template <typename InputIterator>
-  vector(InputIterator first, InputIterator last,
-         const allocator_type& alloc_ = allocator_type())
-      : vector_base(alloc_) {
-    // push_back()
-    // std::uninitialized_copy(first, last, begin);
-  }
+  // range
+  // template <typename InputIterator>
+  // vector(InputIterator first, InputIterator last,
+  //       const allocator_type& alloc = allocator_type())
+  //    : base_(alloc) {
+  //  // push_back()
+  //  // std::uninitialized_copy(first, last, begin);
+  //}
 
-  vector(const vector& x) : vector_base(alloc_, x.size()) {
-    std::uninitialized_copy(begin_, end_, x.begin());
+  // copy
+  vector(const vector& x) : base_(x.alloc_, x.size()) {
+    // std::uninitialized_copy(begin_, end_, x.begin());
   }
 
   // SECTION: destructor
@@ -219,28 +225,32 @@ class vector : private vector_base<T, Allocator> {
    *        if container is empty, return value should not be dereferenced.
    * @return iterator
    */
-  iterator begin(void) { return begin_; }
-  const_iterator begin(void) const { return begin_; }
+  iterator begin(void) { return this->begin_; }
+  const_iterator begin(void) const { return this->begin_; }
 
   // NOTHROW
-  iterator end(void) { return end_; }
-  const_iterator end(void) const { return end_; }
+  iterator end(void) { return this->end_; }
+  const_iterator end(void) const { return this->end_; }
 
   // NOTHROW
-  reverse_iterator rbegin(void) {}
-  const_reverse_iterator rbegin(void) const {}
+  reverse_iterator rbegin(void) { return reverse_iterator(this->begin_); }
+  const_reverse_iterator rbegin(void) const {
+    return const_reverse_iterator(this->begin_);
+  }
 
   // NOTHROW
-  reverse_iterator rend(void) {}
-  const_reverse_iterator rend(void) const {}
+  reverse_iterator rend(void) { return reverse_iterator(this->end_); }
+  const_reverse_iterator rend(void) const {
+    return const_reverse_iterator(this->end_);
+  }
 
   // SECTION : capacity
 
   // NOTHROW
-  size_type size(void) const { return end_ - begin_; }
+  size_type size(void) const { return this->end_ - this->begin_; }
 
   // NOTHROW
-  size_type max_size(void) const { return alloc_.max_size(); }
+  size_type max_size(void) const { return this->alloc_.max_size(); }
 
   // NOTHROW n <= size
   // STRONG n > size and reallocation required, type of elements is copyable
@@ -248,10 +258,10 @@ class vector : private vector_base<T, Allocator> {
   void resize(size_type n, value_type val = value_type()) {}
 
   // NOTHROW
-  size_type capacity(void) const { return end_cap_ - begin_; }
+  size_type capacity(void) const { return this->end_cap_ - this->begin_; }
 
   // NOTHROW
-  bool empty(void) const { return begin_ == end_; }
+  bool empty(void) const { return this->begin_ == this->end_; }
 
   // STRONG n > size and reallocation required, type of elements is copyable
   // BASIC otherwise
@@ -261,27 +271,27 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW size > n
   // otherwise UB
-  reference operator[](size_type n) { return begin_[n]; }
-  const_reference operator[](size_type n) const { return begin_[n]; }
+  reference operator[](size_type n) { return this->begin_[n]; }
+  const_reference operator[](size_type n) const { return this->begin_[n]; }
 
   // STRONG
   // It throws out_of_range if n is out of bounds.
-  reference at(size_type n) { if (n > ㅋ) }
+  reference at(size_type n) {}
   const_reference at(size_type n) const {}
 
   // NOTHROW container is not empty
   // otherwise UB
-  reference front(void) { return *begin_; }
-  const_reference front(void) const { return *begin_; }
+  reference front(void) { return *(this->begin_); }
+  const_reference front(void) const { return *(this->begin_); }
 
   // NOTHROW container is not empty
   // otherwise UB
-  reference back(void) { return *(end_ - 1); }
-  const_reference back(void) const { return *(end_ - 1); }
+  reference back(void) { return *(this->end_ - 1); }
+  const_reference back(void) const { return *(this->end_ - 1); }
 
   // NOTHROW
-  value_type* data(void) { return begin_; }
-  const value_type* data(void) const { return begin_; }
+  value_type* data(void) { return this->begin_; }
+  const value_type* data(void) const { return this->begin_; }
 
   // SECTION : modifiers
   // BASIC
@@ -314,13 +324,17 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW allocator in both vectors compare equal
   // otherwise UB
-  void swap(vector& x) {}
+  void swap(vector& x) {
+    std::swap(this->begin_, x.begin());
+    std::swap(this->end_, x.end());
+    std::swap(this->end_cap_, x.end_cap_);
+  }
 
   // NOTHROW
   void clear(void) {}
 
   // NOTHROW
-  allocator_type get_allocator(void) const {}
+  allocator_type get_allocator(void) const { return this->alloc_; }
 };
 
 // SECTION : non-member function of vector operator

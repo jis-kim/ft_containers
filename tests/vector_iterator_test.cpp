@@ -78,7 +78,10 @@ int main(void) {
   std::cout << "it(4) - tmp(2) = " << it - tmp << '\n';
 
   // SECTION : std::vector iterator test
-  std::vector<int> vec = {1, 2, 3, 4, 5};
+  std::vector<int> vec;
+  for (int i = 0; i < 5; ++i) {
+    vec.push_back(i + 1);
+  }
   std::cout << "\nvec is 1, 2, 3, 4, 5 \n";
 
   std::vector<int>::iterator vit = vec.begin();
@@ -87,4 +90,15 @@ int main(void) {
 
   std::cout << "vit - 2 : " << *(vit - 2) << '\n';
   std::cout << "vit[-2] : " << vit[-2] << '\n';  // -도 되는게 정상
+
+  // vit is
+  std::reverse_iterator<std::vector<int>::iterator> rit(vit);
+
+  std::cout << "Reverse iterator test \n";
+  std::cout << "vit is : " << *vit << ", rit is : " << *rit << "\n\n";
+
+  vit = vec.begin();
+  std::cout << "vit is : " << *++vit << "\n";
+  std::reverse_iterator<std::vector<int>::iterator> rit2(vit);
+  std::cout << "rit2 is : " << *rit2 << "\n";
 }
