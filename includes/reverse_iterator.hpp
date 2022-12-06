@@ -17,6 +17,7 @@ template <typename Iter>
 class reverse_iterator {
  private:
   Iter current_;
+  Iter base_;
 
  public:
   typedef iterator_traits<Iter> traits_type;

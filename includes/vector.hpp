@@ -140,17 +140,17 @@ class vector_base {
   pointer end_cap_;
 
   vector_base(const allocator_type& allocator,
-              typename allocator_type::size_type n)
+              typename allocator_type::size_type n = 0)
       : alloc_(allocator),
         begin_(alloc_.allocate(n)),
         end_(begin_),
         end_cap_(begin_ + n) {}
 
   ~vector_base(void) {
-    for (; begin_ != end_; ++begin_) {
-      alloc_.destroy(begin_);  // NOEXCEPT
+    for (pointer tmp = begin_; tmp != end_; --tmp) {
+      alloc_.destroy(tmp);  // NOEXCEPT
     }
-    alloc_.deallocate(begin_);  // NOEXCEPT
+    alloc_.deallocate(begin_, end_ - begin_);  // NOEXCEPT
   }
 };
 
@@ -189,7 +189,7 @@ class vector : private vector_base<T, Allocator> {
   explicit vector(size_type n, const value_type& val = value_type(),
                   const allocator_type& alloc = allocator_type())
       : base_(alloc, n) {
-    // std::uninitialized_fill(begin_, end_, val);
+    std::uninitialized_fill(this->begin_, this->end_, val);
   }
 
   // TODO : consider SFINAE
@@ -204,7 +204,7 @@ class vector : private vector_base<T, Allocator> {
 
   // copy
   vector(const vector& x) : base_(x.alloc_, x.size()) {
-    // std::uninitialized_copy(begin_, end_, x.begin());
+    std::uninitialized_copy(this->begin_, this->end_, x.begin());
   }
 
   // SECTION: destructor
@@ -216,7 +216,18 @@ class vector : private vector_base<T, Allocator> {
   ~vector(void) {}
 
   // BASIC
-  vector& operator=(const vector& x) {}
+  /**
+   * @brief assign content
+   * 새 content 할당, 현 내용 대체, size 변경
+   *
+   * @param x 복사할 vector
+   * @return vector& 현재 벡터
+   */
+  vector& operator=(const vector& x) {
+    this->clear();
+    // resize 우짜지
+    return *this;
+  }
 
   // SECTION : iterator
   // NOTHROW
@@ -331,7 +342,10 @@ class vector : private vector_base<T, Allocator> {
   }
 
   // NOTHROW
-  void clear(void) {}
+  void clear(void) {
+    // base_.clear();
+    this->end_ = this->begin_;
+  }
 
   // NOTHROW
   allocator_type get_allocator(void) const { return this->alloc_; }
@@ -362,6 +376,7 @@ bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 // otherwise UB
 template <typename T, typename Alloc>
 void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {}
+// 왜 스왑이 두 개?
 
 }  // namespace ft
 
