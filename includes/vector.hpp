@@ -78,6 +78,8 @@ class vector_iterator {
   const Iter& base(void) const { return current_; }
 };
 
+// !SECTION : vector iterator
+
 // SECTION : arithmetic operator
 template <typename T>
 vector_iterator<T> operator+(
@@ -147,12 +149,25 @@ class vector_base {
         end_cap_(begin_ + n) {}
 
   ~vector_base(void) {
+    clear();
+    alloc_.deallocate(begin_, end_ - begin_);  // NOEXCEPT
+  }
+
+  /**
+   * @brief allocate for last
+   *
+   * @param n
+   */
+  void allocate_last(size_type n) { alloc_.allocate(end_, n); }
+
+  void clear(void) {
     for (pointer tmp = begin_; tmp != end_; --tmp) {
       alloc_.destroy(tmp);  // NOEXCEPT
     }
-    alloc_.deallocate(begin_, end_ - begin_);  // NOEXCEPT
   }
 };
+
+// !SECTION : vector_base
 
 // SECTION : vector
 template <typename T, typename Allocator = std::allocator<T> >
@@ -219,6 +234,7 @@ class vector : private vector_base<T, Allocator> {
   /**
    * @brief assign content
    * 새 content 할당, 현 내용 대체, size 변경
+   * @complexity O(size)
    *
    * @param x 복사할 vector
    * @return vector& 현재 벡터
@@ -232,24 +248,47 @@ class vector : private vector_base<T, Allocator> {
   // SECTION : iterator
   // NOTHROW
   /**
-   * @brief return a random access iterator pointing first element.
-   *        if container is empty, return value should not be dereferenced.
+   * @brief vector 의 첫 번째 element를 가리키는 random access 이터레이터를
+   * 반환한다.
+   * @complexity O(1)
+   *
    * @return iterator
    */
-  iterator begin(void) { return this->begin_; }
-  const_iterator begin(void) const { return this->begin_; }
+  iterator begin(void) { return iterator(this->begin_); }
+  const_iterator begin(void) const { return const_iterator(this->begin_;) }
 
   // NOTHROW
-  iterator end(void) { return this->end_; }
-  const_iterator end(void) const { return this->end_; }
+  /**
+   * @brief vector 의 past-the-end element를 가리키는 random access 이터레이터를
+   * 반환한다.
+   * @complexity O(1)
+   *
+   * @return iterator
+   */
+  iterator end(void) { return iterator(this->end_); }
+  const_iterator end(void) const { return const_iterator(this->end_); }
 
   // NOTHROW
+  /**
+   * @brief 첫 element 의 바로 앞 element 를 가리키는 (reverse end) 이론적인
+   * reverse random access iterator 를 반환한다.
+   * @complexity O(1)
+   *
+   * @return reverse_iterator
+   */
   reverse_iterator rbegin(void) { return reverse_iterator(this->begin_); }
   const_reverse_iterator rbegin(void) const {
     return const_reverse_iterator(this->begin_);
   }
 
   // NOTHROW
+  /**
+   * @brief 첫 element 의 바로 앞 element 를 가리키는 (reverse end) 이론적인
+   * reverse random access iterator 를 반환한다.
+   * @complexity O(1)
+   *
+   * @return reverse_iterator
+   */
   reverse_iterator rend(void) { return reverse_iterator(this->end_); }
   const_reverse_iterator rend(void) const {
     return const_reverse_iterator(this->end_);
@@ -258,15 +297,43 @@ class vector : private vector_base<T, Allocator> {
   // SECTION : capacity
 
   // NOTHROW
+  /**
+   * @brief 실제로 갖고 있는 element 의 개수 리턴.
+   *
+   * @return size_type
+   */
   size_type size(void) const { return this->end_ - this->begin_; }
 
   // NOTHROW
+  /**
+   * @brief 시스템 또는 라이브러리에 따라 vector 가 가질 수 있는 element 의 최대
+   * 개수
+   *
+   * @return size_type
+   */
   size_type max_size(void) const { return this->alloc_.max_size(); }
 
   // NOTHROW n <= size
   // STRONG n > size and reallocation required, type of elements is copyable
   // BASIC otherwise
-  void resize(size_type n, value_type val = value_type()) {}
+  /**
+   * @brief n 개의 elements 를 포함하도록 컨테이너를 resize 한다.
+   * n <= size 이면 처음 ~ n개의 elements 까지 잘리고 뒤에 남은 것들은 destroy.
+   * n > size 이면 n에 도달할 때 까지 element 를 insert 한다.
+   * @complexity O(N) N is number of elements inserted/erased
+   *
+   * @param n
+   * @param val n이 사이즈보다 크고 val이 주어질 경우 val으로 초기화 한다.
+   */
+  void resize(size_type n, value_type val = value_type()) {
+    size_type size = size();
+    if (n > size) {
+      // reallocation
+      // append
+    } else if (n < size) {
+      // destroy
+    }
+  }
 
   // NOTHROW
   size_type capacity(void) const { return this->end_cap_ - this->begin_; }
@@ -342,14 +409,20 @@ class vector : private vector_base<T, Allocator> {
   }
 
   // NOTHROW
+  /**
+   * @brief 모든 elements 를 삭제한다. size 를 0으로 설정한다.
+   * @complexity O(N)
+   */
   void clear(void) {
-    // base_.clear();
+    base_::clear();
     this->end_ = this->begin_;
   }
 
   // NOTHROW
   allocator_type get_allocator(void) const { return this->alloc_; }
 };
+
+// !SECTION : vector
 
 // SECTION : non-member function of vector operator
 // SECTION : relational operators
