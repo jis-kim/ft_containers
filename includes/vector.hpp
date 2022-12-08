@@ -76,9 +76,7 @@ class vector_iterator {
 
   // access to value
   const Iter& base(void) const { return current_; }
-};
-
-// !SECTION : vector iterator
+};  // !SECTION : vector_iterator
 
 // SECTION : arithmetic operator
 template <typename T>
@@ -137,20 +135,23 @@ class vector_base {
   typedef typename allocator_type::const_pointer const_pointer;      // const T*
 
   allocator_type alloc_;
-  pointer begin_;
-  pointer end_;
-  pointer end_cap_;
+  pointer _begin;
+  pointer _end;
+  pointer _end_cap;
 
-  vector_base(const allocator_type& allocator,
-              typename allocator_type::size_type n = 0)
+  vector_base(
+      const allocator_type& allocator,
+      typename allocator_type::size_type n = allocator_type::size_type())
       : alloc_(allocator),
-        begin_(alloc_.allocate(n)),
-        end_(begin_),
-        end_cap_(begin_ + n) {}
+        _begin(alloc_.allocate(n)),
+        _end(_begin),
+        _end_cap(_begin + n) {}
 
   ~vector_base(void) {
-    clear();
-    alloc_.deallocate(begin_, end_ - begin_);  // NOEXCEPT
+    for (_begin != _end; ++_begin) {
+      alloc_.destroy(_begin);
+    }
+    alloc_.deallocate(_begin, _end - _begin);  // NOEXCEPT
   }
 
   /**
@@ -158,12 +159,8 @@ class vector_base {
    *
    * @param n
    */
-  void allocate_last(size_type n) { alloc_.allocate(end_, n); }
-
-  void clear(void) {
-    for (pointer tmp = begin_; tmp != end_; --tmp) {
-      alloc_.destroy(tmp);  // NOEXCEPT
-    }
+  void allocate_last(typename allocator_type::size_type n) {
+    alloc_.allocate(_end, n);
   }
 };
 
@@ -174,6 +171,20 @@ template <typename T, typename Allocator = std::allocator<T> >
 class vector : private vector_base<T, Allocator> {
  private:
   typedef vector_base<T, Allocator> base_;
+
+  /**
+   * @brief [pos, end) 까지의 element를 destroy. end를 pos로 대체.
+   * clear(), resize() 에서 사용한다.
+   *
+   * @param pos
+   */
+  // NOTHROW
+  void _destroy_end_(pointer pos) {
+    for (pos != _end; ++pos) {
+      alloc_.destroy(pos);  // NOEXCEPT
+    }
+    end_ = pos;
+  }
 
  public:
   typedef T value_type;
@@ -204,22 +215,21 @@ class vector : private vector_base<T, Allocator> {
   explicit vector(size_type n, const value_type& val = value_type(),
                   const allocator_type& alloc = allocator_type())
       : base_(alloc, n) {
-    std::uninitialized_fill(this->begin_, this->end_, val);
+    std::uninitialized_fill(this->_begin, this->_end, val);
   }
 
   // TODO : consider SFINAE
   // range
-  // template <typename InputIterator>
-  // vector(InputIterator first, InputIterator last,
-  //       const allocator_type& alloc = allocator_type())
-  //    : base_(alloc) {
-  //  // push_back()
-  //  // std::uninitialized_copy(first, last, begin);
-  //}
+  template <typename InputIterator>
+  vector(InputIterator first, InputIterator last,
+         const allocator_type& alloc = allocator_type())
+      : base_(alloc) {
+    // push_back()
+  }
 
   // copy
   vector(const vector& x) : base_(x.alloc_, x.size()) {
-    std::uninitialized_copy(this->begin_, this->end_, x.begin());
+    std::uninitialized_copy(this->_begin, this->_end, x._begin);
   }
 
   // SECTION: destructor
@@ -231,6 +241,8 @@ class vector : private vector_base<T, Allocator> {
   ~vector(void) {}
 
   // BASIC
+  // allocator_traits::construct 가 element 생성에 적절한 대응을 하지 못하거나
+  // value_type 이 copy_assignable 하지 못하면 UB.
   /**
    * @brief assign content
    * 새 content 할당, 현 내용 대체, size 변경
@@ -240,8 +252,19 @@ class vector : private vector_base<T, Allocator> {
    * @return vector& 현재 벡터
    */
   vector& operator=(const vector& x) {
-    this->clear();
-    // resize 우짜지
+    if (this == &x) {
+      return *this;
+    }
+    size_type size = this->size();
+    size_type x_size = x.size();
+    if (this->capacity() < x_size) {
+      swap(vector(x), *this);
+    } else if (size <= x_size) {
+      // throws if element assignment or iterator operation throws
+      std::copy(x._begin, x._end, this->_begin);
+      this->_end = this->_begin + x_size;
+    } else {  // size >= x_size, reallocation needed.
+    }
     return *this;
   }
 
@@ -254,8 +277,8 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return iterator
    */
-  iterator begin(void) { return iterator(this->begin_); }
-  const_iterator begin(void) const { return const_iterator(this->begin_;) }
+  iterator begin(void) { return iterator(this->_begin); }
+  const_iterator begin(void) const { return const_iterator(this->_begin); }
 
   // NOTHROW
   /**
@@ -265,8 +288,8 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return iterator
    */
-  iterator end(void) { return iterator(this->end_); }
-  const_iterator end(void) const { return const_iterator(this->end_); }
+  iterator end(void) { return iterator(this->_end); }
+  const_iterator end(void) const { return const_iterator(this->_end); }
 
   // NOTHROW
   /**
@@ -276,9 +299,9 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return reverse_iterator
    */
-  reverse_iterator rbegin(void) { return reverse_iterator(this->begin_); }
+  reverse_iterator rbegin(void) { return reverse_iterator(this->_begin); }
   const_reverse_iterator rbegin(void) const {
-    return const_reverse_iterator(this->begin_);
+    return const_reverse_iterator(this->_begin);
   }
 
   // NOTHROW
@@ -289,9 +312,9 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return reverse_iterator
    */
-  reverse_iterator rend(void) { return reverse_iterator(this->end_); }
+  reverse_iterator rend(void) { return reverse_iterator(this->_end); }
   const_reverse_iterator rend(void) const {
-    return const_reverse_iterator(this->end_);
+    return const_reverse_iterator(this->_end);
   }
 
   // SECTION : capacity
@@ -302,7 +325,7 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return size_type
    */
-  size_type size(void) const { return this->end_ - this->begin_; }
+  size_type size(void) const { return this->_end - this->_begin; }
 
   // NOTHROW
   /**
@@ -326,20 +349,21 @@ class vector : private vector_base<T, Allocator> {
    * @param val n이 사이즈보다 크고 val이 주어질 경우 val으로 초기화 한다.
    */
   void resize(size_type n, value_type val = value_type()) {
-    size_type size = size();
+    size_type size = this->size();
     if (n > size) {
       // reallocation
       // append
     } else if (n < size) {
-      // destroy
+      _destroy_end(this->begin_ + n);
     }
+    // else do nothing.
   }
 
   // NOTHROW
-  size_type capacity(void) const { return this->end_cap_ - this->begin_; }
+  size_type capacity(void) const { return this->_end_cap - this->_begin; }
 
   // NOTHROW
-  bool empty(void) const { return this->begin_ == this->end_; }
+  bool empty(void) const { return this->_begin == this->_end; }
 
   // STRONG n > size and reallocation required, type of elements is copyable
   // BASIC otherwise
@@ -349,34 +373,80 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW size > n
   // otherwise UB
-  reference operator[](size_type n) { return this->begin_[n]; }
-  const_reference operator[](size_type n) const { return this->begin_[n]; }
+  /**
+   * @brief
+   *
+   * @param n
+   * @return reference
+   */
+  reference operator[](size_type n) { return this->_begin[n]; }
+  const_reference operator[](size_type n) const { return this->_begin[n]; }
 
   // STRONG
   // It throws out_of_range if n is out of bounds.
-  reference at(size_type n) {}
-  const_reference at(size_type n) const {}
+  /**
+   * @brief operator[] 이 범위를 체크하지 않는 반면, at 은 체크한다.
+   * n >= size 이면 throw out_of_range
+   * @complexity O(1)
+   *
+   * @param n
+   * @return reference
+   */
+  reference at(size_type n) {
+    if (n >= this->size()) {
+      throw std::out_of_range("ft::vector::at n is out of range.");
+    }
+    return (*this)[n];
+  }
+
+  const_reference at(size_type n) const {
+    if (n >= this->size()) {
+      throw std::out_of_range("ft::vector::at n is out of range.");
+    }
+    return (*this)[n];
+  }
 
   // NOTHROW container is not empty
   // otherwise UB
-  reference front(void) { return *(this->begin_); }
-  const_reference front(void) const { return *(this->begin_); }
+  reference front(void) { return *(this->_begin); }
+  const_reference front(void) const { return *(this->_begin); }
 
   // NOTHROW container is not empty
   // otherwise UB
-  reference back(void) { return *(this->end_ - 1); }
-  const_reference back(void) const { return *(this->end_ - 1); }
+  reference back(void) { return *(this->_end - 1); }
+  const_reference back(void) const { return *(this->_end - 1); }
 
   // NOTHROW
-  value_type* data(void) { return this->begin_; }
-  const value_type* data(void) const { return this->begin_; }
+  value_type* data(void) { return this->_begin; }
+  const value_type* data(void) const { return this->_begin; }
 
   // SECTION : modifiers
   // BASIC
   // if [first, last) is not valid UB
+  /**
+   * @brief first ~ last elements 들이 같은 순서로 할당된다.
+   * 기존 elements 는 파괴된다.
+   * >>> (reallocate iff capacity < new size) <<<
+   * @complexity construct(final size), destruct(initial size) 에 대해 각 O(N)
+   *
+   * @tparam InputIterator
+   * @param first
+   * @param last
+   */
   template <typename InputIterator>
-  void assign(InputIterator first, InputIterator last) {}
-  void assign(size_type n, const value_type& val) {}
+  void assign(InputIterator first, InputIterator last) {
+    this->swap(vector(first, last));
+  }
+
+  /**
+   * @brief val 이 n개 할당된다. 기존 elements 는 파괴된다.
+   *
+   * @param n
+   * @param val
+   */
+  void assign(size_type n, const value_type& val) {
+    this->swap(vector(n, val));
+  }
 
   // STRONG 1. no reallocation 2. reallocation happens & elements copyable
   // BASIC otherwise
@@ -384,9 +454,9 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW container is not empty
   // otherwise UB
-  void pop_back(void) {}
+  void pop_back(void) { _destroy_end_(_end - 1); }
 
-  // STRONG 1. insert single element at the end_, no reallocations happen
+  // STRONG 1. insert single element at the _end, no reallocations happen
   // 2. reallocation happens & elements copyable
   // BASIC otherwise
   iterator insert(iterator position, const value_type& val) {}
@@ -397,15 +467,30 @@ class vector : private vector_base<T, Allocator> {
   // NOTHROW removed elements include the last element
   // BASIC otherwise
   // invalid position or range UB
-  iterator erase(iterator position) {}
-  iterator erase(iterator first, iterator last) {}
+  /**
+   * @brief [position, end) elements 삭제
+   *
+   * @param position
+   * @return iterator
+   */
+  iterator erase(iterator position) { _destroy_end_(position.base()); }
+  /**
+   * @brief [first, last) elements 삭제. 뒤에 남은 값들 move (contiguos 유지)
+   *
+   * @param first
+   * @param last
+   * @return iterator
+   */
+  iterator erase(iterator first, iterator last) {
+    // first~last 지우고 뒤에 남은 애들 다시 붙여줘야 됨.....
+  }
 
   // NOTHROW allocator in both vectors compare equal
   // otherwise UB
   void swap(vector& x) {
-    std::swap(this->begin_, x.begin());
-    std::swap(this->end_, x.end());
-    std::swap(this->end_cap_, x.end_cap_);
+    std::swap(this->_begin, x._begin);
+    std::swap(this->_end, x._end);
+    std::swap(this->_end_cap, x._end_cap);
   }
 
   // NOTHROW
@@ -414,15 +499,13 @@ class vector : private vector_base<T, Allocator> {
    * @complexity O(N)
    */
   void clear(void) {
-    base_::clear();
-    this->end_ = this->begin_;
+    base_::_clear();
+    this->_end = this->_begin;
   }
 
   // NOTHROW
   allocator_type get_allocator(void) const { return this->alloc_; }
-};
-
-// !SECTION : vector
+};  // !SECTION : vector
 
 // SECTION : non-member function of vector operator
 // SECTION : relational operators
@@ -447,9 +530,18 @@ bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 
 // NOTHROW allocator in both vectors compare equal
 // otherwise UB
+/**
+ * @brief std::swap 에서 이걸 부름
+ *
+ * @tparam T
+ * @tparam Alloc
+ * @param x
+ * @param y
+ */
 template <typename T, typename Alloc>
-void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {}
-// 왜 스왑이 두 개?
+void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {
+  x.swap(y);
+}
 
 }  // namespace ft
 

@@ -1,4 +1,4 @@
-# Makefile for ft_containers
+#Makefile for ft_containers
 CXX = c++
 
 WFLAGS = -Wall -Wextra -Werror
@@ -22,7 +22,7 @@ SRCS_DIR = ./tests/
 SRCS = $(addprefix $(SRCS_DIR), $(SRCS_FILES))
 OBJS = $(SRCS:.cpp=.o)
 
-SRCS_FILES = vector_iterator_test.cpp
+SRCS_FILES = vector_test.cpp
 OBJS_FILES = $(OBJS)
 
 COMPILE_MSG	= @echo $(BOLD)$(L_PURPLE) 📣 ${NAME} Compiled 🥳$(RESET)
