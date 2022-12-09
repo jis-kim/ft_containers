@@ -78,7 +78,7 @@ class vector_iterator {
   const Iter& base(void) const { return current_; }
 };  // !SECTION : vector_iterator
 
-// SECTION : arithmetic operator
+// SECTION : arithmetic operators
 template <typename T>
 vector_iterator<T> operator+(
     const typename vector_iterator<T>::difference_type n,
@@ -91,6 +91,7 @@ typename vector_iterator<T>::difference_type operator-(
     const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
   return lhs.base() - rhs.base();
 }
+// !SECTION : arithmetic operators
 
 // SECTION : comparison operators
 template <typename T, typename U>
@@ -122,6 +123,7 @@ template <typename T, typename U>
 bool operator>=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
   return lhs.base() >= rhs.base();
 }
+// !SECTION : comparision operators
 
 // SECTION : vector base
 template <typename T, typename Allocator = std::allocator<T> >
@@ -148,44 +150,16 @@ class vector_base {
         _end_cap(_begin + n) {}
 
   ~vector_base(void) {
-    for (_begin != _end; ++_begin) {
+    for (; _begin != _end; ++_begin) {
       alloc_.destroy(_begin);
     }
     alloc_.deallocate(_begin, _end - _begin);  // NOEXCEPT
   }
-
-  /**
-   * @brief allocate for last
-   *
-   * @param n
-   */
-  void allocate_last(typename allocator_type::size_type n) {
-    alloc_.allocate(_end, n);
-  }
-};
-
-// !SECTION : vector_base
+};  // !SECTION : vector_base
 
 // SECTION : vector
 template <typename T, typename Allocator = std::allocator<T> >
 class vector : private vector_base<T, Allocator> {
- private:
-  typedef vector_base<T, Allocator> base_;
-
-  /**
-   * @brief [pos, end) 까지의 element를 destroy. end를 pos로 대체.
-   * clear(), resize() 에서 사용한다.
-   *
-   * @param pos
-   */
-  // NOTHROW
-  void _destroy_end_(pointer pos) {
-    for (pos != _end; ++pos) {
-      alloc_.destroy(pos);  // NOEXCEPT
-    }
-    end_ = pos;
-  }
-
  public:
   typedef T value_type;
   typedef Allocator allocator_type;
@@ -237,6 +211,7 @@ class vector : private vector_base<T, Allocator> {
   /**
    * @brief Destroy the vector object
    * @complexity O(N) - N is size of vector
+   * automatically call ~vector_base()
    */
   ~vector(void) {}
 
@@ -282,8 +257,8 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW
   /**
-   * @brief vector 의 past-the-end element를 가리키는 random access 이터레이터를
-   * 반환한다.
+   * @brief vector 의 past-the-end element를 가리키는 random access
+   * 이터레이터를 반환한다.
    * @complexity O(1)
    *
    * @return iterator
@@ -293,7 +268,7 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW
   /**
-   * @brief 첫 element 의 바로 앞 element 를 가리키는 (reverse end) 이론적인
+   * @brief vector의 마지막 element 를 가리키는 (reverse begin)
    * reverse random access iterator 를 반환한다.
    * @complexity O(1)
    *
@@ -329,8 +304,8 @@ class vector : private vector_base<T, Allocator> {
 
   // NOTHROW
   /**
-   * @brief 시스템 또는 라이브러리에 따라 vector 가 가질 수 있는 element 의 최대
-   * 개수
+   * @brief 시스템 또는 라이브러리에 따라 vector 가 가질 수 있는 element 의
+   * 최대 개수
    *
    * @return size_type
    */
@@ -341,7 +316,8 @@ class vector : private vector_base<T, Allocator> {
   // BASIC otherwise
   /**
    * @brief n 개의 elements 를 포함하도록 컨테이너를 resize 한다.
-   * n <= size 이면 처음 ~ n개의 elements 까지 잘리고 뒤에 남은 것들은 destroy.
+   * n <= size 이면 처음 ~ n개의 elements 까지 잘리고 뒤에 남은 것들은
+   * destroy.
    * n > size 이면 n에 도달할 때 까지 element 를 insert 한다.
    * @complexity O(N) N is number of elements inserted/erased
    *
@@ -350,9 +326,12 @@ class vector : private vector_base<T, Allocator> {
    */
   void resize(size_type n, value_type val = value_type()) {
     size_type size = this->size();
-    if (n > size) {
+    if (n > capacity()) {
       // reallocation
+    }
+    if (n > size) {
       // append
+      _append(n, val);
     } else if (n < size) {
       _destroy_end(this->begin_ + n);
     }
@@ -436,25 +415,65 @@ class vector : private vector_base<T, Allocator> {
   template <typename InputIterator>
   void assign(InputIterator first, InputIterator last) {
     this->swap(vector(first, last));
+    // reallocation 여부, iterator 에 따라 나눈다.
   }
 
   /**
-   * @brief val 이 n개 할당된다. 기존 elements 는 파괴된다.
+   * @brief val 이 n개 할당된다. 기존 elements 는 destroy 된다.
    *
    * @param n
    * @param val
    */
   void assign(size_type n, const value_type& val) {
-    this->swap(vector(n, val));
+    if (capacity() < n) {
+      this->swap(vector(n, val));
+      // 통쨰로 swap 하는 것과 추가 reallocation 하는 것 중 뭐가 더
+      // 효율적인가? 추가 안되고 어차피 다 없앴다가 새로 할당하고 복사해야
+      // 됨ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ 재밌어지겠는데~^^;;
+    } else {
+      // 그냥?
+    }
   }
 
   // STRONG 1. no reallocation 2. reallocation happens & elements copyable
-  // BASIC otherwise
-  void push_back(const value_type& val) {}
+  // BASIC otherwise 사실상 98에서 없을 것 같음
+  /**
+   * @brief val 을 복사하여 벡터의 끝에 삽입한다.
+   * size를 효과적으로 1씩 늘린다.
+   * 삽입 후의 사이즈가 capacity 보다 클 때만 (iff) reallocation.
+   * reallocation 났을 때만 iterator 보장 불가.
+   * @complexity amortized(reallocation happened) O(1)
+   *
+   * @param val 복사되어 삽입될 element
+   */
+  void push_back(const value_type& val) {
+    if (this->_end < this->_end_cap) {  // size != capacity
+      // construct only
+      this->alloc_.construct(this->_end, val);  // error may be occur~
+      ++this->_end;
+    } else {
+      // tmp for 연산
+      // reallocation
+      vector tmp(_get_alloc_size(size() + 1));
+      // copy
+      std::uninitialized_copy(this->begin_, this->alloc_, tmp.begin());
+      //
+
+      // after reallocation
+      std::swap(tmp, *this);  // swap 사랑걸..
+    }
+  }
 
   // NOTHROW container is not empty
   // otherwise UB
-  void pop_back(void) { _destroy_end_(_end - 1); }
+  /**
+   * @brief vector 의 마지막 element를 삭제해서 size를 1씩 줄인다.
+   * 삭제된 element 는 destroy 된다.
+   * 삭제된 element 이외를 가리키는 iterator 들은 그대로 사용할 수 있다.
+   * @complexity O(1)
+   *
+   */
+  void pop_back(void) { this->alloc_.destory(--this->_end); }
 
   // STRONG 1. insert single element at the _end, no reallocations happen
   // 2. reallocation happens & elements copyable
@@ -468,18 +487,22 @@ class vector : private vector_base<T, Allocator> {
   // BASIC otherwise
   // invalid position or range UB
   /**
-   * @brief [position, end) elements 삭제
+   * @brief position 위치의 element 하나 삭제
+   * 삭제한 position 뒤에 있던 elements 들은 앞으로 이동시켜줘야 한다.
    *
    * @param position
    * @return iterator
    */
-  iterator erase(iterator position) { _destroy_end_(position.base()); }
+  iterator erase(iterator position) {
+    this->alloc_.destroy(position.base());
+    // 1 2 3 4 5 6 6 7
+  }
   /**
    * @brief [first, last) elements 삭제. 뒤에 남은 값들 move (contiguos 유지)
    *
    * @param first
    * @param last
-   * @return iterator
+   * @return iterator following last removed element
    */
   iterator erase(iterator first, iterator last) {
     // first~last 지우고 뒤에 남은 애들 다시 붙여줘야 됨.....
@@ -498,13 +521,65 @@ class vector : private vector_base<T, Allocator> {
    * @brief 모든 elements 를 삭제한다. size 를 0으로 설정한다.
    * @complexity O(N)
    */
-  void clear(void) {
-    base_::_clear();
-    this->_end = this->_begin;
-  }
+  void clear(void) { _destroy_end_(this->begin_); }
 
   // NOTHROW
   allocator_type get_allocator(void) const { return this->alloc_; }
+
+ private:
+  typedef vector_base<T, Allocator> base_;
+
+  /**
+   * @brief [pos, end) 까지의 element를 destroy. end를 pos로 대체. (size 재설정)
+   * clear(), resize() 에서 사용한다.
+   *
+   * @param pos
+   */
+  void _destroy_end_(pointer pos) {
+    for (; pos != this->_end; ++pos) {
+      this->alloc_.destroy(pos);  // NOEXCEPT
+    }
+    this->end_ = pos;
+  }
+
+  /**
+   * @brief
+   *
+   * @param n
+   * @param val
+   */
+  void _append(size_type n, value_type val) {
+    if (this->_end_cap - this->_end >= n) {  // 추가할당공간 충분!
+      for (; n > 0; ++n) {
+        this->alloc_.construct(this->_end, val);
+        ++this->_end;
+      }
+    } else {
+    }
+  }
+
+  /**
+   * @brief 적절히 resize 할 크기를 리턴한다.
+   * _append() 에서 호출.
+   * push_back(), resize(), assign() 등에서 사용하면 될 듯?
+   *
+   * @param new_size 새로 할당해야 하는 사이즈
+   * @return size_type 실제로 할당할 사이즈
+   */
+  size_type _get_alloc_size(size_type new_size) const {
+    const size_type ms = max_size();
+    if (new_size > ms) {
+      throw std::logic_error("ft::vector : reallocation size is too big");
+    }
+    const size_type cap = capacity();
+    if (cap >= ms / 2) {
+      return ms;
+    }
+    return std::max(2 * cap, new_size);
+    // 그치 굳이 계속 2*cap 할 필요가 없지..걍 할당 시점에 더 큰 거
+    // 리턴하면..되는 거지.. 이걸 몰랐네......
+  }
+
 };  // !SECTION : vector
 
 // SECTION : non-member function of vector operator
