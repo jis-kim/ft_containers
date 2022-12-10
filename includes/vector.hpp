@@ -74,7 +74,6 @@ class vector_iterator {
   }
   reference operator[](difference_type n) const { return current_[n]; }
 
-  // access to value
   const Iter& base(void) const { return current_; }
 };  // !SECTION : vector_iterator
 
@@ -136,7 +135,7 @@ class vector_base {
   typedef typename allocator_type::pointer pointer;                  // T*
   typedef typename allocator_type::const_pointer const_pointer;      // const T*
 
-  allocator_type alloc_;
+  allocator_type _alloc;
   pointer _begin;
   pointer _end;
   pointer _end_cap;
@@ -144,16 +143,16 @@ class vector_base {
   vector_base(
       const allocator_type& allocator,
       typename allocator_type::size_type n = allocator_type::size_type())
-      : alloc_(allocator),
-        _begin(alloc_.allocate(n)),
+      : _alloc(allocator),
+        _begin(_alloc.allocate(n)),
         _end(_begin),
         _end_cap(_begin + n) {}
 
   ~vector_base(void) {
     for (; _begin != _end; ++_begin) {
-      alloc_.destroy(_begin);
+      _alloc.destroy(_begin);
     }
-    alloc_.deallocate(_begin, _end - _begin);  // NOEXCEPT
+    _alloc.deallocate(_begin, _end - _begin);
   }
 };  // !SECTION : vector_base
 
@@ -202,7 +201,7 @@ class vector : private vector_base<T, Allocator> {
   }
 
   // copy
-  vector(const vector& x) : base_(x.alloc_, x.size()) {
+  vector(const vector& x) : base_(x._alloc, x.size()) {
     std::uninitialized_copy(this->_begin, this->_end, x._begin);
   }
 
@@ -309,7 +308,7 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return size_type
    */
-  size_type max_size(void) const { return this->alloc_.max_size(); }
+  size_type max_size(void) const { return this->_alloc.max_size(); }
 
   // NOTHROW n <= size
   // STRONG n > size and reallocation required, type of elements is copyable
@@ -333,7 +332,7 @@ class vector : private vector_base<T, Allocator> {
       // append
       _append(n, val);
     } else if (n < size) {
-      _destroy_end(this->begin_ + n);
+      _destroy_end(this->_begin + n);
     }
     // else do nothing.
   }
@@ -344,9 +343,28 @@ class vector : private vector_base<T, Allocator> {
   // NOTHROW
   bool empty(void) const { return this->_begin == this->_end; }
 
-  // STRONG n > size and reallocation required, type of elements is copyable
+  // STRONG n > capacity and reallocation required, type of elements is copyable
   // BASIC otherwise
-  void reserve(size_type n) {}
+  /**
+   * @brief request to change capacity
+   * n >= capacity 이면 재할당이 필요하다.. 아니면 아무 일도 일어나지 않는다.
+   * n >= max size 이면 length_error throw.
+   * 재할당이 필요할 경우 container 의 allocator를 이용한다.
+   * std::allocator는 bad_alloc throw.
+   * @
+   *
+   * @param n 벡터의 최소 capacity
+   */
+  void reserve(size_type n) {
+    if (n > capacity()) {
+      size_type new_capacity = _get_alloc_size(n);
+      vector tmp(new_capacity);
+      std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
+      tmp._end = tmp._begin + n;
+      tmp._end_cap = tmp._begin + new_capacity;
+      std::swap(tmp, *this);
+    }
+  }
 
   // SECTION : element access
 
@@ -449,18 +467,19 @@ class vector : private vector_base<T, Allocator> {
   void push_back(const value_type& val) {
     if (this->_end < this->_end_cap) {  // size != capacity
       // construct only
-      this->alloc_.construct(this->_end, val);  // error may be occur~
+      this->_alloc.construct(this->_end, val);
       ++this->_end;
     } else {
-      // tmp for 연산
       // reallocation
-      vector tmp(_get_alloc_size(size() + 1));
+      size_type new_capacity = _get_alloc_size(size() + 1);
+      vector tmp(new_capacity);
       // copy
-      std::uninitialized_copy(this->begin_, this->alloc_, tmp.begin());
-      //
+      std::uninitialized_copy(this->_begin, this->_end, tmp.begin());
+      tmp._alloc.construct(tmp._begin, val);  // bad_alloc
+      tmp._end = tmp._begin + size() + 1;
+      tmp._end_cap = tmp.begin + new_capacity;
 
-      // after reallocation
-      std::swap(tmp, *this);  // swap 사랑걸..
+      std::swap(tmp, *this);
     }
   }
 
@@ -473,7 +492,7 @@ class vector : private vector_base<T, Allocator> {
    * @complexity O(1)
    *
    */
-  void pop_back(void) { this->alloc_.destory(--this->_end); }
+  void pop_back(void) { this->_alloc.destory(--this->_end); }
 
   // STRONG 1. insert single element at the _end, no reallocations happen
   // 2. reallocation happens & elements copyable
@@ -493,10 +512,7 @@ class vector : private vector_base<T, Allocator> {
    * @param position
    * @return iterator
    */
-  iterator erase(iterator position) {
-    this->alloc_.destroy(position.base());
-    // 1 2 3 4 5 6 6 7
-  }
+  iterator erase(iterator position) { this->_alloc.destroy(position.base()); }
   /**
    * @brief [first, last) elements 삭제. 뒤에 남은 값들 move (contiguos 유지)
    *
@@ -521,10 +537,10 @@ class vector : private vector_base<T, Allocator> {
    * @brief 모든 elements 를 삭제한다. size 를 0으로 설정한다.
    * @complexity O(N)
    */
-  void clear(void) { _destroy_end_(this->begin_); }
+  void clear(void) { _destroy_end_(this->_begin); }
 
   // NOTHROW
-  allocator_type get_allocator(void) const { return this->alloc_; }
+  allocator_type get_allocator(void) const { return this->_alloc; }
 
  private:
   typedef vector_base<T, Allocator> base_;
@@ -536,14 +552,15 @@ class vector : private vector_base<T, Allocator> {
    * @param pos
    */
   void _destroy_end_(pointer pos) {
-    for (; pos != this->_end; ++pos) {
-      this->alloc_.destroy(pos);  // NOEXCEPT
+    for (pointer tmp = pos; tmp != this->_end; ++tmp) {
+      _destroy_element(tmp);
     }
-    this->end_ = pos;
+    this->_end = pos;
   }
 
   /**
-   * @brief
+   * @brief 이미 할당된 공간에 새 element 들을 삽입한다.
+   * 아직 미사용..
    *
    * @param n
    * @param val
@@ -551,7 +568,7 @@ class vector : private vector_base<T, Allocator> {
   void _append(size_type n, value_type val) {
     if (this->_end_cap - this->_end >= n) {  // 추가할당공간 충분!
       for (; n > 0; ++n) {
-        this->alloc_.construct(this->_end, val);
+        this->_alloc.construct(this->_end, val);
         ++this->_end;
       }
     } else {
@@ -579,6 +596,13 @@ class vector : private vector_base<T, Allocator> {
     // 그치 굳이 계속 2*cap 할 필요가 없지..걍 할당 시점에 더 큰 거
     // 리턴하면..되는 거지.. 이걸 몰랐네......
   }
+
+  /**
+   * @brief allocator 감싸기용 destroy 함수
+   *
+   * @param pos element to destroy
+   */
+  void _destroy_element(pointer pos) { this->alloc_.destroy(pos); }
 
 };  // !SECTION : vector
 
