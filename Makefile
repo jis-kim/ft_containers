@@ -1,8 +1,8 @@
 #Makefile for ft_containers
 CXX = c++
 
-WFLAGS = -Wall -Wextra -Werror
-STDFLAGS = -std=c++98 -pedantic -ferror-limit=50
+#WFLAGS = -Wall -Wextra -Werror
+#STDFLAGS = -std=c++98 -ferror-limit=50
 DEBUGFLAGS = -g3 -fsanitize=address
 LEAKSFLAGS = -g3
 
@@ -22,7 +22,10 @@ SRCS_DIR = ./tests/
 SRCS = $(addprefix $(SRCS_DIR), $(SRCS_FILES))
 OBJS = $(SRCS:.cpp=.o)
 
-SRCS_FILES = vector_test.cpp
+SRCS_FILES =\
+type_traits_test.cpp
+#vector_test.cpp\
+
 OBJS_FILES = $(OBJS)
 
 COMPILE_MSG	= @echo $(BOLD)$(L_PURPLE) 📣 ${NAME} Compiled 🥳$(RESET)
@@ -55,12 +58,12 @@ re : fclean
 
 # 이게 최선입니까? 확실해요?
 .PHONY : debug
-debug :
+debug : fclean
 	@make DEBUG=1
 
 
 .PHONY : leaks
-leaks :
+leaks : fclean
 	@make LEAKS=1
 
 

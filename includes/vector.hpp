@@ -10,6 +10,8 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
+#include <algorithm>  // swap, fill_n
+#include <iostream>   // FIXME : remove
 #include <memory>
 
 #include "iterator.hpp"
@@ -149,10 +151,10 @@ class vector_base {
         _end_cap(_begin + n) {}
 
   ~vector_base(void) {
-    for (; _begin != _end; ++_begin) {
-      _alloc.destroy(_begin);
+    for (pointer tmp = _begin; tmp != _end; ++tmp) {
+      _alloc.destroy(tmp);
     }
-    _alloc.deallocate(_begin, _end - _begin);
+    _alloc.deallocate(_begin, _end_cap - _begin);  // deallocate 는 capacity 로
   }
 };  // !SECTION : vector_base
 
@@ -188,7 +190,8 @@ class vector : private vector_base<T, Allocator> {
   explicit vector(size_type n, const value_type& val = value_type(),
                   const allocator_type& alloc = allocator_type())
       : base_(alloc, n) {
-    std::uninitialized_fill(this->_begin, this->_end, val);
+    std::uninitialized_fill(this->_begin, this->_begin + n, val);
+    this->_end += n;
   }
 
   // TODO : consider SFINAE
@@ -202,7 +205,9 @@ class vector : private vector_base<T, Allocator> {
 
   // copy
   vector(const vector& x) : base_(x._alloc, x.size()) {
-    std::uninitialized_copy(this->_begin, this->_end, x._begin);
+    size_type x_size = x.size();
+    std::uninitialized_copy(this->_begin, this->_begin + x_size, x._begin);
+    this->end_ += x_size;
   }
 
   // SECTION: destructor
@@ -438,18 +443,33 @@ class vector : private vector_base<T, Allocator> {
 
   /**
    * @brief val 이 n개 할당된다. 기존 elements 는 destroy 된다.
+   * @complecity O(N) n is size
+   *
+   * If allocator_traits::construct is not supported with the appropriate
+   * arguments for the element constructions, or if the range specified by
+   * [first,last) is not valid, it causes undefined behavior.
+   * constructor 가 실패하면 UB 이므로.. ㄱㅊ지
+   * 않을지.................
    *
    * @param n
    * @param val
    */
   void assign(size_type n, const value_type& val) {
-    if (capacity() < n) {
-      this->swap(vector(n, val));
-      // 통쨰로 swap 하는 것과 추가 reallocation 하는 것 중 뭐가 더
-      // 효율적인가? 추가 안되고 어차피 다 없앴다가 새로 할당하고 복사해야
-      // 됨ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ 재밌어지겠는데~^^;;
+    if (capacity() >= n) {
+      size_type cur_size = size();
+      std::fill_n(this->_begin, std::max(cur_size, n), val);
+      // 중간에 실패한다면? 세그폴트 날 것 같은데 소멸자에서?..
+      if (n > cur_size) {
+        // construct at end
+        _construct_at_end(n - cur_size, val);
+        std::cout << "n is " << n << "cur_size is " << cur_size << '\n';
+      } else {
+        std::cout << "n is " << n << "cur_size is " << cur_size << '\n';
+        _destroy_at_end_(this->_begin + n);
+      }
     } else {
-      // 그냥?
+      // realloc
+      // this->swap(vector(n, val));
     }
   }
 
@@ -537,21 +557,35 @@ class vector : private vector_base<T, Allocator> {
    * @brief 모든 elements 를 삭제한다. size 를 0으로 설정한다.
    * @complexity O(N)
    */
-  void clear(void) { _destroy_end_(this->_begin); }
+  void clear(void) { _destroy_at_end_(this->_begin); }
 
   // NOTHROW
+  /**
+   * @brief Get the allocator object
+   *
+   * @return allocator_type
+   */
   allocator_type get_allocator(void) const { return this->_alloc; }
 
  private:
   typedef vector_base<T, Allocator> base_;
 
+  void _construct_at_end(size_type n, const value_type& val) {
+    for (size_type i = 0; i < n; ++i) {
+      _construct_element(this->_end, val);
+      // 여기서 exception throw 되면 어떡함..?
+      this->_end++;
+    }
+    // this->_end = _end + n;
+  }
+
   /**
-   * @brief [pos, end) 까지의 element를 destroy. end를 pos로 대체. (size 재설정)
-   * clear(), resize() 에서 사용한다.
+   * @brief [pos, end) 까지의 element를 destroy. end를 pos로 대체. (size
+   * 재설정) clear(), resize() 에서 사용한다.
    *
    * @param pos
    */
-  void _destroy_end_(pointer pos) {
+  void _destroy_at_end_(pointer pos) {
     for (pointer tmp = pos; tmp != this->_end; ++tmp) {
       _destroy_element(tmp);
     }
@@ -559,7 +593,7 @@ class vector : private vector_base<T, Allocator> {
   }
 
   /**
-   * @brief 이미 할당된 공간에 새 element 들을 삽입한다.
+   * @brief 새 element 들을 삽입한다.
    * 아직 미사용..
    *
    * @param n
@@ -567,10 +601,11 @@ class vector : private vector_base<T, Allocator> {
    */
   void _append(size_type n, value_type val) {
     if (this->_end_cap - this->_end >= n) {  // 추가할당공간 충분!
-      for (; n > 0; ++n) {
-        this->_alloc.construct(this->_end, val);
-        ++this->_end;
-      }
+      _construct_at_end(n, val);
+      // for (; n > 0; ++n) {
+      //  this->_alloc.construct(this->_end, val);
+      //++this->_end;
+      //}
     } else {
     }
   }
@@ -597,12 +632,16 @@ class vector : private vector_base<T, Allocator> {
     // 리턴하면..되는 거지.. 이걸 몰랐네......
   }
 
+  void _construct_element(pointer p, const value_type& val) {
+    this->_alloc.construct(p, val);
+  }
+
   /**
    * @brief allocator 감싸기용 destroy 함수
    *
-   * @param pos element to destroy
+   * @param p element to destroy
    */
-  void _destroy_element(pointer pos) { this->alloc_.destroy(pos); }
+  void _destroy_element(pointer p) { this->_alloc.destroy(p); }
 
 };  // !SECTION : vector
 

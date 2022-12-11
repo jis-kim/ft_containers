@@ -1,5 +1,7 @@
 #include "vector.hpp"
 
+#include <unistd.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -14,6 +16,35 @@ class A {
 std::ostream& operator<<(const std::ostream& os, const A& a) {
   return os << a.a;
 }
+
+static int num = 0;
+struct BASIC {
+  int a;
+  BASIC(void) {
+    std::cout << "basic basic\n";
+    if (num >= 5) {
+      num = 0;
+      throw std::logic_error("throw test");
+    }
+  }
+  BASIC(const BASIC& src) {
+    ++num;
+    std::cout << "copy constructor\n";
+    if (num >= 5) {
+      num = 0;
+      throw std::logic_error("throw test");
+    }
+  }
+  BASIC& operator=(const BASIC& rhs) {
+    ++num;
+    std::cout << "operator=\n";
+    if (num >= 5) {
+      num = 0;
+      throw std::logic_error("throw test");
+    }
+    return *this;
+  }
+};
 
 int main(void) {
   std::vector<int> int_vec;
@@ -69,4 +100,43 @@ int main(void) {
   } catch (const std::out_of_range& e) {
     std::cout << e.what() << '\n';
   }
+
+  std::cout << "============= basic guarantee test =============\n";
+  // assign is basic guarantee
+  BASIC abc;
+  std::cout << "\n\nstd::vector !!!!!\n\n";
+  {
+    std::vector<BASIC> basic_vec(10);
+
+    try {
+      std::cout << "size of basic vector : " << basic_vec.size()
+                << ", capacity : " << basic_vec.capacity() << '\n';
+      basic_vec.assign(6, abc);
+      std::cout << "success?\n";
+    } catch (...) {
+      std::cout << "catch!\n";
+      std::cout << "size of basic vector : " << basic_vec.size()
+                << ", capacity : " << basic_vec.capacity() << '\n';
+    }
+  }
+
+  std::cout << "\n\nft_vector !!!!!\n\n";
+  {
+    num = -10;
+    ft::vector<BASIC> ft_basic_vec(10);
+    try {
+      std::cout << "size of ft vector : " << ft_basic_vec.size()
+                << ", capacity : " << ft_basic_vec.capacity() << '\n';
+      ft_basic_vec.assign(6, abc);
+      std::cout << "size of ft vector : " << ft_basic_vec.size()
+                << ", capacity : " << ft_basic_vec.capacity() << '\n';
+      std::cout << "success?\n";
+    } catch (...) {
+      std::cout << "catch!\n";
+      std::cout << "size of ft vector : " << ft_basic_vec.size()
+                << ", capacity : " << ft_basic_vec.capacity() << '\n';
+    }
+  }
+
+  // std::cout << system("leaks ft_containers") << "\n";
 }

@@ -35,6 +35,7 @@
 # etc
 libstdc++-v3/*
 .vscode/*
+a.out.dSYM
 
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#C++
