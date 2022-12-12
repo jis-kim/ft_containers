@@ -19,30 +19,39 @@ std::ostream& operator<<(const std::ostream& os, const A& a) {
 
 static int num = 0;
 struct BASIC {
-  int a;
+  int* a;
   BASIC(void) {
+    a = new int(3);
     std::cout << "basic basic\n";
-    if (num >= 5) {
-      num = 0;
-      throw std::logic_error("throw test");
-    }
+    // if (num >= 5) {
+    //   num = 0;
+    //   throw std::logic_error("throw test");
+    // }
   }
   BASIC(const BASIC& src) {
-    ++num;
-    std::cout << "copy constructor\n";
     if (num >= 5) {
       num = 0;
       throw std::logic_error("throw test");
     }
+    ++num;
+    a = new int(*(src.a));
+    std::cout << "copy constructor\n";
   }
   BASIC& operator=(const BASIC& rhs) {
-    ++num;
-    std::cout << "operator=\n";
     if (num >= 5) {
       num = 0;
       throw std::logic_error("throw test");
     }
+    ++num;
+    std::cout << "num is currently : " << num << "\n";
+    delete a;
+    a = new int(*(rhs.a));
+    std::cout << "operator=\n";
     return *this;
+  }
+
+  ~BASIC(void) {
+    if (a) delete a;
   }
 };
 
@@ -77,10 +86,11 @@ int main(void) {
   // 1.10개 -> 5개로 resize 했을 때 뒤에 있는 요소 접근 가능한가?
   int_vec.resize(5);
 
-  std::cout << "size : " << int_vec.size()
-            << " , end + 3  : " << *(int_vec.end() + 3) << "\n";
-  // 가능하다. 딱히 destruct 해 줄 필요는 없어보이는데?.. 근데 int 라서 그럴
-  // 수도 있다. 얘가 destory 가 되냐?
+  // std::cout << "size : " << int_vec.size()
+  //           << " , end + 3  : " << *(int_vec.end() + 3) << "\n";
+  //  가능하다. 딱히 destruct 해 줄 필요는 없어보이는데?.. 근데 int 라서 그럴
+  //  수도 있다. 얘가 destory 가 되냐?
+  //  22.12.11) sanitizer 돌리면 얘도 에러가 난다.
 
   std::vector<A> a_vec;
   for (int i = 0; i < 10; ++i) {
@@ -103,15 +113,17 @@ int main(void) {
 
   std::cout << "============= basic guarantee test =============\n";
   // assign is basic guarantee
-  BASIC abc;
   std::cout << "\n\nstd::vector !!!!!\n\n";
   {
+    BASIC abc;
     std::vector<BASIC> basic_vec(10);
-
+    // basic_vec.clear();
     try {
       std::cout << "size of basic vector : " << basic_vec.size()
                 << ", capacity : " << basic_vec.capacity() << '\n';
-      basic_vec.assign(6, abc);
+      basic_vec.assign(8, abc);
+      std::cout << "size of basic vector : " << basic_vec.size()
+                << ", capacity : " << basic_vec.capacity() << '\n';
       std::cout << "success?\n";
     } catch (...) {
       std::cout << "catch!\n";
@@ -119,15 +131,20 @@ int main(void) {
                 << ", capacity : " << basic_vec.capacity() << '\n';
     }
   }
+
+  std::cout << system("leaks ft_containers") << "\n";
 
   std::cout << "\n\nft_vector !!!!!\n\n";
   {
+    BASIC abc;
     num = -10;
     ft::vector<BASIC> ft_basic_vec(10);
+    // ft_basic_vec.clear();
+    system("leaks ft_containers");
     try {
       std::cout << "size of ft vector : " << ft_basic_vec.size()
                 << ", capacity : " << ft_basic_vec.capacity() << '\n';
-      ft_basic_vec.assign(6, abc);
+      ft_basic_vec.assign(8, abc);
       std::cout << "size of ft vector : " << ft_basic_vec.size()
                 << ", capacity : " << ft_basic_vec.capacity() << '\n';
       std::cout << "success?\n";
@@ -138,5 +155,5 @@ int main(void) {
     }
   }
 
-  // std::cout << system("leaks ft_containers") << "\n";
+  std::cout << system("leaks ft_containers") << "\n";
 }

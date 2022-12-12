@@ -152,6 +152,7 @@ class vector_base {
 
   ~vector_base(void) {
     for (pointer tmp = _begin; tmp != _end; ++tmp) {
+      std::cout << tmp - _begin << '\n';
       _alloc.destroy(tmp);
     }
     _alloc.deallocate(_begin, _end_cap - _begin);  // deallocate 는 capacity 로
@@ -175,7 +176,6 @@ class vector : private vector_base<T, Allocator> {
   // TODO: reverse iterator custom implement
   typedef ft::reverse_iterator<iterator> reverse_iterator;
   typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
-
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
 
@@ -205,9 +205,8 @@ class vector : private vector_base<T, Allocator> {
 
   // copy
   vector(const vector& x) : base_(x._alloc, x.size()) {
-    size_type x_size = x.size();
-    std::uninitialized_copy(this->_begin, this->_begin + x_size, x._begin);
-    this->end_ += x_size;
+    this->_end = std::uninitialized_copy(this->_begin, this->_begin + x.size(),
+                                         x._begin);
   }
 
   // SECTION: destructor
@@ -457,19 +456,19 @@ class vector : private vector_base<T, Allocator> {
   void assign(size_type n, const value_type& val) {
     if (capacity() >= n) {
       size_type cur_size = size();
-      std::fill_n(this->_begin, std::max(cur_size, n), val);
-      // 중간에 실패한다면? 세그폴트 날 것 같은데 소멸자에서?..
+      // 공통되는 부분까진 n 채운다.
+      std::fill_n(this->_begin, std::min(cur_size, n), val);
+      // 중간에 실패한다면? 세그폴트 날 것 같은데 소멸자에서?.. -> ㄱㅊㄱㅊ;;
       if (n > cur_size) {
-        // construct at end
+        std::cout << "n is " << n << ", cur_size is " << cur_size << '\n';
         _construct_at_end(n - cur_size, val);
-        std::cout << "n is " << n << "cur_size is " << cur_size << '\n';
       } else {
-        std::cout << "n is " << n << "cur_size is " << cur_size << '\n';
+        std::cout << "n is " << n << ", cur_size is " << cur_size << '\n';
         _destroy_at_end_(this->_begin + n);
       }
     } else {
       // realloc
-      // this->swap(vector(n, val));
+      // swap(vector(n, val));
     }
   }
 
@@ -573,10 +572,10 @@ class vector : private vector_base<T, Allocator> {
   void _construct_at_end(size_type n, const value_type& val) {
     for (size_type i = 0; i < n; ++i) {
       _construct_element(this->_end, val);
-      // 여기서 exception throw 되면 어떡함..?
+      // 여기서 exception throw 되면 어떡함..? -> 내 책임 아님
       this->_end++;
     }
-    // this->_end = _end + n;
+    // this->_end += n;
   }
 
   /**

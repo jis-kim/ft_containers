@@ -23,8 +23,8 @@ SRCS = $(addprefix $(SRCS_DIR), $(SRCS_FILES))
 OBJS = $(SRCS:.cpp=.o)
 
 SRCS_FILES =\
-type_traits_test.cpp
-#vector_test.cpp\
+vector_test.cpp\
+#type_traits_test.cpp \
 
 OBJS_FILES = $(OBJS)
 
