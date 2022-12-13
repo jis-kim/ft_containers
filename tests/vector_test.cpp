@@ -23,10 +23,6 @@ struct BASIC {
   BASIC(void) {
     a = new int(3);
     std::cout << "basic basic\n";
-    // if (num >= 5) {
-    //   num = 0;
-    //   throw std::logic_error("throw test");
-    // }
   }
   BASIC(const BASIC& src) {
     if (num >= 5) {
@@ -43,7 +39,6 @@ struct BASIC {
       throw std::logic_error("throw test");
     }
     ++num;
-    std::cout << "num is currently : " << num << "\n";
     delete a;
     a = new int(*(rhs.a));
     std::cout << "operator=\n";
@@ -51,7 +46,8 @@ struct BASIC {
   }
 
   ~BASIC(void) {
-    if (a) delete a;
+    std::cout << "BASIC destructor called\n";
+    delete a;
   }
 };
 
@@ -66,7 +62,7 @@ int main(void) {
     int_vec.push_back(i);
   }
 
-  int_vec.clear();
+  // int_vec.clear();
   std::cout << "\nafter insert & clear vector\n";
   std::cout << "\nbegin : " << int_vec.begin().base() << "\n";
   std::cout << "end : " << int_vec.end().base() << "\n";
@@ -86,8 +82,8 @@ int main(void) {
   // 1.10개 -> 5개로 resize 했을 때 뒤에 있는 요소 접근 가능한가?
   int_vec.resize(5);
 
-  // std::cout << "size : " << int_vec.size()
-  //           << " , end + 3  : " << *(int_vec.end() + 3) << "\n";
+  std::cout << "size : " << int_vec.size()
+            << " , end + 3  : " << *(int_vec.end() + 3) << "\n";
   //  가능하다. 딱히 destruct 해 줄 필요는 없어보이는데?.. 근데 int 라서 그럴
   //  수도 있다. 얘가 destory 가 되냐?
   //  22.12.11) sanitizer 돌리면 얘도 에러가 난다.
@@ -117,7 +113,7 @@ int main(void) {
   {
     BASIC abc;
     std::vector<BASIC> basic_vec(10);
-    // basic_vec.clear();
+    basic_vec.clear();
     try {
       std::cout << "size of basic vector : " << basic_vec.size()
                 << ", capacity : " << basic_vec.capacity() << '\n';
@@ -139,7 +135,7 @@ int main(void) {
     BASIC abc;
     num = -10;
     ft::vector<BASIC> ft_basic_vec(10);
-    // ft_basic_vec.clear();
+    ft_basic_vec.clear();
     system("leaks ft_containers");
     try {
       std::cout << "size of ft vector : " << ft_basic_vec.size()

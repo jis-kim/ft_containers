@@ -36,6 +36,6 @@
 libstdc++-v3/*
 .vscode/*
 a.out.dSYM
-
+ft_containers
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#C++
