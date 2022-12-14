@@ -361,7 +361,6 @@ class vector : private vector_base<T, Allocator> {
       std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       tmp._end = tmp._begin + n;
       tmp._end_cap = tmp._begin + new_capacity;
-      // std::swap(tmp, *this);
       swap(tmp);
     }
   }
@@ -502,8 +501,20 @@ class vector : private vector_base<T, Allocator> {
   // STRONG 1. insert single element at the _end, no reallocations happen
   // 2. reallocation happens & elements copyable
   // BASIC otherwise
-  iterator insert(iterator position, const value_type& val) {}
+  /**
+   * @brief pos 앞 위치에 val 을 삽입한다.
+   *
+   * @param position val 이 삽입될 위치
+   * @param val 삽입할 element 값
+   * @return iterator 새로 삽입한 elements 의 맨 앞 위치
+   */
+  iterator insert(iterator position, const value_type& val) {
+    // vector insert function
+    return position;
+  }
+
   void insert(iterator position, size_type n, const value_type& val) {}
+
   template <typename InputIterator>
   void insert(iterator position, InputIterator first, InputIterator last) {}
 
@@ -513,29 +524,40 @@ class vector : private vector_base<T, Allocator> {
   /**
    * @brief position 위치의 element 하나 삭제
    * 삭제한 position 뒤에 있던 elements 들은 앞으로 이동시켜줘야 한다.
+   * @complexity O(N) 지울 element 의 수 + 뒤에 남은 element 의 수 (moved)
    *
    * @param position
-   * @return iterator
+   * @return iterator 함수 호출로 지워진 마지막 element 의 다음 위치
    */
   iterator erase(iterator position) {
-    // FIXME : 맘대로 구현함..
-    std::copy(position + 1, _end, poisition);
-    _destroy_at_end(_end - 1);
+    if (position != this->_end - 1) {
+      std::copy(position + 1, this->_end, position);
+    }
+    _destroy_at_end(this->_end - 1);
+    return position;
   }
+
   /**
    * @brief [first, last) elements 삭제. 뒤에 남은 값들 move (contiguos 유지)
+   * @complexity O(N) 지울 element 의 수 + 뒤에 남은 element 의 수 (moved)
    *
-   * @param first
-   * @param last
+   * @param first 지울 첫번째 element
+   * @param last  지울 마지막 element의 다음 위치
    * @return iterator following last removed element
    */
   iterator erase(iterator first, iterator last) {
-    std::copy(last, _end, first);
+    std::copy(last, this->_end, first);
     _destroy_at_end(last);
   }
 
   // NOTHROW allocator in both vectors compare equal
   // otherwise UB
+  /**
+   * @brief 같은 T 타입을 가진 벡터를 swap 한다. 사이즈는 다를 수 있다.
+   * @complexity O(1)
+   *
+   * @param x
+   */
   void swap(vector& x) {
     std::swap(this->_begin, x._begin);
     std::swap(this->_end, x._end);
@@ -602,25 +624,30 @@ class vector : private vector_base<T, Allocator> {
    * @return size_type 실제로 할당할 사이즈
    */
   size_type _get_alloc_size(size_type new_size) const {
-    const size_type ms = max_size();
-    if (new_size > ms) {
+    const size_type _max_size = max_size();
+    if (new_size > _max_size) {
       throw std::logic_error("ft::vector : reallocation size is too big");
     }
     const size_type cap = capacity();
-    if (cap >= ms / 2) {
-      return ms;
+    if (cap >= _max_size / 2) {
+      return _max_size;
     }
+    // 새 사이즈와 2 * cap 중 더 큰 것을 리턴.
     return std::max(2 * cap, new_size);
-    // 그치 굳이 계속 2*cap 할 필요가 없지..걍 할당 시점에 더 큰 거
-    // 리턴하면..되는 거지.. 이걸 몰랐네......
   }
 
+  /**
+   * @brief allocator 캡슐화하는 construct 함수
+   *
+   * @param p construct 할 위치
+   * @param val construct 할 값
+   */
   void _construct_element(pointer p, const value_type& val) {
     this->_alloc.construct(p, val);
   }
 
   /**
-   * @brief allocator 감싸기용 destroy 함수
+   * @brief allocator 캡슐화하는 destroy 함수
    *
    * @param p element to destroy
    */
@@ -657,7 +684,9 @@ bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 // NOTHROW allocator in both vectors compare equal
 // otherwise UB
 /**
- * @brief std::swap 에서 이걸 부름
+ * @brief vector 를 swap 한다. 두 벡터는 같은 타입이어야 한다.
+ * <algorithm> 에 있는 std::swap 을 오버로딩해서'
+ *  x.swap(y) 가 불린 것 처럼 작동하도록 한다.
  *
  * @tparam T
  * @tparam Alloc
