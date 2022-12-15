@@ -199,9 +199,7 @@ class vector : private vector_base<T, Allocator> {
   template <typename InputIterator>
   vector(InputIterator first, InputIterator last,
          const allocator_type& alloc = allocator_type())
-      : base_(alloc) {
-    // push_back()
-  }
+      : base_(alloc) {}
 
   // copy
   vector(const vector& x) : base_(x._alloc, x.size()) {
@@ -349,18 +347,15 @@ class vector : private vector_base<T, Allocator> {
    * n >= capacity 이면 재할당이 필요하다.. 아니면 아무 일도 일어나지 않는다.
    * n >= max size 이면 length_error throw.
    * 재할당이 필요할 경우 container 의 allocator를 이용한다.
-   * std::allocator는 bad_alloc throw.
-   * @
+   * @complexity 재할당이 일어나면 O(N) 에 가깝다.
    *
    * @param n 벡터의 최소 capacity
    */
   void reserve(size_type n) {
     if (n > capacity()) {
-      size_type new_capacity = _get_alloc_size(n);
-      vector tmp(new_capacity);
+      vector tmp(_get_alloc_size(n));
       std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       tmp._end = tmp._begin + n;
-      tmp._end_cap = tmp._begin + new_capacity;
       swap(tmp);
     }
   }
@@ -480,10 +475,9 @@ class vector : private vector_base<T, Allocator> {
     } else {
       // reallocation
       vector tmp(_get_alloc_size(size() + 1));  // for strong guarantee
-      // copy
+      // 기존의 element 들을 tmp에 복사한다.
       std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       _construct_at_end(1, val);
-
       swap(tmp);
     }
   }
@@ -502,19 +496,76 @@ class vector : private vector_base<T, Allocator> {
   // 2. reallocation happens & elements copyable
   // BASIC otherwise
   /**
-   * @brief pos 앞 위치에 val 을 삽입한다.
+   * @brief position 앞 위치에 val 을 삽입한다.
    *
    * @param position val 이 삽입될 위치
    * @param val 삽입할 element 값
    * @return iterator 새로 삽입한 elements 의 맨 앞 위치
    */
   iterator insert(iterator position, const value_type& val) {
-    // vector insert function
+    if (position == this->_end) {
+      // STRONG
+      push_back(val);
+      return this->_end - 1;
+    }
+    if (size() + 1 > capacity()) {
+      // STRONG
+      vector tmp(_get_alloc_size(size() + 1));
+      tmp._end = std::copy(this->_begin, position, tmp._begin);
+      tmp._construct_at_end(1, val);
+      tmp._end = std::copy(position, this->_end, tmp._end);
+      swap(tmp);
+    } else {
+      // BASIC
+      // position ~ end - 1 를 position + 1 ~ end에 복사
+      std::copy_backward(position - 1, this->_end - 1, this->_end);
+      ++this->_end;
+      _destroy_element(position);
+      _construct_element(position, val);
+    }
     return position;
   }
 
-  void insert(iterator position, size_type n, const value_type& val) {}
+  /**
+   * @brief position 앞 위치에 n개의 val 을 삽입한다.
+   * iff) 새 벡터의 사이즈 > capacity 일 경우 reallocation
+   *
+   * @param position val 이 삽입될 위치
+   * @param n 삽입할 element 의 수
+   * @param val 삽입할 element 값
+   */
+  void insert(iterator position, size_type n, const value_type& val) {
+    if (n == 0) {
+      return;
+    }
+    if (size() + n > capacity()) {
+      // reallocation
+      vector tmp(_get_alloc_size(size() + n));
+      tmp._end = std::uninitialized_copy(this->begin, position, tmp.begin);
+      std::uninitialized_fill_n(tmp._end, n, val);
+      tmp._end += n;
+      std::uninitialized_copy();
+      swap(tmp);
+    } else {
+      // no reallocation
+      if (position != this->_end) {
+        std::uninitialized_copy(this->_end - n, this->_end, this->_end);
+        // std::copy_backward(position, this->_end - n, this->_end);
+        std::fill_n(position, n, val);
+      } else {
+        _construct_at_end(n, val);
+      }
+    }
+  }
 
+  /**
+   * @brief
+   *
+   * @tparam InputIterator
+   * @param position
+   * @param first
+   * @param last
+   */
   template <typename InputIterator>
   void insert(iterator position, InputIterator first, InputIterator last) {}
 
@@ -579,42 +630,9 @@ class vector : private vector_base<T, Allocator> {
    */
   allocator_type get_allocator(void) const { return this->_alloc; }
 
+  // SECTION : private functions
  private:
   typedef vector_base<T, Allocator> base_;
-
-  void _construct_at_end(size_type n, const value_type& val) {
-    for (size_type idx = 0; idx < n; ++idx) {
-      _construct_element(this->_end, val);
-      this->_end++;
-    }
-  }
-
-  /**
-   * @brief [pos, end) 까지의 element를 destroy. end를 pos로 대체. (size
-   * 재설정) clear(), resize() 에서 사용한다.
-   *
-   * @param pos
-   */
-  void _destroy_at_end(pointer pos) {
-    for (pointer tmp = pos; tmp != this->_end; ++tmp) {
-      _destroy_element(tmp);
-    }
-    this->_end = pos;
-  }
-
-  ///**
-  // * @brief 새 element 들을 삽입한다.
-  // * 아직 미사용..
-  // *
-  // * @param n
-  // * @param val
-  // */
-  // void _append(size_type n, value_type val) {
-  //  if (this->_end_cap - this->_end >= n) {  // 추가할당공간 충분!
-  //    _construct_at_end(n, val);
-  //  } else {
-  //  }
-  //}
 
   /**
    * @brief 적절히 resize 할 크기를 리턴한다.
@@ -634,6 +652,26 @@ class vector : private vector_base<T, Allocator> {
     }
     // 새 사이즈와 2 * cap 중 더 큰 것을 리턴.
     return std::max(2 * cap, new_size);
+  }
+
+  void _construct_at_end(size_type n, const value_type& val) {
+    for (size_type idx = 0; idx < n; ++idx) {
+      _construct_element(this->_end, val);
+      this->_end++;
+    }
+  }
+
+  /**
+   * @brief [pos, end) 까지의 element를 destroy. end를 pos로 대체. (size
+   * 재설정) clear(), resize() 에서 사용한다.
+   *
+   * @param pos
+   */
+  void _destroy_at_end(pointer pos) {
+    for (pointer tmp = pos; tmp != this->_end; ++tmp) {
+      _destroy_element(tmp);
+    }
+    this->_end = pos;
   }
 
   /**
@@ -684,8 +722,8 @@ bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
 // NOTHROW allocator in both vectors compare equal
 // otherwise UB
 /**
- * @brief vector 를 swap 한다. 두 벡터는 같은 타입이어야 한다.
- * <algorithm> 에 있는 std::swap 을 오버로딩해서'
+ * @brief vector를 swap 한다. 두 벡터는 같은 타입이어야 한다.
+ * <algorithm> 에 있는 std::swap 을 오버로딩해서
  *  x.swap(y) 가 불린 것 처럼 작동하도록 한다.
  *
  * @tparam T
