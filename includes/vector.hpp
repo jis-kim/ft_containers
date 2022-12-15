@@ -10,11 +10,10 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
-#include <algorithm>  // swap, fill_n
-#include <iostream>   // FIXME : remove
+#include <iostream>  // FIXME : remove
 #include <memory>
 
-#include "iterator_traits.hpp"
+#include "algorithm.hpp"
 #include "reverse_iterator.hpp"
 
 namespace ft {
@@ -445,7 +444,7 @@ class vector : private vector_base<T, Allocator> {
     if (capacity() >= n) {
       size_type cur_size = size();
       // 공통되는 부분까진 n을 채운다.
-      std::fill_n(this->_begin, std::min(cur_size, n), val);
+      _fill_n_elements(this->_begin, min(cur_size, n), val);
       if (n > cur_size) {
         _construct_at_end(n - cur_size, val);
       } else {
@@ -548,8 +547,11 @@ class vector : private vector_base<T, Allocator> {
     } else {
       // BASIC
       if (position != this->_end) {
-        // position ~ size 까지는 copy, 그 뒤는 construct
-        this->_end = std::uninitialized_copy(position, this->_end, this->_end);
+        // [end - n, end) 까지를 end 에 construct (n개)
+        pointer old_end = this->_end;
+        this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
+        // [position, end - n) 까지를 [end - n,  end) 까지로 copy (aps - n개)
+        _copy_elements_backward(position, old_end - n, old_end);
         _fill_n_elements(position, n, val);
       } else {
         _construct_at_end(n, val);
@@ -650,7 +652,7 @@ class vector : private vector_base<T, Allocator> {
       return _max_size;
     }
     // 새 사이즈와 2 * cap 중 더 큰 것을 리턴.
-    return std::max(2 * cap, new_size);
+    return max(2 * cap, new_size);
   }
 
   /**
@@ -735,6 +737,14 @@ class vector : private vector_base<T, Allocator> {
     return dest;
   }
 
+  /**
+   * @brief copy of std::fill_n specialization for T
+   *
+   * @param dest element 를 넣을 위치
+   * @param n 채울 element 의 수
+   * @param val 채울 값
+   * @return pointer 채운 마지막 위치의 다음 위치
+   */
   pointer _fill_n_elements(pointer dest, size_type n, const value_type& val) {
     for (size_type idx = 0; idx < n; ++idx) {
       *dest = val;
