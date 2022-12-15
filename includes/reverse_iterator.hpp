@@ -10,16 +10,13 @@
 #ifndef REVERSE_ITERATOR_HPP
 #define REVERSE_ITERATOR_HPP
 
-#include <unordered_map>
-
-#include "iterator.hpp"
+#include "iterator_traits.hpp"
 
 namespace ft {
 template <typename Iter>
 class reverse_iterator {
  private:
   Iter current_;
-  Iter base_;
 
  public:
   typedef iterator_traits<Iter> traits_type;

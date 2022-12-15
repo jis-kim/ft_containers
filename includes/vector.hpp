@@ -14,7 +14,7 @@
 #include <iostream>   // FIXME : remove
 #include <memory>
 
-#include "iterator.hpp"
+#include "iterator_traits.hpp"
 #include "reverse_iterator.hpp"
 
 namespace ft {
@@ -320,8 +320,7 @@ class vector : private vector_base<T, Allocator> {
     if (n > capacity()) {
       // reallocation
       vector tmp(_get_alloc_size(n));
-      // 있던 애들 카피해서 보존
-      std::copy(this->_begin, this->_end, tmp->_begin);
+      std::uninitialized_copy(this->_begin, this->_end, tmp->_begin);
       _construct_at_end(n, val);
       swap(tmp);
       return;
@@ -474,7 +473,7 @@ class vector : private vector_base<T, Allocator> {
       _construct_at_end(1, val);
     } else {
       // reallocation
-      vector tmp(_get_alloc_size(size() + 1));  // for strong guarantee
+      vector tmp(_get_alloc_size(size() + 1));
       // 기존의 element 들을 tmp에 복사한다.
       std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       _construct_at_end(1, val);
@@ -511,17 +510,18 @@ class vector : private vector_base<T, Allocator> {
     if (size() + 1 > capacity()) {
       // STRONG
       vector tmp(_get_alloc_size(size() + 1));
-      tmp._end = std::copy(this->_begin, position, tmp._begin);
+      tmp._end = std::uninitialized_copy(this->_begin, position, tmp._begin);
       tmp._construct_at_end(1, val);
-      tmp._end = std::copy(position, this->_end, tmp._end);
+      tmp._end = std::uninitialized_copy(position, this->_end, tmp._end);
       swap(tmp);
     } else {
       // BASIC
       // position ~ end - 1 를 position + 1 ~ end에 복사
-      std::copy_backward(position - 1, this->_end - 1, this->_end);
+      // 한 칸 뒤로 옮기기
+      _copy_elements_backward(position, this->_end - 1, this->_end);
       ++this->_end;
-      _destroy_element(position);
-      _construct_element(position, val);
+      _construct_at_end(1, *(this->_end - 1));
+      *position = *(this->_end);
     }
     return position;
   }
@@ -539,19 +539,18 @@ class vector : private vector_base<T, Allocator> {
       return;
     }
     if (size() + n > capacity()) {
-      // reallocation
+      // STRONG
       vector tmp(_get_alloc_size(size() + n));
-      tmp._end = std::uninitialized_copy(this->begin, position, tmp.begin);
+      tmp._end = std::uninitialized_copy(this->_begin, position, tmp._begin);
       std::uninitialized_fill_n(tmp._end, n, val);
-      tmp._end += n;
-      std::uninitialized_copy();
+      tmp._end = std::uninitialized_copy(position, this->_end, tmp._end + n);
       swap(tmp);
     } else {
-      // no reallocation
+      // BASIC
       if (position != this->_end) {
-        std::uninitialized_copy(this->_end - n, this->_end, this->_end);
-        // std::copy_backward(position, this->_end - n, this->_end);
-        std::fill_n(position, n, val);
+        // position ~ size 까지는 copy, 그 뒤는 construct
+        this->_end = std::uninitialized_copy(position, this->_end, this->_end);
+        _fill_n_elements(position, n, val);
       } else {
         _construct_at_end(n, val);
       }
@@ -582,7 +581,7 @@ class vector : private vector_base<T, Allocator> {
    */
   iterator erase(iterator position) {
     if (position != this->_end - 1) {
-      std::copy(position + 1, this->_end, position);
+      _copy_elements(position + 1, this->_end, position);
     }
     _destroy_at_end(this->_end - 1);
     return position;
@@ -597,7 +596,7 @@ class vector : private vector_base<T, Allocator> {
    * @return iterator following last removed element
    */
   iterator erase(iterator first, iterator last) {
-    std::copy(last, this->_end, first);
+    _copy_elements(last, this->_end, first);
     _destroy_at_end(last);
   }
 
@@ -610,9 +609,9 @@ class vector : private vector_base<T, Allocator> {
    * @param x
    */
   void swap(vector& x) {
-    std::swap(this->_begin, x._begin);
-    std::swap(this->_end, x._end);
-    std::swap(this->_end_cap, x._end_cap);
+    _swap_pointer(this->_begin, x._begin);
+    _swap_pointer(this->_end, x._end);
+    _swap_pointer(this->_end_cap, x._end_cap);
   }
 
   // NOTHROW
@@ -654,6 +653,12 @@ class vector : private vector_base<T, Allocator> {
     return std::max(2 * cap, new_size);
   }
 
+  /**
+   * @brief end() 위치에 n개의 element를 생성한다.
+   *
+   * @param n 생성할 element 의 개수
+   * @param val 생성할 element 의 값
+   */
   void _construct_at_end(size_type n, const value_type& val) {
     for (size_type idx = 0; idx < n; ++idx) {
       _construct_element(this->_end, val);
@@ -690,6 +695,53 @@ class vector : private vector_base<T, Allocator> {
    * @param p element to destroy
    */
   void _destroy_element(pointer p) { this->_alloc.destroy(p); }
+
+  void _swap_pointer(pointer& p1, pointer& p2) {
+    pointer tmp = p1;
+    p1 = p2;
+    p2 = tmp;
+  }
+
+  /**
+   * @brief copy of std::copy specialization for T*
+   *
+   * @param begin 복사하려는 범위의 첫번째 element
+   * @param end 복사하려는 범위의 마지막 element의 다음 위치
+   * @param dest 복사할 위치
+   * @return pointer 복사한 마지막 위치의 다음 위치
+   */
+  pointer _copy_elements(pointer begin, pointer end, pointer dest) {
+    for (pointer tmp = begin; tmp != end; ++tmp) {
+      *dest = *tmp;
+      ++dest;
+    }
+    return dest;
+  }
+
+  /**
+   * @brief copy of std::copy_backward.. 근데 내 입맛대로를 곁들인
+   * [begin, end)
+   *
+   * @param begin 복사하려는 범위의 마지막 element
+   * @param end 복사하려는 범위의 첫번째 element의 이전 위치
+   * @param dest 복사할 마지막 위치
+   * @return pointer 복사한 첫번째 위치의 이전 위치
+   */
+  pointer _copy_elements_backward(pointer begin, pointer end, pointer dest) {
+    for (pointer tmp = end - 1; tmp != begin - 1; --tmp) {
+      *dest = *tmp;
+      --dest;
+    }
+    return dest;
+  }
+
+  pointer _fill_n_elements(pointer dest, size_type n, const value_type& val) {
+    for (size_type idx = 0; idx < n; ++idx) {
+      *dest = val;
+      ++dest;
+    }
+    return dest;
+  }
 
 };  // !SECTION : vector
 
