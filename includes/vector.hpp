@@ -141,9 +141,9 @@ class vector_base {
   pointer _end;
   pointer _end_cap;
 
-  vector_base(
-      const allocator_type& allocator,
-      typename allocator_type::size_type n = allocator_type::size_type())
+  vector_base(const allocator_type& allocator,
+              typename allocator_type::size_type n =
+                  typename allocator_type::size_type())
       : _alloc(allocator),
         _begin(_alloc.allocate(n)),
         _end(_begin),
@@ -186,9 +186,10 @@ class vector : private vector_base<T, Allocator> {
       : base_(alloc, size_type()) {}
 
   // fill
-  explicit vector(size_type n, const value_type& val = value_type(),
+  explicit vector(size_type n, const value_type& val,
                   const allocator_type& alloc = allocator_type())
       : base_(alloc, n) {
+    std::cout << "constructed by n, value\n";
     std::uninitialized_fill(this->_begin, this->_begin + n, val);
     this->_end += n;
   }
@@ -198,7 +199,9 @@ class vector : private vector_base<T, Allocator> {
   template <typename InputIterator>
   vector(InputIterator first, InputIterator last,
          const allocator_type& alloc = allocator_type())
-      : base_(alloc) {}
+      : base_(alloc) {
+    std::cout << "iterator version\n";
+  }
 
   // copy
   vector(const vector& x) : base_(x._alloc, x.size()) {
@@ -352,8 +355,7 @@ class vector : private vector_base<T, Allocator> {
   void reserve(size_type n) {
     if (n > capacity()) {
       vector tmp(_get_alloc_size(n));
-      std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
-      tmp._end = tmp._begin + n;
+      tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       swap(tmp);
     }
   }
@@ -664,7 +666,7 @@ class vector : private vector_base<T, Allocator> {
   void _construct_at_end(size_type n, const value_type& val) {
     for (size_type idx = 0; idx < n; ++idx) {
       _construct_element(this->_end, val);
-      this->_end++;
+      ++this->_end;
     }
   }
 

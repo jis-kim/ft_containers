@@ -128,15 +128,12 @@ int main(void) {
     }
   }
 
-  std::cout << system("leaks ft_containers") << "\n";
-
   std::cout << "\n\nft_vector !!!!!\n\n";
   {
     BASIC abc;
     num = -10;
-    ft::vector<BASIC> ft_basic_vec(10);
+    ft::vector<BASIC> ft_basic_vec(10, abc);
     ft_basic_vec.clear();
-    system("leaks ft_containers");
     try {
       std::cout << "size of ft vector : " << ft_basic_vec.size()
                 << ", capacity : " << ft_basic_vec.capacity() << '\n';
@@ -151,5 +148,10 @@ int main(void) {
     }
   }
 
-  std::cout << system("leaks ft_containers") << "\n";
+  // std::cout << system("leaks ft_containers") << "\n";
+
+  std::cout << "\n\nSFINAE test\n";
+  // itereator 를 이용한 consturctor 에 enable_if 를 적용하지 않은 경우
+  // 그리고 n, val 의 타입이 동일한 경우 어떤 타입의 생성자가 호출될 것인가?
+  ft::vector<int>((size_t)10, 3);  // 의도 : vector(n, val) 호출
 }
