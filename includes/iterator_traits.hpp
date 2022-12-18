@@ -22,7 +22,7 @@ struct iterator_traits {
   typedef typename Iterator::value_type value_type;
   typedef typename Iterator::pointer pointer;
   typedef typename Iterator::reference reference;
-  typedef typename Iterator::iterator_category iterator_category;  // 종류
+  typedef typename Iterator::iterator_category iterator_category;
 };
 
 // pointer 로 들어왔을 때도 작동해야 한다.

@@ -30,7 +30,7 @@ struct enable_if<true, T> {
   typedef T type;
 };
 
-// SECTION: is_integral
+// SECTION: integral_constant
 /**
  * @brief v 를 static 인자로 가지기 위한 class
  * 컴파일 단계에서도 값을 쓰려는 편법
@@ -49,6 +49,14 @@ struct integral_constant {
 typedef integral_constant<bool, true> true_type;
 typedef integral_constant<bool, false> false_type;
 
+// SECTION : is_same
+template <typename T, typename U>
+struct is_same : public false_type {};
+
+template <typename T>
+struct is_same<T, T> : public true_type {};
+
+// SECTION: is_integral
 /**
  * @brief integral 인지 아닌지 판별.
  * integral 이면 true_type, 아니면 false_type 을 상속받아 value 를 달리 가진다.
@@ -87,13 +95,6 @@ struct is_integral<long> : public true_type {};
 template <>
 struct is_integral<unsigned long> : public true_type {};
 
-// SECTION : is_same
-template <typename T, typename U>
-struct is_same : public false_type {};
-
-template <typename T>
-struct is_same<T, T> : public true_type {};
-
 template <typename Iter>
 struct _iterator_category_t {
   typedef typename iterator_traits<Iter>::iterator_category type;
@@ -102,49 +103,38 @@ struct _iterator_category_t {
 // SECTION : iterator categorize
 template <typename InputIterator>
 struct is_input_iterator {
-  typedef typename enable_if<
-      is_same<typename _iterator_category_t<InputIterator>::type,
-              std::input_iterator_tag>::value>::type type;
-  typedef typename type::value value;
+  typedef typename is_same<
+      typename iterator_traits<InputIterator>::iterator_category,
+      std::input_iterator_tag>::type type;
 };
 
 template <typename OutputIterator>
 struct is_output_iterator {
-  typedef typename enable_if<
-      is_same<typename _iterator_category_t<OutputIterator>::type,
-              std::output_iterator_tag>::value>::type type;
-  typedef typename type::value value;
+  typedef typename is_same<
+      typename iterator_traits<OutputIterator>::iterator_category,
+      std::output_iterator_tag>::type type;
 };
 
 template <typename ForwardIterator>
 struct is_forward_iterator {
-  typedef typename enable_if<
-      typename is_input_iterator<ForwardIterator>::value ||
-      typename is_output_iterator<ForwardIterator>::value ||
-      is_same<typename iterator_traits<ForwardIterator>::iterator_category,
-              std::forward_iterator_tag>::value>::type type;
-  typedef typename type::value value;
+  typedef typename is_same<
+      typename iterator_traits<ForwardIterator>::iterator_category,
+      std::forward_iterator_tag>::type type;
 };
 
 template <typename BidirectionalIterator>
 struct is_bidirectional_iterator {
-  typedef typename enable_if<
-      typename is_forward_iterator<BidirectionalIterator>::value ||
-      is_same<
-          typename iterator_traits<BidirectionalIterator>::iterator_category,
-          std::bidirectional_iterator_tag>::value>::type type;
-  typedef typename type::value value;
+  typedef typename is_same<
+      typename iterator_traits<BidirectionalIterator>::iterator_category,
+      std::bidirectional_iterator_tag>::type type;
 };
 
 template <typename RandomAccessIterator>
 struct is_random_access_iterator {
-  typedef is_same<
+  typedef typename is_same<
       typename iterator_traits<RandomAccessIterator>::iterator_category,
-      std::random_access_iterator_tag>::value value;
-  typedef typename enable_if<
-      typename is_bidirectional_iterator<RandomAccessIterator>::value ||
-      is_same<typename iterator_traits<RandomAccessIterator>::iterator_category,
-              std::random_access_iterator_tag>::value>::type type;
+      std::random_access_iterator_tag>::type type;
+  // static const typename type::value_type value = type::value;
 };
 
 }  // namespace ft
