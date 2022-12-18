@@ -5,9 +5,9 @@
 
 // class B {};
 
-int main(void) {
-  std::cout << "why sanitizer dorat????????????????\n";
+#include "type_traits.hpp"
 
+int main(void) {
   // std::cout << "is_class type traits test!!\n";
 
   // std::cout << "class : " << std::boolalpha << std::is_class<A>::value

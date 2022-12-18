@@ -10,6 +10,8 @@
 #ifndef TYPE_TRAITS_HPP
 #define TYPE_TRAITS_HPP
 
+#include "iterator_traits.hpp"
+
 namespace ft {
 
 // SECTION: enable_if
@@ -85,18 +87,65 @@ struct is_integral<long> : public true_type {};
 template <>
 struct is_integral<unsigned long> : public true_type {};
 
+// SECTION : is_same
+template <typename T, typename U>
+struct is_same : public false_type {};
+
+template <typename T>
+struct is_same<T, T> : public true_type {};
+
+template <typename Iter>
+struct _iterator_category_t {
+  typedef typename iterator_traits<Iter>::iterator_category type;
+};
+
 // SECTION : iterator categorize
-/**
- * @brief iterator 의 카테고리를 나타내는 타입.
- * iterator 의 카테고리는 input, output, forward, bidirectional, random-access
- * 로 나뉜다.
- *
- * @tparam Category 카테고리
- * @tparam T 타입
- * @tparam Distance 거리
- * @tparam Pointer 포인터
- * @tparam Reference 참조
- */
+template <typename InputIterator>
+struct is_input_iterator {
+  typedef typename enable_if<
+      is_same<typename _iterator_category_t<InputIterator>::type,
+              std::input_iterator_tag>::value>::type type;
+  typedef typename type::value value;
+};
+
+template <typename OutputIterator>
+struct is_output_iterator {
+  typedef typename enable_if<
+      is_same<typename _iterator_category_t<OutputIterator>::type,
+              std::output_iterator_tag>::value>::type type;
+  typedef typename type::value value;
+};
+
+template <typename ForwardIterator>
+struct is_forward_iterator {
+  typedef typename enable_if<
+      typename is_input_iterator<ForwardIterator>::value ||
+      typename is_output_iterator<ForwardIterator>::value ||
+      is_same<typename iterator_traits<ForwardIterator>::iterator_category,
+              std::forward_iterator_tag>::value>::type type;
+  typedef typename type::value value;
+};
+
+template <typename BidirectionalIterator>
+struct is_bidirectional_iterator {
+  typedef typename enable_if<
+      typename is_forward_iterator<BidirectionalIterator>::value ||
+      is_same<
+          typename iterator_traits<BidirectionalIterator>::iterator_category,
+          std::bidirectional_iterator_tag>::value>::type type;
+  typedef typename type::value value;
+};
+
+template <typename RandomAccessIterator>
+struct is_random_access_iterator {
+  typedef is_same<
+      typename iterator_traits<RandomAccessIterator>::iterator_category,
+      std::random_access_iterator_tag>::value value;
+  typedef typename enable_if<
+      typename is_bidirectional_iterator<RandomAccessIterator>::value ||
+      is_same<typename iterator_traits<RandomAccessIterator>::iterator_category,
+              std::random_access_iterator_tag>::value>::type type;
+};
 
 }  // namespace ft
 #endif  // TYPE_TRAITS_HPP

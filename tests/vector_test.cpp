@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "type_traits.hpp"
+
 class A {
  public:
   int a;
@@ -153,5 +155,5 @@ int main(void) {
   std::cout << "\n\nSFINAE test\n";
   // itereator 를 이용한 consturctor 에 enable_if 를 적용하지 않은 경우
   // 그리고 n, val 의 타입이 동일한 경우 어떤 타입의 생성자가 호출될 것인가?
-  ft::vector<int>((size_t)10, 3);  // 의도 : vector(n, val) 호출
+  ft::vector<int>(10, 3);  // 의도 : vector(n, val) 호출
 }
