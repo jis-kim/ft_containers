@@ -8,6 +8,24 @@
 
 #include "type_traits.hpp"
 
+class A {};
+class B : public A {};
+
+template <typename B, typename D>
+struct is_base_of {
+ private:
+  struct no {};
+  struct yes {
+    no m[2];
+  };
+
+  static yes test(B*);
+  static no test(...);
+
+ public:
+  static const bool value = sizeof(test(static_cast<D*>(0))) == sizeof(yes);
+};
+
 int main(void) {
   // std::cout << "is_class type traits test!!\n";
 
@@ -22,6 +40,9 @@ int main(void) {
 
   std::cout << "vector<int> iterator is input access iterator? : "
             << std::boolalpha
-            << ft::is_input_iterator<std::vector<int>::iterator>::type::value
+            << is_base_of<std::forward_iterator_tag,
+                          std::random_access_iterator_tag>::value
             << '\n';
+  //<< ft::is_input_iterator<std::vector<int>::iterator>::type::value
+  //<< '\n';
 }

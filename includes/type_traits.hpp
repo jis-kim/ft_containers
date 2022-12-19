@@ -192,32 +192,34 @@ struct _is_output_iterator {
 };
 
 // SECTION : iterator categorize
-template <typename InputIterator>
-struct is_input_iterator {
-  typedef typename _is_input_iterator<InputIterator>::type type;
-};
+// template <typename InputIterator>
+// struct is_input_iterator {
+//  typedef typename _is_input_iterator<InputIterator>::type type;
+//};
 
-template <typename OutputIterator>
-struct is_output_iterator {
-  typedef typename _is_output_iterator<OutputIterator>::type type;
-};
+// template <typename OutputIterator>
+// struct is_output_iterator {
+//   typedef typename _is_output_iterator<OutputIterator>::type type;
+// };
 
-template <typename ForwardIterator>
-struct is_forward_iterator {
-  typedef typename _is_forward_iterator<ForwardIterator>::type type;
-};
+// template <typename ForwardIterator>
+// struct is_forward_iterator {
+//   typedef typename _is_forward_iterator<ForwardIterator>::type type;
+// };
 
-template <typename BidirectionalIterator>
-struct is_bidirectional_iterator {
-  typedef typename _is_bidirectional_iterator<BidirectionalIterator>::type type;
-};
+// template <typename BidirectionalIterator>
+// struct is_bidirectional_iterator {
+//   typedef typename _is_bidirectional_iterator<BidirectionalIterator>::type
+//   type;
+// };
 
 template <typename RandomAccessIterator>
 struct is_random_access_iterator {
-  // typedef typename is_same<
-  //     typename iterator_traits<RandomAccessIterator>::iterator_category,
-  //     std::random_access_iterator_tag>::type type;
-  typedef typename _is_random_access_iterator<RandomAccessIterator>::type type;
+  typedef typename is_same<
+      typename iterator_traits<RandomAccessIterator>::iterator_category,
+      std::random_access_iterator_tag>::type type;
+  // typedef typename _is_random_access_iterator<RandomAccessIterator>::type
+  // type;
 };
 
 template <typename Iter>
