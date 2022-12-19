@@ -140,16 +140,20 @@ struct _iterator_category_t {
 
 // SECTION : is_*_iterator
 
-namespace detail {
-template <class T>
-std::integral_constant<bool, !std::is_union<T>::value> test(int T::*);
+template <typename B, typename D>
+struct is_base_of {
+ private:
+  struct no {};
+  struct yes {
+    no m[2];
+  };
 
-template <class>
-std::false_type test(...);
-}  // namespace detail
+  static yes test(B*);
+  static no test(...);
 
-template <class T>
-struct is_class : decltype(detail::test<T>(nullptr)) {};
+ public:
+  static const bool value = sizeof(test(static_cast<D*>(0))) == sizeof(yes);
+};
 
 template <typename RandomAccessIterator>
 struct _is_random_access_iterator {

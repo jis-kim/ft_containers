@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "type_traits.hpp"
+#include "vector.hpp"
 
 class A {};
 class B : public A {};
@@ -31,6 +32,8 @@ int main(void) {
 
   // std::cout << "class : " << std::boolalpha << std::is_class<A>::value
   //           << ", struct : " << std::is_class<B>::value << '\n';
+  // print type id
+  std::cout << "class : " << typeid(ft::vector<int>).name() << "\n";
 
   std::cout
       << "==================random access iterator test==================\n";
