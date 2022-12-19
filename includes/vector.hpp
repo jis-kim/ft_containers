@@ -628,6 +628,7 @@ class vector : private vector_base<T, Allocator> {
   // NOTHROW
   /**
    * @brief Get the allocator object
+   * @complexity O(1)
    *
    * @return allocator_type
    */

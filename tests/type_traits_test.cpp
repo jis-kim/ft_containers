@@ -17,11 +17,11 @@ int main(void) {
   std::cout
       << "==================random access iterator test==================\n";
   std::vector<int> v;
-  std::cout
-      << "vector<int> iterator is random access iterator? : " << std::boolalpha
-      << ft::is_random_access_iterator<std::vector<int>::iterator>::type::value
-      << '\n';
-  std::cout << "vector<int> iterator is input iterator? : " << std::boolalpha
+
+  std::vector<int>::iterator it = v.begin();
+
+  std::cout << "vector<int> iterator is input access iterator? : "
+            << std::boolalpha
             << ft::is_input_iterator<std::vector<int>::iterator>::type::value
             << '\n';
 }
