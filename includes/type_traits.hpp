@@ -133,14 +133,9 @@ struct _is_integral<unsigned long> : public true_type {};
 template <typename T>
 struct is_integral : public _is_integral<typename remove_cv<T>::type> {};
 
-template <typename Iter>
-struct _iterator_category_t {
-  typedef typename iterator_traits<Iter>::iterator_category type;
-};
-
 // SECTION : is_*_iterator
 
-template <typename B, typename D>
+template <typename Base, typename Derived>
 struct is_base_of {
  private:
   struct no {};
@@ -148,17 +143,46 @@ struct is_base_of {
     no m[2];
   };
 
-  static yes test(B*);
+  /**
+   * @brief Derived* -> Base* 로 형변환이 가능할 경우
+   *
+   * @param Base* Base* 로 형변환 시도.
+   * @return yes size 가 2 인 no 배열을 리턴한다.
+   */
+
+  static yes test(Base*);
+
+  /**
+   * @brief yes 를 return 하는 경우를 제외한 나머지.
+   *
+   * @param ... 가변인자 (우선순위 낮음)
+   * @return no size 가 1 (아무것도 없는 struct 의 size 는 1이다.)
+   */
   static no test(...);
 
  public:
-  static const bool value = sizeof(test(static_cast<D*>(0))) == sizeof(yes);
+  /**
+   * @brief test 의 overload resolution 을 이용해서 형변환 가능 여부에 따라
+   * 리턴값의 size 를 달리한다. size로 yes 와 no 를 구분한다.
+   *
+   */
+  static const bool value =
+      sizeof(test(static_cast<Derived*>(0))) == sizeof(yes);
 };
+
+template <typename Iter>
+struct _iterator_category_t {
+  typedef typename iterator_traits<Iter>::iterator_category type;
+};
+
+template <typename T, typename U>
+struct _iterator_category_base_of
+    : public integral_constant<bool, is_base_of<T, U>::value> {};
 
 template <typename RandomAccessIterator>
 struct _is_random_access_iterator {
   typedef typename is_same<
-      typename iterator_traits<RandomAccessIterator>::iterator_category,
+      typename _iterator_category_t<RandomAccessIterator>::type,
       std::random_access_iterator_tag>::type type;
   static const bool value = type::value;
 };

@@ -46,6 +46,10 @@ int main(void) {
             << is_base_of<std::forward_iterator_tag,
                           std::random_access_iterator_tag>::value
             << '\n';
-  //<< ft::is_input_iterator<std::vector<int>::iterator>::type::value
-  //<< '\n';
+
+  std::cout
+      << "\nvector<int> iterator is random access iterator? : "
+      << std::boolalpha
+      << ft::is_random_access_iterator<std::vector<int>::iterator>::type::value
+      << '\n';
 }

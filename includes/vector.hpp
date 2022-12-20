@@ -15,6 +15,7 @@
 
 #include "algorithm.hpp"
 #include "reverse_iterator.hpp"
+#include "type_traits.hpp"
 
 namespace ft {
 
@@ -151,7 +152,6 @@ class vector_base {
 
   ~vector_base(void) {
     for (pointer tmp = _begin; tmp != _end; ++tmp) {
-      std::cout << tmp - _begin << "[ " << tmp << " ]" << '\n';
       _alloc.destroy(tmp);
     }
     _alloc.deallocate(_begin, _end_cap - _begin);  // deallocate 는 capacity 로
@@ -189,18 +189,47 @@ class vector : private vector_base<T, Allocator> {
   explicit vector(size_type n, const value_type& val,
                   const allocator_type& alloc = allocator_type())
       : base_(alloc, n) {
-    std::cout << "constructed by n, value\n";
     std::uninitialized_fill(this->_begin, this->_begin + n, val);
     this->_end += n;
   }
 
   // TODO : consider SFINAE
   // range
+  /**
+   * @brief InputIterator range 로 새 vector 를 생성한다.
+   *
+   * @tparam InputIterator 한 번 이동하는 순간 기존 값에 다시 접근할 수 없다.
+   * @param first
+   * @param last
+   * @param alloc
+   */
   template <typename InputIterator>
-  vector(InputIterator first, InputIterator last,
+  vector(InputIterator first,
+         typename enable_if<is_input_iterator<InputIterator>::value &&
+                                !is_forward_iterator<InputIterator>::value,
+                            InputIterator>::type last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc) {
-    std::cout << "iterator version\n";
+    for (; first != last; ++first) {
+      this->push_back(*first);
+    }
+  }
+
+  /**
+   * @brief ForwardIterator 이상)
+   *
+   * @tparam ForwardIterator
+   * @param first
+   * @param last
+   * @param alloc
+   */
+  template <typename ForwardIterator>
+  vector(ForwardIterator first,
+         typename enable_if<is_forward_iterator<ForwardIterator>::value,
+                            ForwardIterator>::type last,
+         const allocator_type& alloc = allocator_type())
+      : base_(alloc, last - first) {
+    this->_end = std::uninitialized_copy(first, last, this->_begin);
   }
 
   // copy
@@ -436,11 +465,9 @@ class vector : private vector_base<T, Allocator> {
    * If allocator_traits::construct is not supported with the appropriate
    * arguments for the element constructions, or if the range specified by
    * [first,last) is not valid, it causes undefined behavior.
-   * constructor 가 실패하면 UB 이므로.. ㄱㅊ지
-   * 않을지.................
    *
-   * @param n
-   * @param val
+   * @param n 할당할 element 의 개수
+   * @param val 할당할 element 의 값
    */
   void assign(size_type n, const value_type& val) {
     if (capacity() >= n) {
