@@ -10,6 +10,8 @@
 #ifndef TYPE_TRAITS_HPP
 #define TYPE_TRAITS_HPP
 
+#include <algorithm>
+
 #include "iterator_traits.hpp"
 
 namespace ft {
@@ -136,7 +138,7 @@ struct is_integral : public _is_integral<typename remove_cv<T>::type> {};
 // SECTION : is_*_iterator
 
 template <typename Base, typename Derived>
-struct is_base_of {
+struct _is_base_of {
  private:
   struct no {};
   struct yes {
@@ -170,91 +172,44 @@ struct is_base_of {
       sizeof(test(static_cast<Derived*>(0))) == sizeof(yes);
 };
 
+template <typename Base, typename Derived>
+struct is_base_of
+    : public integral_constant<bool, _is_base_of<Base, Derived>::value> {};
+
 template <typename Iter>
 struct _iterator_category_t {
   typedef typename iterator_traits<Iter>::iterator_category type;
 };
 
-template <typename T, typename U>
-struct _iterator_category_base_of
-    : public integral_constant<bool, is_base_of<T, U>::value> {};
+// SECTION : iterator categorize
+template <typename InputIterator>
+struct is_input_iterator
+    : public is_base_of<std::input_iterator_tag,
+                        typename _iterator_category_t<InputIterator>::type> {};
 
-template <typename RandomAccessIterator>
-struct _is_random_access_iterator {
-  typedef typename is_same<
-      typename _iterator_category_t<RandomAccessIterator>::type,
-      std::random_access_iterator_tag>::type type;
-  static const bool value = type::value;
+// template <typename OutputIterator>
+// struct is_output_iterator
+//     : public is_base_of<std::output_iterator_tag,
+//                         typename _iterator_category_t<OutputIterator>::type>
+//                         {};
+
+template <typename ForwardIterator>
+struct is_forward_iterator
+    : public is_base_of<std::forward_iterator_tag,
+                        typename _iterator_category_t<ForwardIterator>::type> {
 };
 
 template <typename BidirectionalIterator>
-struct _is_bidirectional_iterator {
-  static const bool value =
-      _is_random_access_iterator<BidirectionalIterator>::value ||
-      is_same<
-          typename iterator_traits<BidirectionalIterator>::iterator_category,
-          std::random_access_iterator_tag>::value;
-};
-template <typename ForwardIterator>
-struct _is_forward_iterator {
-  static const bool value =
-      _is_bidirectional_iterator<ForwardIterator>::value ||
-      is_same<typename iterator_traits<ForwardIterator>::iterator_category,
-              std::forward_iterator_tag>::value;
-};
-
-template <typename InputIterator>
-struct _is_input_iterator {
-  static const bool value =
-      _is_forward_iterator<InputIterator>::value ||
-      is_same<typename iterator_traits<InputIterator>::iterator_category,
-              std::input_iterator_tag>::value;
-};
-
-template <typename OutputIterator>
-struct _is_output_iterator {
-  static const bool value =
-      _is_forward_iterator<OutputIterator>::value ||
-      is_same<typename iterator_traits<OutputIterator>::iterator_category,
-              std::output_iterator_tag>::value;
-};
-
-// SECTION : iterator categorize
-// template <typename InputIterator>
-// struct is_input_iterator {
-//  typedef typename _is_input_iterator<InputIterator>::type type;
-//};
-
-// template <typename OutputIterator>
-// struct is_output_iterator {
-//   typedef typename _is_output_iterator<OutputIterator>::type type;
-// };
-
-// template <typename ForwardIterator>
-// struct is_forward_iterator {
-//   typedef typename _is_forward_iterator<ForwardIterator>::type type;
-// };
-
-// template <typename BidirectionalIterator>
-// struct is_bidirectional_iterator {
-//   typedef typename _is_bidirectional_iterator<BidirectionalIterator>::type
-//   type;
-// };
+struct is_bidirectional_iterator
+    : public is_base_of<
+          std::bidirectional_iterator_tag,
+          typename _iterator_category_t<BidirectionalIterator>::type> {};
 
 template <typename RandomAccessIterator>
-struct is_random_access_iterator {
-  typedef typename is_same<
-      typename iterator_traits<RandomAccessIterator>::iterator_category,
-      std::random_access_iterator_tag>::type type;
-  // typedef typename _is_random_access_iterator<RandomAccessIterator>::type
-  // type;
-};
-
-template <typename Iter>
-struct is_iterator {
-  typedef typename is_same<typename _iterator_category_t<Iter>::type,
-                           std::input_iterator_tag>::type type;
-};
+struct is_random_access_iterator
+    : public is_base_of<
+          std::random_access_iterator_tag,
+          typename _iterator_category_t<RandomAccessIterator>::type> {};
 
 }  // namespace ft
 #endif  // TYPE_TRAITS_HPP
