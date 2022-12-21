@@ -160,23 +160,23 @@ int main(void) {
       << ft::is_input_iterator<std::istream_iterator<std::string> >::type::value
       << '\n';
 
-  //{
-  //  PRINT(
-  //      "ft::vector<char> v((std::istreambuf_iterator<char>(source)), "
-  //      "std::istreambuf_iterator<char>()) ");
-  //  std::ifstream source("Makefile", std::ios::binary);
-  //  ft::vector<char> v((std::istreambuf_iterator<char>(source)),
-  //                     std::istreambuf_iterator<char>());
-  //  print_vector(v.begin(), v.end());
-  //  print_vector(v);
-  //}
+  {
+    PRINT(
+        "ft::vector<char> v((std::istreambuf_iterator<char>(source)), "
+        "std::istreambuf_iterator<char>()) ");
+    std::ifstream source("Makefile", std::ios::binary);
+    ft::vector<char> v((std::istreambuf_iterator<char>(source)),
+                       std::istreambuf_iterator<char>());
+    print_vector(v.begin(), v.end());
+    print_vector(v);
+  }
 
-  //{
-  //  ft::vector<char> v;
-  //  std::ifstream source("Makefile", std::ios::binary);
-  //  v.assign(std::istreambuf_iterator<char>(source),
-  //           std::istreambuf_iterator<char>());
-  //  print_vector(v.begin(), v.end());
-  //  print_vector(v);
-  //}
+  {
+    ft::vector<char> v;
+    std::ifstream source("Makefile", std::ios::binary);
+    v.assign(std::istreambuf_iterator<char>(source),
+             std::istreambuf_iterator<char>());
+    print_vector(v.begin(), v.end());
+    print_vector(v);
+  }
 }

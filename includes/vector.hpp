@@ -10,7 +10,6 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
-#include <iostream>  // FIXME : remove
 #include <memory>
 
 #include "algorithm.hpp"
@@ -173,8 +172,8 @@ class vector : private vector_base<T, Allocator> {
   typedef vector_iterator<const_pointer> const_iterator;
 
   // TODO: reverse iterator custom implement
-  typedef ft::reverse_iterator<iterator> reverse_iterator;
-  typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef std::reverse_iterator<iterator> reverse_iterator;
+  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
 
@@ -186,14 +185,13 @@ class vector : private vector_base<T, Allocator> {
       : base_(alloc, size_type()) {}
 
   // fill
-  explicit vector(size_type n, const value_type& val,
+  explicit vector(size_type n, const value_type& val = value_type(),
                   const allocator_type& alloc = allocator_type())
       : base_(alloc, n) {
     std::uninitialized_fill(this->_begin, this->_begin + n, val);
     this->_end += n;
   }
 
-  // TODO : consider SFINAE
   // range
   /**
    * @brief InputIterator range 로 새 vector 를 생성한다.
@@ -203,11 +201,11 @@ class vector : private vector_base<T, Allocator> {
    * @param last
    * @param alloc
    */
-  template <typename InputIterator>
-  vector(InputIterator first,
-         typename enable_if<is_input_iterator<InputIterator>::value &&
-                                !is_forward_iterator<InputIterator>::value,
-                            InputIterator>::type last,
+  template <typename InputIterator,
+            typename enable_if<is_input_iterator<InputIterator>::value &&
+                                   !is_forward_iterator<InputIterator>::value,
+                               InputIterator>::type>
+  vector(InputIterator first, InputIterator last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc) {
     for (; first != last; ++first) {
@@ -223,10 +221,10 @@ class vector : private vector_base<T, Allocator> {
    * @param last
    * @param alloc
    */
-  template <typename ForwardIterator>
-  vector(ForwardIterator first,
-         typename enable_if<is_forward_iterator<ForwardIterator>::value,
-                            ForwardIterator>::type last,
+  template <typename ForwardIterator,
+            typename enable_if<is_forward_iterator<ForwardIterator>::value,
+                               ForwardIterator>::type>
+  vector(ForwardIterator first, ForwardIterator last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc, last - first) {
     this->_end = std::uninitialized_copy(first, last, this->_begin);
@@ -453,9 +451,32 @@ class vector : private vector_base<T, Allocator> {
    * @param first
    * @param last
    */
-  template <typename InputIterator>
+  template <typename InputIterator,
+            typename enable_if<is_input_iterator<InputIterator>::value &&
+                                   !is_forward_iterator<InputIterator>::value,
+                               InputIterator>::type>
   void assign(InputIterator first, InputIterator last) {
-    // reallocation 여부, iterator 에 따라 나눈다.
+    for (; first != last; ++first) {
+      push_back(*first);
+    }
+  }
+
+  template <typename ForwardIterator,
+            typename enable_if<is_forward_iterator<ForwardIterator>::value,
+                               ForwardIterator>::type>
+  void assign(ForwardIterator first, ForwardIterator last) {
+    typename ForwardIterator::difference_type n = std::distance(first, last);
+    if (capacity() >= n) {
+      size_type cur_size = size();
+      this->_end = _copy_elements(first, last, this->_begin);
+      if (n > cur_size) {
+        _construct_by_range(first + cur_size, last);
+      } else if (n < cur_size) {
+        _destroy_at_end(this->_begin + n);
+      }
+    } else {
+      vector(first, last).swap(*this);
+    }
   }
 
   /**
@@ -503,8 +524,8 @@ class vector : private vector_base<T, Allocator> {
       // reallocation
       vector tmp(_get_alloc_size(size() + 1));
       // 기존의 element 들을 tmp에 복사한다.
-      std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
-      _construct_at_end(1, val);
+      tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
+      tmp._construct_at_end(1, val);
       swap(tmp);
     }
   }
@@ -589,15 +610,31 @@ class vector : private vector_base<T, Allocator> {
   }
 
   /**
-   * @brief
+   * @brief position 앞 위치에 [first, last) 의 element 를 삽입한다.
    *
    * @tparam InputIterator
    * @param position
    * @param first
    * @param last
    */
-  template <typename InputIterator>
+  template <typename InputIterator,
+            typename enable_if<is_input_iterator<InputIterator>::value &&
+                                   !is_forward_iterator<InputIterator>::value,
+                               InputIterator>::type>
   void insert(iterator position, InputIterator first, InputIterator last) {}
+
+  /**
+   * @brief
+   *
+   * @tparam ForwardIterator
+   * @param position
+   * @param first
+   * @param last
+   */
+  template <typename ForwardIterator,
+            typename enable_if<is_forward_iterator<ForwardIterator>::value,
+                               ForwardIterator>::type>
+  void insert(iterator position, ForwardIterator first, ForwardIterator last) {}
 
   // NOTHROW removed elements include the last element
   // BASIC otherwise
@@ -683,6 +720,20 @@ class vector : private vector_base<T, Allocator> {
     }
     // 새 사이즈와 2 * cap 중 더 큰 것을 리턴.
     return max(2 * cap, new_size);
+  }
+
+  /**
+   * @brief [first, last) 를 end에 생성한다.
+   *
+   * @param first range 의 첫번째 element
+   * @param last range 의 마지막 element의 다음 위치
+   * @param dest 생성할 element 들의 시작 위치 (this)
+   */
+  void _construct_by_range(iterator first, iterator last) {
+    for (; first != last; ++first) {
+      _construct_element(this->_end, *first);
+      ++this->_end;
+    }
   }
 
   /**
