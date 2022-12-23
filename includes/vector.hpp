@@ -201,11 +201,11 @@ class vector : private vector_base<T, Allocator> {
    * @param last
    * @param alloc
    */
-  template <typename InputIterator,
-            typename enable_if<is_input_iterator<InputIterator>::value &&
-                                   !is_forward_iterator<InputIterator>::value,
-                               InputIterator>::type>
-  vector(InputIterator first, InputIterator last,
+  template <typename InputIterator>
+  vector(InputIterator first,
+         typename enable_if<is_input_iterator<InputIterator>::value &&
+                                !is_forward_iterator<InputIterator>::value,
+                            InputIterator>::type last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc) {
     for (; first != last; ++first) {
@@ -221,10 +221,10 @@ class vector : private vector_base<T, Allocator> {
    * @param last
    * @param alloc
    */
-  template <typename ForwardIterator,
-            typename enable_if<is_forward_iterator<ForwardIterator>::value,
-                               ForwardIterator>::type>
-  vector(ForwardIterator first, ForwardIterator last,
+  template <typename ForwardIterator>
+  vector(ForwardIterator first,
+         typename enable_if<is_forward_iterator<ForwardIterator>::value,
+                            ForwardIterator>::type last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc, last - first) {
     this->_end = std::uninitialized_copy(first, last, this->_begin);
@@ -451,20 +451,20 @@ class vector : private vector_base<T, Allocator> {
    * @param first
    * @param last
    */
-  template <typename InputIterator,
-            typename enable_if<is_input_iterator<InputIterator>::value &&
-                                   !is_forward_iterator<InputIterator>::value,
-                               InputIterator>::type>
-  void assign(InputIterator first, InputIterator last) {
+  template <typename InputIterator>
+  void assign(InputIterator first,
+              typename enable_if<is_input_iterator<InputIterator>::value &&
+                                     !is_forward_iterator<InputIterator>::value,
+                                 InputIterator>::type last) {
     for (; first != last; ++first) {
       push_back(*first);
     }
   }
 
-  template <typename ForwardIterator,
-            typename enable_if<is_forward_iterator<ForwardIterator>::value,
-                               ForwardIterator>::type>
-  void assign(ForwardIterator first, ForwardIterator last) {
+  template <typename ForwardIterator>
+  void assign(ForwardIterator first,
+              typename enable_if<is_forward_iterator<ForwardIterator>::value,
+                                 ForwardIterator>::type last) {
     typename ForwardIterator::difference_type n = std::distance(first, last);
     if (capacity() >= n) {
       size_type cur_size = size();
@@ -617,11 +617,11 @@ class vector : private vector_base<T, Allocator> {
    * @param first
    * @param last
    */
-  template <typename InputIterator,
-            typename enable_if<is_input_iterator<InputIterator>::value &&
-                                   !is_forward_iterator<InputIterator>::value,
-                               InputIterator>::type>
-  void insert(iterator position, InputIterator first, InputIterator last) {}
+  template <typename InputIterator>
+  void insert(iterator position, InputIterator first,
+              typename enable_if<is_input_iterator<InputIterator>::value &&
+                                     !is_forward_iterator<InputIterator>::value,
+                                 InputIterator>::type last) {}
 
   /**
    * @brief

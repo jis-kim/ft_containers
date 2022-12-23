@@ -109,6 +109,7 @@ int main(void) {
     //  수도 있다. 얘가 destory 가 되냐?
     //  22.12.11) sanitizer 돌리면 얘도 에러가 난다.
   }
+
   {
     std::vector<A> a_vec;
     for (int i = 0; i < 10; ++i) {

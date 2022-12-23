@@ -165,18 +165,37 @@ int main(void) {
         "ft::vector<char> v((std::istreambuf_iterator<char>(source)), "
         "std::istreambuf_iterator<char>()) ");
     std::ifstream source("Makefile", std::ios::binary);
-    ft::vector<char> v((std::istreambuf_iterator<char>(source)),
-                       std::istreambuf_iterator<char>());
+
+    std::cout << ft::is_input_iterator<
+        std::istreambuf_iterator<char> >::type::value &&
+        !ft::is_forward_iterator<std::istreambuf_iterator<char> >::type::value
+            << '\n';
+
+    std::cout << "\n\n===============Makefile print test "
+                 "(constructor)================\n\n";
+    std::istreambuf_iterator<char> it(source);
+    std::cout
+        << typeid(std::istreambuf_iterator<char>::iterator_category).name()
+        << '\n';
+
+    ft::vector<char> v(it, std::istreambuf_iterator<char>());
     print_vector(v.begin(), v.end());
     print_vector(v);
+    std::cout
+        << "\n\n===============Makefile print test end================\n\n";
   }
 
   {
+    std::cout
+        << "\n\n===============Makefile print test(assign)================\n\n";
     ft::vector<char> v;
     std::ifstream source("Makefile", std::ios::binary);
     v.assign(std::istreambuf_iterator<char>(source),
              std::istreambuf_iterator<char>());
     print_vector(v.begin(), v.end());
     print_vector(v);
+
+    std::cout
+        << "\n\n===============Makefile print test end================\n\n";
   }
 }
