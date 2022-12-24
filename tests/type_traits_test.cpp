@@ -1,4 +1,3 @@
-#include <fstream>
 #include <iostream>
 // #include <type_traits>
 
@@ -10,27 +9,9 @@
 #include <string>
 #include <vector>
 
+#include "testheader/print_vector.hpp"
 #include "type_traits.hpp"
 #include "vector.hpp"
-
-#define L_CYAN "\033[1;96m"
-#define RESET "\033[0m"
-
-#define PRINT(...) std::cout, L_CYAN, __VA_ARGS__, RESET, "\n"
-
-template <typename T>
-void print_vector(T it, T ite) {
-  while (it != ite) {
-    std::cout << *it << ", ";
-    ++it;
-    if (it == ite) std::cout << "\n";
-  }
-}
-
-template <typename vec>
-void print_vector(vec &v) {
-  PRINT("vector info (size, capacity) : (", v.size(), ", ", v.capacity(), ")");
-}
 
 int main(void) {
   // std::cout << "is_class type traits test!!\n";
@@ -180,9 +161,20 @@ int main(void) {
 
     ft::vector<char> v(it, std::istreambuf_iterator<char>());
     print_vector(v.begin(), v.end());
+
+    std::cout
+        << "-------------------------------------------------------------\n";
+
     print_vector(v);
     std::cout
         << "\n\n===============Makefile print test end================\n\n";
+
+    std::cout << "\n\n=============== >= forward iterator consturct "
+                 "===============\n\n";
+
+    ft::vector<char> v2(v.begin(), v.end());
+    print_vector(v2.begin(), v2.end());
+    print_vector(v2);
   }
 
   {
@@ -193,6 +185,8 @@ int main(void) {
     v.assign(std::istreambuf_iterator<char>(source),
              std::istreambuf_iterator<char>());
     print_vector(v.begin(), v.end());
+    std::cout
+        << "--------------------------------------------------------------\n";
     print_vector(v);
 
     std::cout

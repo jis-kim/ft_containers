@@ -187,12 +187,6 @@ struct is_input_iterator
     : public is_base_of<std::input_iterator_tag,
                         typename _iterator_category_t<InputIterator>::type> {};
 
-// template <typename OutputIterator>
-// struct is_output_iterator
-//     : public is_base_of<std::output_iterator_tag,
-//                         typename _iterator_category_t<OutputIterator>::type>
-//                         {};
-
 template <typename ForwardIterator>
 struct is_forward_iterator
     : public is_base_of<std::forward_iterator_tag,

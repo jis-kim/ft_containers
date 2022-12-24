@@ -14,6 +14,7 @@
 
 #include "algorithm.hpp"
 #include "reverse_iterator.hpp"
+#include "testheader/print_vector.hpp"  // FIXME
 #include "type_traits.hpp"
 
 namespace ft {
@@ -208,6 +209,7 @@ class vector : private vector_base<T, Allocator> {
                             InputIterator>::type last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc) {
+    PRINT("input iterator constructor\n");
     for (; first != last; ++first) {
       this->push_back(*first);
     }
@@ -227,6 +229,7 @@ class vector : private vector_base<T, Allocator> {
                             ForwardIterator>::type last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc, last - first) {
+    PRINT("forward iterator constructor\n");
     this->_end = std::uninitialized_copy(first, last, this->_begin);
   }
 
@@ -347,6 +350,7 @@ class vector : private vector_base<T, Allocator> {
   void resize(size_type n, value_type val = value_type()) {
     size_type size = this->size();
     if (n > capacity()) {
+      // STRONG
       // reallocation
       vector tmp(_get_alloc_size(n));
       std::uninitialized_copy(this->_begin, this->_end, tmp->_begin);
@@ -456,6 +460,8 @@ class vector : private vector_base<T, Allocator> {
               typename enable_if<is_input_iterator<InputIterator>::value &&
                                      !is_forward_iterator<InputIterator>::value,
                                  InputIterator>::type last) {
+    // FIXME
+    PRINT("input assign\n");
     for (; first != last; ++first) {
       push_back(*first);
     }
@@ -465,8 +471,12 @@ class vector : private vector_base<T, Allocator> {
   void assign(ForwardIterator first,
               typename enable_if<is_forward_iterator<ForwardIterator>::value,
                                  ForwardIterator>::type last) {
-    typename ForwardIterator::difference_type n = std::distance(first, last);
-    if (capacity() >= n) {
+    size_type n = std::distance(first, last);
+    // FIXME
+    PRINT("forward assign\n");
+    if (capacity() < n) {
+      vector(first, last).swap(*this);
+    } else {
       size_type cur_size = size();
       this->_end = _copy_elements(first, last, this->_begin);
       if (n > cur_size) {
@@ -474,8 +484,6 @@ class vector : private vector_base<T, Allocator> {
       } else if (n < cur_size) {
         _destroy_at_end(this->_begin + n);
       }
-    } else {
-      vector(first, last).swap(*this);
     }
   }
 
@@ -491,17 +499,17 @@ class vector : private vector_base<T, Allocator> {
    * @param val 할당할 element 의 값
    */
   void assign(size_type n, const value_type& val) {
-    if (capacity() >= n) {
+    if (capacity() < n) {
+      vector(n, val).swap(*this);
+    } else {
       size_type cur_size = size();
       // 공통되는 부분까진 n을 채운다.
       _fill_n_elements(this->_begin, min(cur_size, n), val);
-      if (n > cur_size) {
+      if (cur_size < n) {
         _construct_at_end(n - cur_size, val);
       } else {
         _destroy_at_end(this->_begin + n);
       }
-    } else {
-      vector(n, val).swap(*this);
     }
   }
 
@@ -517,16 +525,14 @@ class vector : private vector_base<T, Allocator> {
    * @param val 복사되어 삽입될 element
    */
   void push_back(const value_type& val) {
-    if (this->_end < this->_end_cap) {
-      // construct only
-      _construct_at_end(1, val);
-    } else {
+    if (this->_end >= this->_end_cap) {  // no more space
       // reallocation
       vector tmp(_get_alloc_size(size() + 1));
-      // 기존의 element 들을 tmp에 복사한다.
       tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       tmp._construct_at_end(1, val);
       swap(tmp);
+    } else {
+      _construct_at_end(1, val);
     }
   }
 
@@ -565,8 +571,6 @@ class vector : private vector_base<T, Allocator> {
       swap(tmp);
     } else {
       // BASIC
-      // position ~ end - 1 를 position + 1 ~ end에 복사
-      // 한 칸 뒤로 옮기기
       _copy_elements_backward(position, this->_end - 1, this->_end);
       ++this->_end;
       _construct_at_end(1, *(this->_end - 1));
@@ -621,10 +625,23 @@ class vector : private vector_base<T, Allocator> {
   void insert(iterator position, InputIterator first,
               typename enable_if<is_input_iterator<InputIterator>::value &&
                                      !is_forward_iterator<InputIterator>::value,
-                                 InputIterator>::type last) {}
+                                 InputIterator>::type last) {
+    if (first == last) {
+      return;
+    }
+    difference_type offset = position - this->_begin;
+    difference_type n = offset;
+    for (; first != last; ++first) {
+      // 재할당이 일어날 수도 있다. 일어난다면 position 무효화됨.
+      insert(this->_begin + n, *first);
+      ++n;
+    }
+    return this->_begin + offset;
+  }
 
   /**
-   * @brief
+   * @brief position 앞 위치에 [first, last) 의 element 를 삽입한다.
+   * ForwardIterator 를 사용해서 미리 new size 를 알 수 있다.
    *
    * @tparam ForwardIterator
    * @param position
@@ -634,7 +651,32 @@ class vector : private vector_base<T, Allocator> {
   template <typename ForwardIterator,
             typename enable_if<is_forward_iterator<ForwardIterator>::value,
                                ForwardIterator>::type>
-  void insert(iterator position, ForwardIterator first, ForwardIterator last) {}
+  void insert(iterator position, ForwardIterator first, ForwardIterator last) {
+    size_type n = std::distance(first, last);
+    if (n == 0) {
+      return;
+    }
+    if (size() + n > capacity()) {
+      // STRONG
+      vector tmp(_get_alloc_size(size() + n));
+      tmp._end = std::uninitialized_copy(this->_begin, position, tmp._begin);
+      tmp._end = std::uninitialized_copy(first, last, tmp._end);
+      tmp._end = std::uninitialized_copy(position, this->_end, tmp._end);
+      swap(tmp);
+    } else {
+      // BASIC
+      if (position != this->_end) {
+        // [end - n, end) 까지를 end 에 construct (n개)
+        pointer old_end = this->_end;
+        this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
+        // [position, end - n) 까지를 [end - n,  end) 까지로 copy (aps - n개)
+        _copy_elements_backward(position, old_end - n, old_end);
+        _copy_elements(first, last, position);
+      } else {
+        _construct_at_end(first, last);
+      }
+    }
+  }
 
   // NOTHROW removed elements include the last element
   // BASIC otherwise
