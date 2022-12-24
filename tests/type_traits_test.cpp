@@ -192,4 +192,32 @@ int main(void) {
     std::cout
         << "\n\n===============Makefile print test end================\n\n";
   }
+
+  {
+    ft::vector<char> v;
+    for (int i = 0; i < 10; ++i) {
+      v.push_back('0' + i);
+    }
+    print_vector(v.begin(), v.end());
+    print_vector(v);
+    std::cout
+        << "--------------------------------------------------------------\n";
+
+    std::ifstream source("Makefile", std::ios::binary);
+    ft::vector<char> vec((std::istreambuf_iterator<char>(source)),
+                         std::istreambuf_iterator<char>());
+
+    print_vector(vec.begin(), vec.end());
+    print_vector(vec);
+
+    v.insert(v.begin() + 5, vec.begin(), vec.end());
+
+    std::cout
+        << "--------------------------------------------------------------\n";
+    print_vector(v.begin(), v.end());
+    print_vector(v);
+    // well done!
+  }
+
+  {}
 }

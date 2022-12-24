@@ -557,7 +557,7 @@ class vector : private vector_base<T, Allocator> {
    * @return iterator 새로 삽입한 elements 의 맨 앞 위치
    */
   iterator insert(iterator position, const value_type& val) {
-    if (position == this->_end) {
+    if (position == end()) {
       // STRONG
       push_back(val);
       return this->_end - 1;
@@ -565,13 +565,13 @@ class vector : private vector_base<T, Allocator> {
     if (size() + 1 > capacity()) {
       // STRONG
       vector tmp(_get_alloc_size(size() + 1));
-      tmp._end = std::uninitialized_copy(this->_begin, position, tmp._begin);
+      tmp._end = std::uninitialized_copy(begin(), position, tmp._begin);
       tmp._construct_at_end(1, val);
-      tmp._end = std::uninitialized_copy(position, this->_end, tmp._end);
+      tmp._end = std::uninitialized_copy(position, end(), tmp._end);
       swap(tmp);
     } else {
       // BASIC
-      _copy_elements_backward(position, this->_end - 1, this->_end);
+      _copy_elements_backward(position.base(), this->_end - 1, this->_end);
       ++this->_end;
       _construct_at_end(1, *(this->_end - 1));
       *position = *(this->_end);
@@ -626,17 +626,17 @@ class vector : private vector_base<T, Allocator> {
               typename enable_if<is_input_iterator<InputIterator>::value &&
                                      !is_forward_iterator<InputIterator>::value,
                                  InputIterator>::type last) {
+    PRINT("insert(InputIterator first, InputIterator last)\n");
     if (first == last) {
       return;
     }
-    difference_type offset = position - this->_begin;
+    difference_type offset = position - begin();
     difference_type n = offset;
     for (; first != last; ++first) {
       // 재할당이 일어날 수도 있다. 일어난다면 position 무효화됨.
       insert(this->_begin + n, *first);
       ++n;
     }
-    return this->_begin + offset;
   }
 
   /**
@@ -648,10 +648,10 @@ class vector : private vector_base<T, Allocator> {
    * @param first
    * @param last
    */
-  template <typename ForwardIterator,
-            typename enable_if<is_forward_iterator<ForwardIterator>::value,
-                               ForwardIterator>::type>
-  void insert(iterator position, ForwardIterator first, ForwardIterator last) {
+  template <typename ForwardIterator>
+  void insert(iterator position, ForwardIterator first,
+              typename enable_if<is_forward_iterator<ForwardIterator>::value,
+                                 ForwardIterator>::type last) {
     size_type n = std::distance(first, last);
     if (n == 0) {
       return;
@@ -659,21 +659,24 @@ class vector : private vector_base<T, Allocator> {
     if (size() + n > capacity()) {
       // STRONG
       vector tmp(_get_alloc_size(size() + n));
-      tmp._end = std::uninitialized_copy(this->_begin, position, tmp._begin);
+      tmp._end = std::uninitialized_copy(begin(), position, tmp._begin);
       tmp._end = std::uninitialized_copy(first, last, tmp._end);
-      tmp._end = std::uninitialized_copy(position, this->_end, tmp._end);
+      tmp._end = std::uninitialized_copy(position, end(), tmp._end);
       swap(tmp);
     } else {
       // BASIC
-      if (position != this->_end) {
+      if (position != end()) {
         // [end - n, end) 까지를 end 에 construct (n개)
         pointer old_end = this->_end;
         this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
         // [position, end - n) 까지를 [end - n,  end) 까지로 copy (aps - n개)
-        _copy_elements_backward(position, old_end - n, old_end);
-        _copy_elements(first, last, position);
+        _copy_elements_backward(position.base(), old_end - n, old_end);
+        _copy_elements(first.base(), last.base(), position.base());
       } else {
-        _construct_at_end(first, last);
+        // position == end
+        for (; first != last; ++first) {
+          push_back(*first);
+        }
       }
     }
   }
