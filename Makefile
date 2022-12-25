@@ -22,10 +22,11 @@ SRCS_DIR = ./tests/
 SRCS = $(addprefix $(SRCS_DIR), $(SRCS_FILES))
 OBJS = $(SRCS:.cpp=.o)
 
-SRCS_FILES =\
+# wild card
+SRCS_FILES = main.cpp\
+vector_test.cpp\
+vector_iterator_test.cpp\
 type_traits_test.cpp\
-#vector_test.cpp\
-
 
 OBJS_FILES = $(OBJS)
 
@@ -36,7 +37,7 @@ COMPILE_MSG	= @echo $(BOLD)$(L_PURPLE) 📣 ${NAME} Compiled 🥳$(RESET)
 all : $(NAME) $(OBJS)
 
 $(NAME) : $(OBJS)
-	@$(CXX) $(CXXFLAGS) $(OBJS) -o $@
+	#$(CXX) $(CXXFLAGS) $(OBJS) -o $@
 
 %.o : %.cpp
 	@$(CXX) $(CXXFLAGS) -I$(INCS_DIR) -c $< -o $@

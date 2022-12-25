@@ -3,7 +3,7 @@
 
 #include "vector.hpp"
 
-int main(void) {
+void vector_iterator_test(void) {
   int array[5] = {1, 2, 3, 4, 5};
 
   ft::vector_iterator<int *> it(array);

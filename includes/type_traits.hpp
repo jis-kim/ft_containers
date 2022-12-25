@@ -152,7 +152,7 @@ struct _is_base_of {
    * @return yes size 가 2 인 no 배열을 리턴한다.
    */
 
-  static yes test(Base*);
+  static yes test(Base *);
 
   /**
    * @brief yes 를 return 하는 경우를 제외한 나머지.
@@ -169,7 +169,7 @@ struct _is_base_of {
    *
    */
   static const bool value =
-      sizeof(test(static_cast<Derived*>(0))) == sizeof(yes);
+      sizeof(test(static_cast<Derived *>(0))) == sizeof(yes);
 };
 
 template <typename Base, typename Derived>

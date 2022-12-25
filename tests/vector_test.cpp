@@ -71,7 +71,7 @@ class Test {
   }
 };
 
-int main(void) {
+void vector_test(void) {
   {
     std::vector<int> int_vec;
 

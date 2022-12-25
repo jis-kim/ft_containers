@@ -30,4 +30,9 @@ void print_vector(vec& v) {
   PRINT("vector info (size, capacity) : (", v.size(), ", ", v.capacity(), ")");
 }
 
+void vector_iterator_test(void);
+void type_traits_test(void);
+void vector_test(void);
+void std_vector_test(void);
+
 #endif

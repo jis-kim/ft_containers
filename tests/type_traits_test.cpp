@@ -13,7 +13,7 @@
 #include "type_traits.hpp"
 #include "vector.hpp"
 
-int main(void) {
+void type_traits_test(void) {
   // std::cout << "is_class type traits test!!\n";
 
   // std::cout << "class : " << std::boolalpha << std::is_class<A>::value

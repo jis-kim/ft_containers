@@ -19,7 +19,7 @@ struct A {
   operator void *() { return NULL; }
 };
 
-int main(void) {
+void std_vector_test(void) {
   std::vector<int> a;
   std::cout << "init 0 capacity : " << a.capacity() << '\n';
   a.push_back(1);

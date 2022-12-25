@@ -14,7 +14,6 @@
 
 #include "algorithm.hpp"
 #include "reverse_iterator.hpp"
-#include "testheader/print_vector.hpp"  // FIXME
 #include "type_traits.hpp"
 
 namespace ft {
@@ -209,14 +208,13 @@ class vector : private vector_base<T, Allocator> {
                             InputIterator>::type last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc) {
-    PRINT("input iterator constructor\n");
     for (; first != last; ++first) {
       this->push_back(*first);
     }
   }
 
   /**
-   * @brief ForwardIterator 이상
+   * @brief ForwardIterator
    *
    * @tparam ForwardIterator
    * @param first
@@ -229,7 +227,6 @@ class vector : private vector_base<T, Allocator> {
                             ForwardIterator>::type last,
          const allocator_type& alloc = allocator_type())
       : base_(alloc, last - first) {
-    PRINT("forward iterator constructor\n");
     this->_end = std::uninitialized_copy(first, last, this->_begin);
   }
 
@@ -348,7 +345,7 @@ class vector : private vector_base<T, Allocator> {
    * @param val n이 사이즈보다 크고 val이 주어질 경우 val으로 초기화 한다.
    */
   void resize(size_type n, value_type val = value_type()) {
-    size_type size = size();
+    size_type _size = size();
     if (n > capacity()) {
       // STRONG
       // reallocation
@@ -358,9 +355,9 @@ class vector : private vector_base<T, Allocator> {
       swap(tmp);
       return;
     }
-    if (n > size) {
+    if (n > _size) {
       _construct_at_end(n, val);
-    } else if (n < size) {
+    } else if (n < _size) {
       _destroy_end(this->_begin + n);
     }
     // else do nothing.
@@ -460,8 +457,6 @@ class vector : private vector_base<T, Allocator> {
               typename enable_if<is_input_iterator<InputIterator>::value &&
                                      !is_forward_iterator<InputIterator>::value,
                                  InputIterator>::type last) {
-    // FIXME
-    PRINT("input assign\n");
     for (; first != last; ++first) {
       push_back(*first);
     }
@@ -472,8 +467,6 @@ class vector : private vector_base<T, Allocator> {
               typename enable_if<is_forward_iterator<ForwardIterator>::value,
                                  ForwardIterator>::type last) {
     size_type n = std::distance(first, last);
-    // FIXME
-    PRINT("forward assign\n");
     if (capacity() < n) {
       vector(first, last).swap(*this);
     } else {
@@ -625,7 +618,6 @@ class vector : private vector_base<T, Allocator> {
               typename enable_if<is_input_iterator<InputIterator>::value &&
                                      !is_forward_iterator<InputIterator>::value,
                                  InputIterator>::type last) {
-    PRINT("insert(InputIterator first, InputIterator last)\n");
     if (first == last) {
       return;
     }
@@ -885,7 +877,7 @@ class vector : private vector_base<T, Allocator> {
 template <typename T, typename Alloc>
 bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
   return (lhs.size() == rhs.size()) &&
-         std::equal(lhs.begin(), lhs.end(), rhs.begin());
+         ft::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
 template <typename T, typename Alloc>

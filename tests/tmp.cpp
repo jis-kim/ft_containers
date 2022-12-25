@@ -143,7 +143,7 @@ struct is_prime {
   static const bool result = _is_prime<INT<N> >::result;
 };
 
-int main() {
+void tmp(void) {
   typedef Ratio<2, 3> rat1;
   typedef Ratio<3, 2> rat2;
 
@@ -163,6 +163,4 @@ int main() {
   std::cout << "Is 10 prime ? :: " << is_prime<10>::result << std::endl;
   std::cout << "Is 11 prime ? :: " << is_prime<11>::result << std::endl;
   std::cout << "Is 61 prime ? :: " << is_prime<61>::result << std::endl;
-
-  return 0;
 }
