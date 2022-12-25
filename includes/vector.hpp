@@ -216,7 +216,7 @@ class vector : private vector_base<T, Allocator> {
   }
 
   /**
-   * @brief ForwardIterator 이상)
+   * @brief ForwardIterator 이상
    *
    * @tparam ForwardIterator
    * @param first
@@ -348,7 +348,7 @@ class vector : private vector_base<T, Allocator> {
    * @param val n이 사이즈보다 크고 val이 주어질 경우 val으로 초기화 한다.
    */
   void resize(size_type n, value_type val = value_type()) {
-    size_type size = this->size();
+    size_type size = size();
     if (n > capacity()) {
       // STRONG
       // reallocation
@@ -571,10 +571,9 @@ class vector : private vector_base<T, Allocator> {
       swap(tmp);
     } else {
       // BASIC
-      _copy_elements_backward(position.base(), this->_end - 1, this->_end);
-      ++this->_end;
       _construct_at_end(1, *(this->_end - 1));
-      *position = *(this->_end);
+      _copy_elements_backward(position.base(), this->_end - 2, this->_end - 2);
+      *position = val;
     }
     return position;
   }
@@ -763,7 +762,6 @@ class vector : private vector_base<T, Allocator> {
     if (cap >= _max_size / 2) {
       return _max_size;
     }
-    // 새 사이즈와 2 * cap 중 더 큰 것을 리턴.
     return max(2 * cap, new_size);
   }
 
@@ -896,16 +894,25 @@ bool operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
 }
 
 template <typename T, typename Alloc>
-bool operator<(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
+bool operator<(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(),
+                                     rhs.end());
+}
 
 template <typename T, typename Alloc>
-bool operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
+bool operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return !(rhs < lhs);
+}
 
 template <typename T, typename Alloc>
-bool operator>(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
+bool operator>(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return rhs < lhs;
+}
 
 template <typename T, typename Alloc>
-bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {}
+bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return !(lhs < rhs);
+}
 
 // NOTHROW allocator in both vectors compare equal
 // otherwise UB

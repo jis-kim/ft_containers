@@ -219,5 +219,24 @@ int main(void) {
     // well done!
   }
 
-  {}
+  {
+    ft::vector<char> v;
+    for (int i = 0; i < 10; ++i) {
+      v.push_back('0' + i);
+    }
+    print_vector(v.begin(), v.end());
+    print_vector(v);
+    std::cout
+        << "--------------------------------------------------------------\n";
+
+    std::ifstream source("Makefile", std::ios::binary);
+
+    v.insert(v.begin() + 5, (std::istreambuf_iterator<char>(source)),
+             std::istreambuf_iterator<char>());
+    print_vector(v.begin(), v.end());
+    print_vector(v);
+
+    std::cout
+        << "--------------------------------------------------------------\n";
+  }
 }
