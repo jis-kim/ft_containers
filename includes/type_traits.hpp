@@ -177,33 +177,61 @@ struct is_base_of
     : public integral_constant<bool, _is_base_of<Base, Derived>::value> {};
 
 template <typename Iter>
+struct _has_iterator_category {
+ private:
+  struct no {};
+  struct yes {
+    no m[2];
+  };
+
+  template <typename T>
+  static yes test(typename T::iterator_category *);
+
+  template <typename T>
+  static no test(...);
+
+ public:
+  static const bool value = sizeof(test<Iter>(0)) == sizeof(yes);
+};
+
+template <bool B, typename Iter>
 struct _iterator_category_t {
-  typedef typename iterator_traits<Iter>::iterator_category type;
+  typedef void type;
+};
+
+template <typename Iter>
+struct _iterator_category_t<true, Iter> {
+  typedef typename Iter::iterator_category type;
+};
+
+template <typename Iter>
+struct iterator_category_t {
+  typedef typename _iterator_category_t<_has_iterator_category<Iter>::value,
+                                        Iter>::type type;
 };
 
 // SECTION : iterator categorize
 template <typename InputIterator>
 struct is_input_iterator
     : public is_base_of<std::input_iterator_tag,
-                        typename _iterator_category_t<InputIterator>::type> {};
+                        typename iterator_category_t<InputIterator>::type> {};
 
 template <typename ForwardIterator>
 struct is_forward_iterator
     : public is_base_of<std::forward_iterator_tag,
-                        typename _iterator_category_t<ForwardIterator>::type> {
-};
+                        typename iterator_category_t<ForwardIterator>::type> {};
 
 template <typename BidirectionalIterator>
 struct is_bidirectional_iterator
     : public is_base_of<
           std::bidirectional_iterator_tag,
-          typename _iterator_category_t<BidirectionalIterator>::type> {};
+          typename iterator_category_t<BidirectionalIterator>::type> {};
 
 template <typename RandomAccessIterator>
 struct is_random_access_iterator
     : public is_base_of<
           std::random_access_iterator_tag,
-          typename _iterator_category_t<RandomAccessIterator>::type> {};
+          typename iterator_category_t<RandomAccessIterator>::type> {};
 
 }  // namespace ft
 #endif  // TYPE_TRAITS_HPP
