@@ -176,6 +176,13 @@ template <typename Base, typename Derived>
 struct is_base_of
     : public integral_constant<bool, _is_base_of<Base, Derived>::value> {};
 
+// SECTION : iterator_category_t
+
+/**
+ * @brief iterator category 가 있으면 yes, 없으면 no 를 리턴한다.
+ *
+ * @tparam Iter
+ */
 template <typename Iter>
 struct _has_iterator_category {
  private:
@@ -194,11 +201,22 @@ struct _has_iterator_category {
   static const bool value = sizeof(test<Iter>(0)) == sizeof(yes);
 };
 
+/**
+ * @brief general
+ *
+ * @tparam B
+ * @tparam Iter
+ */
 template <bool B, typename Iter>
 struct _iterator_category_t {
   typedef void type;
 };
 
+/**
+ * @brief specialization for true (has iterator_category)
+ *
+ * @tparam Iter
+ */
 template <typename Iter>
 struct _iterator_category_t<true, Iter> {
   typedef typename Iter::iterator_category type;
@@ -208,6 +226,11 @@ template <typename Iter>
 struct iterator_category_t {
   typedef typename _iterator_category_t<_has_iterator_category<Iter>::value,
                                         Iter>::type type;
+};
+
+template <typename Iter>
+struct iterator_category_t<Iter *> {
+  typedef typename std::random_access_iterator_tag type;
 };
 
 // SECTION : iterator categorize

@@ -351,7 +351,7 @@ class vector : private vector_base<T, Allocator> {
       // STRONG
       // reallocation
       vector tmp(_get_alloc_size(n));
-      std::uninitialized_copy(this->_begin, this->_end, tmp->_begin);
+      std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       _construct_at_end(n, val);
       swap(tmp);
       return;
@@ -359,7 +359,7 @@ class vector : private vector_base<T, Allocator> {
     if (n > _size) {
       _construct_at_end(n, val);
     } else if (n < _size) {
-      _destroy_end(this->_begin + n);
+      _destroy_at_end(this->_begin + n);
     }
     // else do nothing.
   }
@@ -551,7 +551,8 @@ class vector : private vector_base<T, Allocator> {
    * @return iterator 새로 삽입한 elements 의 맨 앞 위치
    */
   iterator insert(iterator position, const value_type& val) {
-    if (position == end()) {
+    pointer p = this->_begin + (position - begin());
+    if (p == this->_end) {
       // STRONG
       push_back(val);
       return this->_end - 1;
@@ -559,17 +560,17 @@ class vector : private vector_base<T, Allocator> {
     if (size() + 1 > capacity()) {
       // STRONG
       vector tmp(_get_alloc_size(size() + 1));
-      tmp._end = std::uninitialized_copy(begin(), position, tmp._begin);
+      tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       tmp._construct_at_end(1, val);
-      tmp._end = std::uninitialized_copy(position, end(), tmp._end);
+      tmp._end = std::uninitialized_copy(p, this->_end, tmp._end);
       swap(tmp);
     } else {
       // BASIC
       _construct_at_end(1, *(this->_end - 1));
-      _copy_elements_backward(position.base(), this->_end - 2, this->_end - 2);
-      *position = val;
+      _copy_elements_backward(p, this->_end - 2, this->_end - 2);
+      *p = val;
     }
-    return position;
+    return iterator(p);
   }
 
   /**
@@ -584,22 +585,23 @@ class vector : private vector_base<T, Allocator> {
     if (n == 0) {
       return;
     }
+    pointer p = this->_begin + (position - begin());
     if (size() + n > capacity()) {
       // STRONG
       vector tmp(_get_alloc_size(size() + n));
-      tmp._end = std::uninitialized_copy(this->_begin, position, tmp._begin);
+      tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       std::uninitialized_fill_n(tmp._end, n, val);
-      tmp._end = std::uninitialized_copy(position, this->_end, tmp._end + n);
+      tmp._end = std::uninitialized_copy(p, this->_end, tmp._end + n);
       swap(tmp);
     } else {
       // BASIC
-      if (position != this->_end) {
+      if (p != this->_end) {
         // [end - n, end) 까지를 end 에 construct (n개)
         pointer old_end = this->_end;
         this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
         // [position, end - n) 까지를 [end - n,  end) 까지로 copy (aps - n개)
-        _copy_elements_backward(position, old_end - n, old_end);
-        _fill_n_elements(position, n, val);
+        _copy_elements_backward(p, old_end - n, old_end);
+        _fill_n_elements(p, n, val);
       } else {
         _construct_at_end(n, val);
       }
@@ -644,26 +646,29 @@ class vector : private vector_base<T, Allocator> {
   void insert(iterator position, ForwardIterator first,
               typename enable_if<is_forward_iterator<ForwardIterator>::value,
                                  ForwardIterator>::type last) {
-    size_type n = std::distance(first, last);
+    difference_type n = std::distance(first, last);
+    pointer p = this->_begin + (position - begin());
+    pointer first_p = this->_begin + (first - begin());
+    pointer last_p = this->_begin + (last - begin());
     if (n == 0) {
       return;
     }
     if (size() + n > capacity()) {
       // STRONG
       vector tmp(_get_alloc_size(size() + n));
-      tmp._end = std::uninitialized_copy(begin(), position, tmp._begin);
+      tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       tmp._end = std::uninitialized_copy(first, last, tmp._end);
-      tmp._end = std::uninitialized_copy(position, end(), tmp._end);
+      tmp._end = std::uninitialized_copy(p, this->_end, tmp._end);
       swap(tmp);
     } else {
       // BASIC
-      if (position != end()) {
+      if (p != this->_end) {
         // [end - n, end) 까지를 end 에 construct (n개)
         pointer old_end = this->_end;
         this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
         // [position, end - n) 까지를 [end - n,  end) 까지로 copy (aps - n개)
-        _copy_elements_backward(position.base(), old_end - n, old_end);
-        _copy_elements(first.base(), last.base(), position.base());
+        _copy_elements_backward(p, old_end - n, old_end);
+        _copy_elements(first_p, last_p, p);
       } else {
         // position == end
         for (; first != last; ++first) {
@@ -685,11 +690,12 @@ class vector : private vector_base<T, Allocator> {
    * @return iterator 함수 호출로 지워진 마지막 element 의 다음 위치
    */
   iterator erase(iterator position) {
-    if (position != this->_end - 1) {
-      _copy_elements(position + 1, this->_end, position);
+    pointer p = this->_begin + (position - begin());
+    if (p != this->_end - 1) {
+      _copy_elements(p + 1, this->_end, p);
     }
     _destroy_at_end(this->_end - 1);
-    return position;
+    return iterator(p);
   }
 
   /**
@@ -701,8 +707,11 @@ class vector : private vector_base<T, Allocator> {
    * @return iterator following last removed element
    */
   iterator erase(iterator first, iterator last) {
-    _copy_elements(last, this->_end, first);
-    _destroy_at_end(last);
+    pointer first_p = this->_begin + (first - begin());
+    pointer last_p = this->_begin + (last - begin());
+    _copy_elements(last_p, this->_end, first_p);
+    _destroy_at_end(last_p);
+    return iterator(first_p);
   }
 
   // NOTHROW allocator in both vectors compare equal
@@ -829,8 +838,10 @@ class vector : private vector_base<T, Allocator> {
    * @param dest 복사할 위치
    * @return pointer 복사한 마지막 위치의 다음 위치
    */
-  pointer _copy_elements(pointer begin, pointer end, pointer dest) {
-    for (pointer tmp = begin; tmp != end; ++tmp) {
+  template <typename InputIterator, typename OutputIterator>
+  OutputIterator _copy_elements(InputIterator begin, InputIterator end,
+                                OutputIterator dest) {
+    for (InputIterator tmp = begin; tmp != end; ++tmp) {
       *dest = *tmp;
       ++dest;
     }
@@ -846,8 +857,10 @@ class vector : private vector_base<T, Allocator> {
    * @param dest 복사할 마지막 위치
    * @return pointer 복사한 첫번째 위치의 이전 위치
    */
-  pointer _copy_elements_backward(pointer begin, pointer end, pointer dest) {
-    for (pointer tmp = end - 1; tmp != begin - 1; --tmp) {
+  template <typename InputIterator, typename OutputIterator>
+  OutputIterator _copy_elements_backward(InputIterator begin, InputIterator end,
+                                         OutputIterator dest) {
+    for (InputIterator tmp = end - 1; tmp != begin - 1; --tmp) {
       *dest = *tmp;
       --dest;
     }
