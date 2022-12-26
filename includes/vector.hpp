@@ -227,14 +227,13 @@ class vector : private vector_base<T, Allocator> {
          typename enable_if<is_forward_iterator<ForwardIterator>::value,
                             ForwardIterator>::type last,
          const allocator_type& alloc = allocator_type())
-      : base_(alloc, last - first) {
+      : base_(alloc, std::distance(first, last)) {
     this->_end = std::uninitialized_copy(first, last, this->_begin);
   }
 
   // copy
   vector(const vector& x) : base_(x._alloc, x.size()) {
-    this->_end = std::uninitialized_copy(this->_begin, this->_begin + x.size(),
-                                         x._begin);
+    this->_end = std::uninitialized_copy(x._begin, x._end, this->_begin);
   }
 
   // SECTION: destructor
@@ -458,6 +457,7 @@ class vector : private vector_base<T, Allocator> {
               typename enable_if<is_input_iterator<InputIterator>::value &&
                                      !is_forward_iterator<InputIterator>::value,
                                  InputIterator>::type last) {
+    clear();
     for (; first != last; ++first) {
       push_back(*first);
     }
@@ -467,16 +467,27 @@ class vector : private vector_base<T, Allocator> {
   void assign(ForwardIterator first,
               typename enable_if<is_forward_iterator<ForwardIterator>::value,
                                  ForwardIterator>::type last) {
-    size_type n = std::distance(first, last);
+    size_type n = static_cast<size_type>(std::distance(first, last));
     if (capacity() < n) {
       vector(first, last).swap(*this);
     } else {
+      // 0 ~ min(size, n) => copy
+      size_type n = static_cast<size_type>(std::distance(first, last));
       size_type cur_size = size();
-      this->_end = _copy_elements(first, last, this->_begin);
-      if (n > cur_size) {
-        _construct_by_range(first + cur_size, last);
-      } else if (n < cur_size) {
-        _destroy_at_end(this->_begin + n);
+      size_type min_size = min(cur_size, n);
+      for (size_type i = 0; i < min_size; ++i) {
+        this->_begin[i] = *first;
+        ++first;
+      }
+      if (cur_size < n) {
+        for (size_type i = cur_size; i < n; ++i) {
+          push_back(*first);
+          ++first;
+        }
+      } else if (cur_size > n) {
+        for (size_type i = n; i < cur_size; ++i) {
+          pop_back();
+        }
       }
     }
   }
@@ -501,7 +512,7 @@ class vector : private vector_base<T, Allocator> {
       _fill_n_elements(this->_begin, min(cur_size, n), val);
       if (cur_size < n) {
         _construct_at_end(n - cur_size, val);
-      } else {
+      } else if (cur_size > n) {
         _destroy_at_end(this->_begin + n);
       }
     }
@@ -538,7 +549,7 @@ class vector : private vector_base<T, Allocator> {
    * @complexity O(1)
    *
    */
-  void pop_back(void) { this->_alloc.destory(--this->_end); }
+  void pop_back(void) { this->_alloc.destroy(--this->_end); }
 
   // STRONG 1. insert single element at the _end, no reallocations happen
   // 2. reallocation happens & elements copyable
@@ -648,8 +659,8 @@ class vector : private vector_base<T, Allocator> {
                                  ForwardIterator>::type last) {
     difference_type n = std::distance(first, last);
     pointer p = this->_begin + (position - begin());
-    pointer first_p = this->_begin + (first - begin());
-    pointer last_p = this->_begin + (last - begin());
+    // pointer first_p = this->_begin + (first - begin());
+    // pointer last_p = this->_begin + (last - begin());
     if (n == 0) {
       return;
     }
@@ -668,7 +679,7 @@ class vector : private vector_base<T, Allocator> {
         this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
         // [position, end - n) 까지를 [end - n,  end) 까지로 copy (aps - n개)
         _copy_elements_backward(p, old_end - n, old_end);
-        _copy_elements(first_p, last_p, p);
+        _copy_elements(first, last, p);
       } else {
         // position == end
         for (; first != last; ++first) {
