@@ -25,7 +25,7 @@ namespace ft {
 template <typename Iter>
 class vector_iterator {
  private:
-  Iter current_;  // pointer of elements
+  Iter _current;  // pointer of elements
 
  public:
   typedef iterator_traits<Iter> traits_type;
@@ -38,45 +38,49 @@ class vector_iterator {
 
   typedef vector_iterator self;
 
-  vector_iterator(void) {}
-  vector_iterator(const Iter& current) : current_(current) {}
+  vector_iterator(void) : _current() {}
+  vector_iterator(const Iter& current) : _current(current) {}
+
+  template <typename Iter2>
+  vector_iterator(const vector_iterator<Iter2>& other)
+      : _current(other.base()) {}
 
   ~vector_iterator(void) {}
 
-  reference operator*(void) const { return *current_; }
-  pointer operator->(void) const { return current_; }
+  reference operator*(void) const { return *_current; }
+  pointer operator->(void) const { return _current; }
 
   self& operator++(void) {
-    ++current_;
+    ++_current;
     return *this;
   }
-  self operator++(int) { return vector_iterator(current_++); }
+  self operator++(int) { return vector_iterator(_current++); }
 
   self& operator--(void) {
-    --current_;
+    --_current;
     return *this;
   }
-  self operator--(int) { return vector_iterator(current_--); }
+  self operator--(int) { return vector_iterator(_current--); }
 
   // NOTE : 이 경우는 iterator + n 의 경우고 n + iterator 도 가능해야 한다.
   self operator+(difference_type n) const {
-    return vector_iterator(current_ + n);
+    return vector_iterator(_current + n);
   }
   self operator-(difference_type n) const {
-    return vector_iterator(current_ - n);
+    return vector_iterator(_current - n);
   }
 
   self& operator+=(difference_type n) {
-    current_ += n;
+    _current += n;
     return *this;
   }
   self& operator-=(difference_type n) {
-    current_ -= n;
+    _current -= n;
     return *this;
   }
-  reference operator[](difference_type n) const { return current_[n]; }
+  reference operator[](difference_type n) const { return _current[n]; }
 
-  const Iter& base(void) const { return current_; }
+  const Iter& base(void) const { return _current; }
 };  // !SECTION : vector_iterator
 
 // SECTION : arithmetic operators
@@ -172,9 +176,8 @@ class vector : private vector_base<T, Allocator> {
   typedef vector_iterator<pointer> iterator;
   typedef vector_iterator<const_pointer> const_iterator;
 
-  // TODO: reverse iterator custom implement
-  typedef std::reverse_iterator<iterator> reverse_iterator;
-  typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+  typedef ft::reverse_iterator<iterator> reverse_iterator;
+  typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
 
@@ -258,7 +261,7 @@ class vector : private vector_base<T, Allocator> {
    */
   vector& operator=(const vector& x) {
     if (this != &x) {
-      assign(x._begin, x._end);  // assign 이랑 사실상 같음.
+      assign(x._begin, x._end);
     }
     return *this;
   }
@@ -294,9 +297,9 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return reverse_iterator
    */
-  reverse_iterator rbegin(void) { return reverse_iterator(this->_begin); }
+  reverse_iterator rbegin(void) { return reverse_iterator(end()); }
   const_reverse_iterator rbegin(void) const {
-    return const_reverse_iterator(this->_begin);
+    return const_reverse_iterator(end());
   }
 
   // NOTHROW
@@ -307,9 +310,9 @@ class vector : private vector_base<T, Allocator> {
    *
    * @return reverse_iterator
    */
-  reverse_iterator rend(void) { return reverse_iterator(this->_end); }
+  reverse_iterator rend(void) { return reverse_iterator(begin()); }
   const_reverse_iterator rend(void) const {
-    return const_reverse_iterator(this->_end);
+    return const_reverse_iterator(begin());
   }
 
   // SECTION : capacity
@@ -350,13 +353,13 @@ class vector : private vector_base<T, Allocator> {
       // STRONG
       // reallocation
       vector tmp(_get_alloc_size(n));
-      std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
-      _construct_at_end(n, val);
+      tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
+      tmp._construct_at_end(n - _size, val);
       swap(tmp);
       return;
     }
     if (n > _size) {
-      _construct_at_end(n, val);
+      _construct_at_end(n - _size, val);
     } else if (n < _size) {
       _destroy_at_end(this->_begin + n);
     }
@@ -373,8 +376,8 @@ class vector : private vector_base<T, Allocator> {
   // BASIC otherwise
   /**
    * @brief request to change capacity
-   * n >= capacity 이면 재할당이 필요하다.. 아니면 아무 일도 일어나지 않는다.
-   * n >= max size 이면 length_error throw.
+   * n > capacity 이면 재할당이 필요하다.. 아니면 아무 일도 일어나지 않는다.
+   * n > max size 이면 length_error throw.
    * 재할당이 필요할 경우 container 의 allocator를 이용한다.
    * @complexity 재할당이 일어나면 O(N) 에 가깝다.
    *
@@ -717,8 +720,11 @@ class vector : private vector_base<T, Allocator> {
   iterator erase(iterator first, iterator last) {
     pointer first_p = this->_begin + (first - begin());
     pointer last_p = this->_begin + (last - begin());
-    _copy_elements(last_p, this->_end, first_p);
-    _destroy_at_end(last_p);
+    if (first_p != last_p) {
+      // std::copy(last_p, this->_end, first_p);
+      _copy_elements(last_p, this->_end, first_p);
+      _destroy_at_end(this->_end - (last_p - first_p));
+    }
     return iterator(first_p);
   }
 
@@ -815,7 +821,7 @@ class vector : private vector_base<T, Allocator> {
    * @param pos
    */
   void _destroy_at_end(pointer pos) {
-    for (pointer tmp = pos; tmp != this->_end; ++tmp) {
+    for (pointer tmp = pos; tmp < this->_end; ++tmp) {
       _destroy_element(tmp);
     }
     this->_end = pos;
