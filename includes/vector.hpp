@@ -610,8 +610,7 @@ class vector : private vector_base<T, Allocator> {
         // [end - n, end) 까지를 end 에 construct (n개)
         pointer old_end = this->_end;
         this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
-        // [position, end - n) 까지를 [end - n,  end) 까지로 copy (aps - n개)
-        _copy_elements_backward(p, old_end - n, old_end);
+        _copy_elements_backward(p, old_end - n, old_end - 1);
         _fill_n_elements(p, n, val);
       } else {
         _construct_at_end(n, val);
@@ -659,8 +658,6 @@ class vector : private vector_base<T, Allocator> {
                                  ForwardIterator>::type last) {
     difference_type n = std::distance(first, last);
     pointer p = this->_begin + (position - begin());
-    // pointer first_p = this->_begin + (first - begin());
-    // pointer last_p = this->_begin + (last - begin());
     if (n == 0) {
       return;
     }
@@ -778,6 +775,12 @@ class vector : private vector_base<T, Allocator> {
     return max(2 * cap, new_size);
   }
 
+  void _swap_pointer(pointer& p1, pointer& p2) {
+    pointer tmp = p1;
+    p1 = p2;
+    p2 = tmp;
+  }
+
   /**
    * @brief [first, last) 를 end에 생성한다.
    *
@@ -835,12 +838,6 @@ class vector : private vector_base<T, Allocator> {
    */
   void _destroy_element(pointer p) { this->_alloc.destroy(p); }
 
-  void _swap_pointer(pointer& p1, pointer& p2) {
-    pointer tmp = p1;
-    p1 = p2;
-    p2 = tmp;
-  }
-
   /**
    * @brief copy of std::copy specialization for T*
    *
@@ -871,7 +868,7 @@ class vector : private vector_base<T, Allocator> {
   template <typename InputIterator, typename OutputIterator>
   OutputIterator _copy_elements_backward(InputIterator begin, InputIterator end,
                                          OutputIterator dest) {
-    for (InputIterator tmp = end - 1; tmp != begin - 1; --tmp) {
+    for (InputIterator tmp = end - 1; tmp >= begin; --tmp) {
       *dest = *tmp;
       --dest;
     }
