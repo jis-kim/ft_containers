@@ -10,7 +10,7 @@
 #ifndef REVERSE_ITERATOR_HPP
 #define REVERSE_ITERATOR_HPP
 
-#include "iterator_traits.hpp"
+#include "iterator.hpp"
 
 namespace ft {
 template <typename Iter>
@@ -21,7 +21,7 @@ class reverse_iterator
                       typename iterator_traits<Iter>::pointer,
                       typename iterator_traits<Iter>::reference> {
  private:
-  Iter _current;
+  Iter current;
 
  public:
   typedef iterator_traits<Iter> traits_type;
@@ -33,56 +33,56 @@ class reverse_iterator
 
   reverse_iterator(void) {}
 
-  explicit reverse_iterator(iterator_type it) : _current(it) {}
+  explicit reverse_iterator(iterator_type it) : current(it) {}
 
   template <typename Iter2>
   reverse_iterator(const reverse_iterator<Iter2>& rev_it)
-      : _current(rev_it.base()) {}
+      : current(rev_it.base()) {}
 
-  iterator_type base(void) const { return _current; }
+  iterator_type base(void) const { return current; }
 
   reference operator*(void) const {
-    iterator_type tmp = _current;
+    iterator_type tmp = current;
     return *--tmp;
   }
 
   reverse_iterator operator+(difference_type n) const {
-    return reverse_iterator(_current - n);
+    return reverse_iterator(current - n);
   }
 
   reverse_iterator& operator++(void) {
-    --_current;
+    --current;
     return *this;
   }
 
   reverse_iterator operator++(int) {
     reverse_iterator tmp = *this;
-    --_current;
+    --current;
     return tmp;
   }
 
   reverse_iterator& operator+=(difference_type n) {
-    _current -= n;
+    current -= n;
     return *this;
   }
 
   reverse_iterator operator-(difference_type n) const {
-    return reverse_iterator(_current + n);
+    return reverse_iterator(current + n);
   }
 
   reverse_iterator& operator--(void) {
-    ++_current;
+    ++current;
     return *this;
   }
 
   reverse_iterator operator--(int) {
     reverse_iterator tmp = *this;
-    ++_current;
+    ++current;
     return tmp;
   }
 
   reverse_iterator& operator-=(difference_type n) {
-    _current += n;
+    current += n;
     return *this;
   }
 

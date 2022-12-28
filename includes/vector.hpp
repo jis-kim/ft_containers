@@ -35,7 +35,6 @@ class vector_iterator
   typedef iterator_traits<Iter> traits_type;
 
   typedef typename traits_type::difference_type difference_type;
-  typedef typename traits_type::value_type value_type;
   typedef typename traits_type::pointer pointer;
   typedef typename traits_type::reference reference;
 
@@ -137,7 +136,6 @@ bool operator>=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
 template <typename T, typename Allocator = std::allocator<T> >
 class vector_base {
  protected:
-  typedef T value_type;
   typedef Allocator allocator_type;
   typedef typename allocator_type::reference reference;              // T&
   typedef typename allocator_type::const_reference const_reference;  // const T&

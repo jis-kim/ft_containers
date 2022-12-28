@@ -1,5 +1,5 @@
 /**
- * @file iterator_traits.hpp
+ * @file iterator.hpp
  * @author jiskim
  * @brief iterator traits
  * @date 2022-11-18
@@ -7,14 +7,14 @@
  * @copyright Copyright (c) 2022
  */
 
-#ifndef ITERATOR_TRAITS_HPP
-#define ITERATOR_TRAITS_HPP
+#ifndef ITERATOR_HPP
+#define ITERATOR_HPP
 
 #include <cstddef>   // ptrdiff_t
 #include <iterator>  // std::random_access_iterator_tag
 
 namespace ft {
-
+// SECTION : iterator
 template <typename _Category, typename _Tp, typename _Distance = ptrdiff_t,
           typename _Pointer = _Tp*, typename _Reference = _Tp&>
 struct iterator {
@@ -58,4 +58,4 @@ class iterator_traits<const T*> {
 
 }  // namespace ft
 
-#endif  // ITERATOR_TRAITS_HPP
+#endif  // ITERATOR_HPP

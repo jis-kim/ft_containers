@@ -27,11 +27,64 @@ class stack {
   container_type c;
 
  public:
-  explicit stack(const container_type& c = container_type()) {}
+  explicit stack(const container_type& ctnr = container_type()) : c(ctnr) {}
 
-  bool empty() const { return c.empty(); }
+  bool empty(void) const { return c.empty(); }
+
+  size_type size(void) const { return c.size(); }
+
+  value_type& top(void) { return c.back(); }
+
+  const value_type& top(void) const { return c.back(); }
+
+  void push(const value_type& val) { c.push_back(val); }
+
+  void pop(void) { c.pop_back(); }
+
+  template <typename T1, typename Container1>
+  friend bool operator==(const stack<T1, Container1>& lhs,
+                         const stack<T1, Container1>& rhs);
+
+  template <typename T1, typename Container1>
+  friend bool operator<(const stack<T1, Container1>& lhs,
+                        const stack<T1, Container1>& rhs);
 };
 
+// SECTION : stack non-member function
+
+template <typename T, typename Container>
+bool operator==(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return lhs.c == rhs.c;
+}
+
+template <typename T, typename Container>
+bool operator!=(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename T, typename Container>
+bool operator<(const stack<T, Container>& lhs, const stack<T, Container>& rhs) {
+  return lhs.c < rhs.c;
+}
+
+template <typename T, typename Container>
+bool operator<=(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return !(rhs < lhs);
+}
+
+template <typename T, typename Container>
+bool operator>(const stack<T, Container>& lhs, const stack<T, Container>& rhs) {
+  return rhs < lhs;
+}
+
+template <typename T, typename Container>
+bool operator>=(const stack<T, Container>& lhs,
+                const stack<T, Container>& rhs) {
+  return !(lhs < rhs);
+}
 }  // namespace ft
 
 #endif  // STACK_HPP
