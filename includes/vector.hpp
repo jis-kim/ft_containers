@@ -18,12 +18,16 @@
 #include "type_traits.hpp"
 
 namespace ft {
-
 // SECTION : vector iterator
 // Random access iterator
 // T is pointer of elements
 template <typename Iter>
-class vector_iterator {
+class vector_iterator
+    : public iterator<typename iterator_traits<Iter>::iterator_category,
+                      typename iterator_traits<Iter>::value_type,
+                      typename iterator_traits<Iter>::difference_type,
+                      typename iterator_traits<Iter>::pointer,
+                      typename iterator_traits<Iter>::reference> {
  private:
   Iter _current;  // pointer of elements
 
@@ -34,7 +38,6 @@ class vector_iterator {
   typedef typename traits_type::value_type value_type;
   typedef typename traits_type::pointer pointer;
   typedef typename traits_type::reference reference;
-  typedef typename traits_type::iterator_category iterator_category;
 
   typedef vector_iterator self;
 
@@ -609,7 +612,7 @@ class vector : private vector_base<T, Allocator> {
       swap(tmp);
     } else {
       // BASIC
-      if (p != this->_end) {
+      if (p != this->end) {
         // [end - n, end) 까지를 end 에 construct (n개)
         pointer old_end = this->_end;
         this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
@@ -659,6 +662,7 @@ class vector : private vector_base<T, Allocator> {
   void insert(iterator position, ForwardIterator first,
               typename enable_if<is_forward_iterator<ForwardIterator>::value,
                                  ForwardIterator>::type last) {
+    PRINT("insert forward iterator\n");
     difference_type n = std::distance(first, last);
     pointer p = this->_begin + (position - begin());
     if (n == 0) {
@@ -721,7 +725,6 @@ class vector : private vector_base<T, Allocator> {
     pointer first_p = this->_begin + (first - begin());
     pointer last_p = this->_begin + (last - begin());
     if (first_p != last_p) {
-      // std::copy(last_p, this->_end, first_p);
       _copy_elements(last_p, this->_end, first_p);
       _destroy_at_end(this->_end - (last_p - first_p));
     }
@@ -905,7 +908,7 @@ class vector : private vector_base<T, Allocator> {
 template <typename T, typename Alloc>
 bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
   return (lhs.size() == rhs.size()) &&
-         ft::equal(lhs.begin(), lhs.end(), rhs.begin());
+         equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
 template <typename T, typename Alloc>
@@ -915,8 +918,8 @@ bool operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
 
 template <typename T, typename Alloc>
 bool operator<(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
-  return ft::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(),
-                                     rhs.end());
+  return lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(),
+                                 rhs.end());
 }
 
 template <typename T, typename Alloc>

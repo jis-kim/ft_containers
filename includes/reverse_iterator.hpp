@@ -14,7 +14,12 @@
 
 namespace ft {
 template <typename Iter>
-class reverse_iterator {
+class reverse_iterator
+    : public iterator<typename iterator_traits<Iter>::iterator_category,
+                      typename iterator_traits<Iter>::value_type,
+                      typename iterator_traits<Iter>::difference_type,
+                      typename iterator_traits<Iter>::pointer,
+                      typename iterator_traits<Iter>::reference> {
  private:
   Iter _current;
 
@@ -23,26 +28,8 @@ class reverse_iterator {
 
   typedef Iter iterator_type;
   typedef typename traits_type::difference_type difference_type;
-  typedef typename traits_type::value_type value_type;
   typedef typename traits_type::pointer pointer;
   typedef typename traits_type::reference reference;
-  typedef typename traits_type::iterator_category iterator_category;
-
-  // TODO : member function
-  /**
-   * constructor
-   * base
-   * operator*
-   * +
-   * ++
-   * +=
-   * -
-   * --
-   * -=
-   * ->
-   * []
-   */
-  // same as copy_constructor of base iterator
 
   reverse_iterator(void) {}
 
@@ -103,14 +90,6 @@ class reverse_iterator {
 
   pointer operator->(void) const { return &(operator*()); }
 };
-
-// TODO : non-member
-/**
- * relational operators
- * operator+
- * operator-
- *
- */
 
 template <typename Iter1, typename Iter2>
 bool operator==(const reverse_iterator<Iter1>& lhs,
