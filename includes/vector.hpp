@@ -29,7 +29,7 @@ class vector_iterator
                       typename iterator_traits<Iter>::pointer,
                       typename iterator_traits<Iter>::reference> {
  private:
-  Iter _current;  // pointer of elements
+  Iter _current;
 
  public:
   typedef iterator_traits<Iter> traits_type;
@@ -610,8 +610,7 @@ class vector : private vector_base<T, Allocator> {
       swap(tmp);
     } else {
       // BASIC
-      if (p != this->end) {
-        // [end - n, end) 까지를 end 에 construct (n개)
+      if (p != this->_end) {
         pointer old_end = this->_end;
         this->_end = std::uninitialized_copy(old_end - n, old_end, old_end);
         _copy_elements_backward(p, old_end - n, old_end - 1);
@@ -660,7 +659,6 @@ class vector : private vector_base<T, Allocator> {
   void insert(iterator position, ForwardIterator first,
               typename enable_if<is_forward_iterator<ForwardIterator>::value,
                                  ForwardIterator>::type last) {
-    PRINT("insert forward iterator\n");
     difference_type n = std::distance(first, last);
     pointer p = this->_begin + (position - begin());
     if (n == 0) {

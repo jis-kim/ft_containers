@@ -20,7 +20,7 @@ class reverse_iterator
                       typename iterator_traits<Iter>::difference_type,
                       typename iterator_traits<Iter>::pointer,
                       typename iterator_traits<Iter>::reference> {
- private:
+ protected:
   Iter current;
 
  public:
