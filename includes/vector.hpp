@@ -214,7 +214,7 @@ class vector : private vector_base<T, Allocator> {
          const allocator_type& alloc = allocator_type())
       : base_(alloc) {
     for (; first != last; ++first) {
-      this->push_back(*first);
+      push_back(*first);
     }
   }
 

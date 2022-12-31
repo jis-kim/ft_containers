@@ -193,4 +193,14 @@ void vector_test(void) {
     test_vec.assign(10, Test(2));
     std::cout << "size of test_vec : " << test_vec.size() << '\n';
   }
+
+  ft::vector<int> vct(10, 3);
+  ft::vector<int> vct2(12, 4);
+
+  ft::swap<int, std::allocator<int> >(vct, vct2);  // ADL
+
+  std::cout << std::endl;
+
+  endl(std::cout);
+  // x.swap(y); => ㅁㅔㅁㅂㅓ
 }
