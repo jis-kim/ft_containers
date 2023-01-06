@@ -34,5 +34,6 @@ void vector_iterator_test(void);
 void type_traits_test(void);
 void vector_test(void);
 void std_vector_test(void);
+void pair_test(void);
 
 #endif

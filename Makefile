@@ -26,7 +26,8 @@ OBJS = $(SRCS:.cpp=.o)
 SRCS_FILES = main.cpp\
 vector_test.cpp \
 vector_iterator_test.cpp \
-type_traits_test.cpp
+type_traits_test.cpp \
+pair_test.cpp
 
 OBJS_FILES = $(OBJS)
 

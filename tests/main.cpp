@@ -35,4 +35,6 @@ int main(void) {
   alloc.construct(&(*(const_vec.begin())));
   const int ad = 10;
   std::cout << alloc.address(ad) << '\n';
+
+  pair_test();
 }
