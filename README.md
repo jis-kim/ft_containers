@@ -3,7 +3,7 @@
 # ft_containers
 C++ containers, easy mode
 
-</br>
+<br>
 
 # 구현사항
 ## containers
@@ -41,40 +41,40 @@ C++ standard library 에서는 exception safety 를 보장하기 위해 3가지 
 // warning: naive implementation
 template <class T, class A>
 vector<T, A>::vector(size_type n, const T& val, const A& a)
-   :alloc(a) // copy the allocator
+  :alloc(a) // copy the allocator
 {
-   v = alloc.allocate(n); // get memory for elements (§19.4.1)
-   space = last = v + n;
-   for(T* p= v; p != last; ++p)
-      a.construct(p, val) ; // construct copy of val in *p (§19.4.1)
+  v = alloc.allocate(n); // get memory for elements (§19.4.1)
+  space = last = v + n;
+  for(T* p= v; p != last; ++p)
+    a.construct(p, val) ; // construct copy of val in *p (§19.4.1)
 }
 ```
 - 위와 같이 생성자를 구현했을 경우, 세 부분에서 exception 이 throw 될 수 있다.
- 1. `allocate()` 에서 메모리 할당 실패할 경우.
- 2. `alloc(a)` 에서 복사 생성자가 throw 할 경우.
- 3. `T` 의 복사 생성자가 `val` 을 복사할 수 없을 경우.
+  1. `allocate()` 에서 메모리 할당 실패할 경우.
+  2. `alloc(a)` 에서 복사 생성자가 throw 할 경우.
+  3. `T` 의 복사 생성자가 `val` 을 복사할 수 없을 경우.
 
-3번의 경우, 일부 리소스만 할당받은 채로 exception 이 throw 되어 적절한 처리를 해주지 않는다면 memory leak 이 발생할 수 있다.
+- 3번의 경우, 일부 리소스만 할당받은 채로 exception 이 throw 되어 적절한 처리를 해주지 않는다면 memory leak 이 발생할 수 있다.
 이를 추적해서 파괴해야 Basic guarantee 를 보장할 수 있다.
 
 ### 1. try-catch block
 ```cpp
 template<class T, class A>
 vector<T,A>::vector(size_type n, const T& val, const A& a) // messy implementation
-   :alloc(a) // copy the allocator
+  :alloc(a) // copy the allocator
 {
-	v= alloc.allocate(n); // get memory for elements
+	v = alloc.allocate(n); // get memory for elements
 	iterator p;
 	try {
-		iterator end= v+n;
+		iterator end = v + n;
 		for(p = v; p != end; ++p)
-         alloc.construct(p,val); //  construct element (§19.4.1)
-      last = space = p;
+      alloc.construct(p,val); //  construct element (§19.4.1)
+    last = space = p;
 	} catch(...) {
-      for(iterator q = v; q != p; ++q)
-         alloc.destroy(q) ; // destroy constructed elements
-      alloc.deallocate(v, n) ; // free memory
-      throw; // re-throw
+    for(iterator q = v; q != p; ++q)
+      alloc.destroy(q) ; // destroy constructed elements
+    alloc.deallocate(v, n) ; // free memory
+    throw; // re-throw
 	}
 }
 ```
@@ -91,9 +91,9 @@ struct vector_base{
 	T* space; // end of element sequence, start of space allocated for possible expansion
 	T* last; // end of allocated space
 
-	vector_base(const A& a, typename A::size_type n)
-		: alloc(a) , v(a.allocate(n)) , space(v + n) , last(v + n) { }
-	~vector_base() { alloc.deallocate(v, last - v) ; }
+  vector_base(const A& a, typename A::size_type n)
+    : alloc(a) , v(a.allocate(n)) , space(v + n) , last(v + n) {}
+  ~vector_base() { alloc.deallocate(v, last - v) ; }
 };
 ```
 - `vector` 의 핵심 리소스는 element 들을 담을 메모리 이므로 메모리만 다루는 `vector_base` 클래스를 사용한다.
@@ -103,11 +103,11 @@ template<class T, class A = allocator<T> >
 class vector : private vector_base<T, A> {
 	void destroy_elements() { for(T* p = v; p != space; ++p) p->~T() ; } // §10.4.11
 public:
-	explicit vector(size_type n, const T& val = T() , const A& = A());
-	vector(const vector& a) ; // copy constructor
-	vector& operator=(const vector& a) ; // copy assignment
+  explicit vector(size_type n, const T& val = T() , const A& = A());
+  vector(const vector& a) ; // copy constructor
+  vector& operator=(const vector& a) ; // copy assignment
 
-	~vector() { destroy_elements(); }
+  ~vector() { destroy_elements(); }
    // ...
 };
 ```
