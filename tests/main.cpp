@@ -1,6 +1,7 @@
-#include "testheader/print_vector.hpp"
-// #include "vector.hpp"
 #include <iostream>
+
+#include "testheader/print_vector.hpp"
+#include "vector.hpp"
 
 const std::string& test(void) {
   const std::string a =
@@ -20,10 +21,18 @@ enum hi { first = true, second };
 
 int main(void) {
   // type_traits_test();
-  vector_test();
+  // vector_test();
   //  vector_iterator_test();
 
   // const std::string b = test();
   //  std::cout << b << '\n';
-  std::cout << first << ", " << second << ", " << '\n';
+  // std::cout << first << ", " << second << ", " << '\n';
+
+  ft::vector<const int> const_vec;
+
+  std::allocator<const int> alloc = const_vec.get_allocator();
+
+  alloc.construct(&(*(const_vec.begin())));
+  const int ad = 10;
+  std::cout << alloc.address(ad) << '\n';
 }

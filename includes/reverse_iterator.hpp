@@ -37,7 +37,7 @@ class reverse_iterator
 
   template <typename Iter2>
   reverse_iterator(const reverse_iterator<Iter2>& rev_it)
-      : current(rev_it.base()) {}
+      : current(rev_it.current) {}
 
   iterator_type base(void) const { return current; }
 

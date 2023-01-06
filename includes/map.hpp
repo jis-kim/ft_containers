@@ -1,6 +1,6 @@
 /**
-를 가리키는삽입에 성공했다면 삽입된 element 를 가리키는 iterator
-실패했다면 key 가 같은 이미 존재하는 element 를 가리키는 iterator.
+ * @file map.hpp
+ * @author jiskim
  * @brief
  * @date 2023-01-02
  *
@@ -300,13 +300,85 @@ class map {
   key_compare key_comp(void) const {}
 
   // STRONG
-  /*
+  /**
    * @brief key 에 따라 element 들을 비교하는 comparison object 를 리턴한다.
    * value_compare 의 생성자는 public 이 아니므로 밖에서 직접 생성할 수 없다.
    *
    * @return value_compare (nested class type)
    */
   value_compare value_comp(void) const {}
+
+  // !SECTION : observers
+
+  // SECTION : operations
+
+  // STRONG
+  /**
+   * @brief
+   * @complexity O(log N) N is size
+   *
+   * @param k
+   * @return k 라는 key 가 있으면 그 element 를 가리키는 iterator, 없으면 end
+   */
+  iterator find(const key_type& k) {}
+  const_iterator find(const key_type& k) const {}
+
+  // STRONG
+  /**
+   * @brief k 라는 key 를 가진 element 의 개수.
+   * map 의 key 는 unique 하므로 0 또는 1 이다.
+   * @complexity O(log N) N is size
+   *
+   * @param k
+   * @return size_type k 라는 key 를 가진 element 가 있으면 1, 없으면 0
+   */
+  size_type count(const key_type& k) const {}
+
+  // STRONG
+  /**
+   * @brief k 보다 앞에 있지 않은 (같거나 뒤에 있는) 첫번째 element 를 가리키는
+   * iterator 를 리턴한다.
+   *
+   * @param k
+   * @return iterator
+   */
+  iterator lower_bound(const key_type& k) {}
+  const_iterator lower_bound(const key_type& k) const {}
+
+  // STRONG
+  /**
+   * @brief
+   *
+   * @param k
+   * @return iterator
+   */
+  iterator upper_bound(const key_type& k) {}
+  const_iterator upper_bound(const key_type& k) const {}
+
+  // STRONG
+  /**
+   * @brief k 와 같은 key 를 가진 element 들의 range 를 리턴한다.
+   * map 은 unique key 를 가지므로 range 의 길이는 0 또는 1 이다.
+   *
+   * @param k
+   * @return std::pair<iterator, iterator> pair::first 는 lower_bound,
+   * pair::second 는 upper_bound
+   */
+  std::pair<iterator, iterator> equal_range(const key_type& k) {}
+  std::pair<const_iterator, const_iterator> equal_range(
+      const key_type& k) const {}
+
+  // !SECTION : operations
+
+  // SECTION : allocator
+
+  // NOTHROW
+  /**
+   * @brief Get the allocator object
+   *
+   * @return allocator_type map 의 allocator
+   */
+  allocator_type get_allocator(void) const {}
 };
 
 }  // namespace ft
