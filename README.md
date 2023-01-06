@@ -50,9 +50,10 @@ vector<T, A>::vector(size_type n, const T& val, const A& a)
 }
 ```
 - 위와 같이 생성자를 구현했을 경우, 세 부분에서 exception 이 throw 될 수 있다.
-  1. `allocate()` 에서 메모리 할당 실패할 경우.
-  2. `alloc(a)` 에서 복사 생성자가 throw 할 경우.
-  3. `T` 의 복사 생성자가 `val` 을 복사할 수 없을 경우.
+
+1. `allocate()` 에서 메모리 할당 실패할 경우.
+2. `alloc(a)` 에서 복사 생성자가 throw 할 경우.
+3. `T` 의 복사 생성자가 `val` 을 복사할 수 없을 경우.
 
 - 3번의 경우, 일부 리소스만 할당받은 채로 exception 이 throw 되어 적절한 처리를 해주지 않는다면 memory leak 이 발생할 수 있다.
 이를 추적해서 파괴해야 Basic guarantee 를 보장할 수 있다.
@@ -63,19 +64,19 @@ template<class T, class A>
 vector<T,A>::vector(size_type n, const T& val, const A& a) // messy implementation
   :alloc(a) // copy the allocator
 {
-	v = alloc.allocate(n); // get memory for elements
-	iterator p;
-	try {
-		iterator end = v + n;
-		for(p = v; p != end; ++p)
+  v = alloc.allocate(n); // get memory for elements
+  iterator p;
+  try {
+    iterator end = v + n;
+    for(p = v; p != end; ++p)
       alloc.construct(p,val); //  construct element (§19.4.1)
     last = space = p;
-	} catch(...) {
+  } catch(...) {
     for(iterator q = v; q != p; ++q)
       alloc.destroy(q) ; // destroy constructed elements
     alloc.deallocate(v, n) ; // free memory
     throw; // re-throw
-	}
+  }
 }
 ```
 - `try` 블록에서 예외가 발생하면 `catch` 블록에서 예외를 처리하고 라이브러리의 사용자들에게 문제가 발생했음을 알리기 위해 re-throw 해 준다.
