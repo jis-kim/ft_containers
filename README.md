@@ -87,10 +87,10 @@ vector<T,A>::vector(size_type n, const T& val, const A& a) // messy implementati
 ```cpp
 template<class T, class A= allocator<T> >
 struct vector_base{
-	A alloc; // allocator
-	T* v; // start of allocation
-	T* space; // end of element sequence, start of space allocated for possible expansion
-	T* last; // end of allocated space
+  A alloc; // allocator
+  T* v; // start of allocation
+  T* space; // end of element sequence, start of space allocated for possible expansion
+  T* last; // end of allocated space
 
   vector_base(const A& a, typename A::size_type n)
     : alloc(a) , v(a.allocate(n)) , space(v + n) , last(v + n) {}
@@ -126,3 +126,5 @@ public:
     ⇒ 베이스 클래스인 `vector_base` 에서 `allocate()` 하고, `construct()` 시점엔 `vector_base` 의 sub object 가 생성된 상태이므로 `construct()` 중간에 throw 되어도 스코프(생성자) 를 벗어나면 sub object 의 생명주기가 끝나서 안전하게 `deallocate()` 및 `destroy()` 된다.
 
 # vector
+# stack
+# map

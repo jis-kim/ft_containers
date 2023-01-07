@@ -14,7 +14,6 @@
 
 #include "algorithm.hpp"
 #include "reverse_iterator.hpp"
-#include "testheader/print_vector.hpp"  // FIXME
 #include "type_traits.hpp"
 
 namespace ft {

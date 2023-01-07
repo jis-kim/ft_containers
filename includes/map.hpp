@@ -14,23 +14,22 @@
 #include <memory>      //std::allocator
 
 #include "_rb_tree.hpp"
-
-// TODO : std::pair to ft::pair
+#include "pair.hpp"
 
 namespace ft {
 
 template <typename Key, typename T, typename Compare = std::less<Key>,
-          typename Alloc = std::allocator<std::pair<const Key, T>>>
+          typename Alloc = std::allocator<pair<const Key, T>>>
 class map {
  private:
-  typedef _rb_tree<Key, T, std::pair<const Key, T>, Compare, Alloc> _rep_type;
+  typedef _rb_tree<Key, T, pair<const Key, T>, Compare, Alloc> _rep_type;
 
   _rep_type _tree;  // structure
 
  public:
   typedef Key key_type;
   typedef T mapped_type;
-  typedef std::pair<const Key, T> value_type;  // FIXME ft::pair
+  typedef pair<const Key, T> value_type;
   typedef size_t size_type;
   typedef ptrdiff_t difference_type;
   typedef Compare key_compare;
@@ -44,6 +43,9 @@ class map {
   typedef typename _rep_type::const_iterator const_iterator;
   typedef typename _rep_type::reverse_iterator reverse_iterator;
   typedef typename _rep_type::const_reverse_iterator const_reverse_iterator;
+
+  struct key_compare {};
+  struct value_compare {};
 
   // SECTION : constructor
   // STRONG
@@ -210,12 +212,12 @@ class map {
    * @complexity O(log N) N is size
    *
    * @param val
-   * @return std::pair<iterator, bool> 새로 삽입에 성공했다면 first 는 삽입한
+   * @return pair<iterator, bool> 새로 삽입에 성공했다면 first 는 삽입한
    * element 를 가리키는 iterator, second 는 true.
    * 삽입에 실패했다면 first 는 이미 존재하는 element 를 가리키는 iterator,
    * second 는 false.
    */
-  std::pair<iterator, bool> insert(const value_type& val) {}
+  pair<iterator, bool> insert(const value_type& val) {}
 
   /**
    * @brief
@@ -261,6 +263,7 @@ class map {
    * @param k
    * @return size_type 지워진 element 의 개수
    */
+
   size_type erase(const key_type& k) {}
 
   /**
@@ -297,7 +300,7 @@ class map {
    *
    * @return key_compare
    */
-  key_compare key_comp(void) const {}
+  key_compare key_comp(void) const { return key_compare(); }
 
   // STRONG
   /**
@@ -306,7 +309,7 @@ class map {
    *
    * @return value_compare (nested class type)
    */
-  value_compare value_comp(void) const {}
+  value_compare value_comp(void) const { return value_compare(); }
 
   // !SECTION : observers
 
@@ -361,12 +364,11 @@ class map {
    * map 은 unique key 를 가지므로 range 의 길이는 0 또는 1 이다.
    *
    * @param k
-   * @return std::pair<iterator, iterator> pair::first 는 lower_bound,
+   * @return pair<iterator, iterator> pair::first 는 lower_bound,
    * pair::second 는 upper_bound
    */
-  std::pair<iterator, iterator> equal_range(const key_type& k) {}
-  std::pair<const_iterator, const_iterator> equal_range(
-      const key_type& k) const {}
+  pair<iterator, iterator> equal_range(const key_type& k) {}
+  pair<const_iterator, const_iterator> equal_range(const key_type& k) const {}
 
   // !SECTION : operations
 
@@ -378,7 +380,7 @@ class map {
    *
    * @return allocator_type map 의 allocator
    */
-  allocator_type get_allocator(void) const {}
+  allocator_type get_allocator(void) const { return _tree.get_allocator(); }
 };
 
 }  // namespace ft
