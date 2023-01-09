@@ -294,8 +294,10 @@ class map {
 
   // STRONG 아니 이게 뭐라고 strong?
   /**
-   * @brief key 를 비교하는 comparison object 를 리턴한다. (기본값
-   * std::less<key_type>)
+   * @brief key 를 비교하는 comparison object 를 리턴한다. (std::less<key_type>)
+   *
+   * Returns the function object that compares the keys, which is a copy of this
+   * container's constructor argument comp.
    * @complexity O(1)
    *
    * @return key_compare
@@ -306,6 +308,10 @@ class map {
   /**
    * @brief key 에 따라 element 들을 비교하는 comparison object 를 리턴한다.
    * value_compare 의 생성자는 public 이 아니므로 밖에서 직접 생성할 수 없다.
+   *
+   * Returns a function object that compares objects of type
+   * std::map::value_type (key-value pairs) by using key_comp to compare the
+   * first components of the pairs.
    *
    * @return value_compare (nested class type)
    */
