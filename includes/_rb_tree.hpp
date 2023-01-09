@@ -131,18 +131,22 @@ struct _rb_tree_header {
   _rb_tree_node_base _header;
   size_t _node_count;
 
+  _rb_tree_header(void) {
+    _header.color = RED;
+    _reset();
+  }
+
   /**
-   * @brief Construct a new rb tree header object
+   * @brief
    * 초기 상태 : root 는 NIL, leftmost, rightmost 는 header 자신 (end)
    * 삽입 : left-most, right-most 를 갱신
    *
    */
-  _rb_tree_header(void) {
-    _node_count = 0;
-    _header.color = RED;
+  void _reset(void) {
     _header.parent = NIL;
-    _header.left = &_header;  // use _header as end
+    _header.left = &_header;
     _header.right = &_header;
+    _node_count = 0;
   }
 };
 
@@ -169,6 +173,7 @@ struct _rb_tree_node : public _rb_tree_node_base {
 template <typename Compare>
 struct _rb_tree_impl : public _rb_tree_header, _rb_tree_key_compare<Compare> {
   typedef _rb_tree_key_compare<Compare> _base_key_compare;
+
   _rb_tree_impl(void) {}
   _rb_tree_impl(const _rb_tree_impl& src)
       : _rb_tree_header(), _base_key_compare(src._compare) {}
@@ -220,13 +225,25 @@ class _rb_tree {
   size_type size(void) const { return _impl._node_count; }
   size_type max_size(void) const { return _alloc.max_size(); }
 
+  // NOTHROW
   void clear(void) {
-    // for (iterator it = begin(); it != end(); ++it) {
-    //   _alloc.destroy();  // 헉 이거 생각 좀 하고 해야할듯..
-    // }
+    _erase(_get_root());
+    _impl._reset();
   }
 
   node_allocator get_node_allocator(void) { return _alloc; }
+
+  iterator lower_bound(link_type x, base_ptr y, const key_type& key) {
+    while (x != NIL) {
+      if (!_impl._compare(key, KeyOfValue(x->value))) {  // return boolean
+        y = x;
+        x = x->left;
+      } else {
+        x = x->right;
+      }
+    }
+    return iterator(y);
+  }
 
  private:
   typedef _rb_tree_node_base* base_ptr;
@@ -240,10 +257,35 @@ class _rb_tree {
   base_ptr _get_right_most(void) { return _header.right; }
 
   link_type _create_node(const KeyOfValue& key_value) {
-    return _alloc.allocate();
+    link_type tmp = _alloc.allocate();
+    _construct_node(tmp, key_value);
+    return tmp;
   }
 
-  link_type _
+  link_type _construct_node(link_type node, const KeyOfValue& key_value) {
+    try {
+      _alloc.construct(node, key_value);
+    } catch (...) {
+      _deallocate_node(node);
+      throw;
+    }
+  }
+
+  void _destroy_node(link_type node) {
+    _alloc.destroy(node);
+    _deallocate_node(node);
+  }
+
+  void _deallocate_node(link_type node) { _alloc.deallocate(node); }
+
+  void _erase(link_type node) {
+    while (node != NIL) {
+      _erase(node->right);
+      link_type tmp = node->left;
+      _destroy_node(node);
+      node = tmp;
+    }
+  }
 };
 // !SECTION: red-black tree
 
