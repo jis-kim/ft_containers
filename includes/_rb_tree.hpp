@@ -12,6 +12,7 @@
 
 #include <iterator>  // std::bidirectional_iterator_tag
 
+#include "pair.hpp"
 #include "reverse_iterator.hpp"
 #define NIL NULL
 
@@ -182,6 +183,15 @@ struct _rb_tree_impl : public _rb_tree_header, _rb_tree_key_compare<Compare> {
 
 // SECTION: red-black tree
 // Compare 로 노드 간에 비교해야 함
+/**
+ * @brief
+ *
+ * @tparam Key T key type
+ * @tparam Val pair<Key, Val>
+ * @tparam KeyOfValue
+ * @tparam Compare
+ * @tparam Alloc
+ */
 template <typename Key, typename Val, typename KeyOfValue, typename Compare,
           typename Alloc = std::allocator<Val>>
 class _rb_tree {
@@ -201,7 +211,8 @@ class _rb_tree {
   typedef reverse_iterator<const_iterator> const_reverse_iterator;
 
   // rebind for nodes
-  typedef typename Alloc::template rebind<value_type>::other node_allocator;
+  typedef typename Alloc::template rebind<_rb_tree_node<value_type>>::other
+      node_allocator;
 
   // SECTION : member
  private:
@@ -235,7 +246,7 @@ class _rb_tree {
 
   iterator lower_bound(link_type x, base_ptr y, const key_type& key) {
     while (x != NIL) {
-      if (!_impl._compare(key, KeyOfValue(x->value))) {  // return boolean
+      if (!_impl._compare(key, KeyOfValue()(x->value))) {  // return boolean
         y = x;
         x = x->left;
       } else {
@@ -244,6 +255,8 @@ class _rb_tree {
     }
     return iterator(y);
   }
+
+  iterator upper_bound(link_type x, base_ptr y, const key_type& key) {}
 
  private:
   typedef _rb_tree_node_base* base_ptr;

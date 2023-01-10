@@ -14,6 +14,7 @@
 #include <memory>      //std::allocator
 
 #include "_rb_tree.hpp"
+#include "function.hpp"
 #include "pair.hpp"
 
 namespace ft {
@@ -22,7 +23,7 @@ template <typename Key, typename T, typename Compare = std::less<Key>,
           typename Alloc = std::allocator<pair<const Key, T>>>
 class map {
  private:
-  typedef _rb_tree<Key, T, pair<const Key, T>, Compare, Alloc> _rep_type;
+  typedef _rb_tree<Key, T, _SelectKey, Compare, Alloc> _rep_type;
 
   _rep_type _tree;  // structure
 
