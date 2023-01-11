@@ -352,7 +352,8 @@ class vector : private vector_base<T, Allocator> {
     if (n > capacity()) {
       // STRONG
       // reallocation
-      vector tmp(_get_alloc_size(n));
+      vector tmp;
+      tmp._allocate(_get_alloc_size(n));
       tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       tmp._construct_at_end(n - _size, val);
       swap(tmp);
@@ -385,7 +386,8 @@ class vector : private vector_base<T, Allocator> {
    */
   void reserve(size_type n) {
     if (n > capacity()) {
-      vector tmp(_get_alloc_size(n));
+      vector tmp;
+      tmp._allocate(_get_alloc_size(n));
       tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       swap(tmp);
     }
@@ -535,7 +537,8 @@ class vector : private vector_base<T, Allocator> {
   void push_back(const value_type& val) {
     if (this->_end >= this->_end_cap) {  // no more space
       // reallocation
-      vector tmp(_get_alloc_size(size() + 1));
+      vector tmp;
+      tmp._allocate(_get_alloc_size(size() + 1));
       tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
       tmp._construct_at_end(1, val);
       swap(tmp);
@@ -573,7 +576,8 @@ class vector : private vector_base<T, Allocator> {
     }
     if (size() + 1 > capacity()) {
       // STRONG
-      vector tmp(_get_alloc_size(size() + 1));
+      vector tmp;
+      tmp._allocate(_get_alloc_size(size() + 1));
       tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       tmp._construct_at_end(1, val);
       tmp._end = std::uninitialized_copy(p, this->_end, tmp._end);
@@ -602,7 +606,8 @@ class vector : private vector_base<T, Allocator> {
     pointer p = this->_begin + (position - begin());
     if (size() + n > capacity()) {
       // STRONG
-      vector tmp(_get_alloc_size(size() + n));
+      vector tmp;
+      tmp._allocate(_get_alloc_size(size() + n));
       tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       std::uninitialized_fill_n(tmp._end, n, val);
       tmp._end = std::uninitialized_copy(p, this->_end, tmp._end + n);
@@ -665,7 +670,8 @@ class vector : private vector_base<T, Allocator> {
     }
     if (size() + n > capacity()) {
       // STRONG
-      vector tmp(_get_alloc_size(size() + n));
+      vector tmp;
+      tmp._allocate(_get_alloc_size(size() + n));
       tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       tmp._end = std::uninitialized_copy(first, last, tmp._end);
       tmp._end = std::uninitialized_copy(p, this->_end, tmp._end);
@@ -783,6 +789,16 @@ class vector : private vector_base<T, Allocator> {
     pointer tmp = p1;
     p1 = p2;
     p2 = tmp;
+  }
+
+  /**
+   * @brief allocate 위치를 지정하기 어려우므로 초기에만 호출한다고 가정함.
+   *
+   * @param n
+   */
+  void _allocate(size_type n) {
+    this->_end = this->_begin = this->_alloc.allocate(n);
+    this->_end_cap = this->_begin + n;
   }
 
   /**
