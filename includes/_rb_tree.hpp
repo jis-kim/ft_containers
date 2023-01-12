@@ -17,142 +17,6 @@
 namespace ft {
 enum _rb_tree_color { RED = 0, BLACK };
 
-// SECTION : red-black tree iterator
-template <typename T>
-struct _rb_tree_iterator {
-  typedef T value_type;
-  typedef T* pointer;
-  typedef T& reference;
-
-  typedef std::bidirectional_iterator_tag iterator_category;
-  typedef ptrdiff_t difference_type;
-
-  typedef _rb_tree_iterator<T> self;
-  typedef _rb_tree_node_base::base_ptr base_ptr;
-  typedef _rb_tree_node<T>* link_type;
-
- private:
-  base_ptr _node;
-
- public:
-  _rb_tree_iterator(void) : _node() {}
-
-  explicit _rb_tree_iterator(base_ptr x) : _node(x) {}
-
-  reference operator*(void) const {
-    return static_cast<link_type>(_node)->value;
-  }
-
-  pointer operator->(void) const { &(static_cast<link_type>(_node)->value); }
-
-  self& operator++(void) {
-    _node = _rb_tree_increament(_node);
-    return *this;
-  }
-
-  self operator++(int) {
-    self tmp = *this;
-    _node = _rb_tree_increment(_node);
-    return tmp;
-  }
-
-  self& operator--(void) {
-    _node = _rb_tree_decrement(_node);
-    return *this;
-  }
-
-  self operator--(int) {
-    self tmp = *this;
-    _node = _rb_tree_decrement(_node);
-    return tmp;
-  }
-
-  // NOTE: STL uses friend keyword.
-  bool operator==(const self& lhs, const self& rhs) const {
-    return lhs._node == rhs._node;  // private
-  }
-
-  bool operator!=(const self& lhs, const self& rhs) const {
-    return !(lhs == rhs);
-  }
-
-  // SECTION : assginment operator
-};
-
-template <typename T>
-struct _rb_tree_const_iterator {
-  typedef T value_type;
-  typedef const T* pointer;
-  typedef const T& reference;
-
-  typedef _rb_tree_iterator<T> iterator;
-
-  typedef std::bidirectional_iterator_tag iterator_category;
-  typedef ptrdiff_t difference_type;
-
-  typedef _rb_tree_const_iterator<T> self;
-  typedef _rb_tree_node_base::const_base_ptr base_ptr;
-  typedef const _rb_tree_node<T>* link_type;
-
- private:
-  base_ptr _node;
-
- public:
-  _rb_tree_const_iterator(void) : _node() {}
-
-  explicit _rb_tree_const_iterator(base_ptr x) : _node(x) {}
-
-  _rb_treE_const_iterator(const iterator& it) : _node(it._node) {}
-
-  /**
-   * @brief const iterator to iterator casting
-   *
-   * @return iterator
-   */
-  iterator _const_cast(void) const {
-    return iterator(const_cast<typename iterator::base_ptr>(_node)));
-  }
-
-  reference operator*(void) const {
-    return static_cast<link_type>(_node)->value;
-  }
-
-  pointer operator->(void) const { &(static_cast<link_type>(_node)->value); }
-
-  self& operator++(void) {
-    _node = _rb_tree_increament(_node);
-    return *this;
-  }
-
-  self operator++(int) {
-    self tmp = *this;
-    _node = _rb_tree_increment(_node);
-    return tmp;
-  }
-
-  self& operator--(void) {
-    _node = _rb_tree_decrement(_node);
-    return *this;
-  }
-
-  self operator--(int) {
-    self tmp = *this;
-    _node = _rb_tree_decrement(_node);
-    return tmp;
-  }
-
-  // NOTE: STL uses friend keyword.
-  bool operator==(const self& lhs, const self& rhs) const {
-    return lhs._node == rhs._node;  // private
-  }
-
-  bool operator!=(const self& lhs, const self& rhs) const {
-    return !(lhs == rhs);
-  }
-};
-
-// !SECTION: red-black tree iterator
-
 /**
  * @brief base class of red-black tree node
  * _rb_tree_node 가 이를 상속받는다.
@@ -215,9 +79,145 @@ template <typename Compare>
 struct _rb_tree_key_compare {
   Compare _compare;
 
-  _rb_tree_key_compare(void) : compare() {}
-  _rb_tree_key_compare(const Compare& comp) : compare(comp) {}
+  _rb_tree_key_compare(void) : _compare() {}
+  _rb_tree_key_compare(const Compare& comp) : _compare(comp) {}
 };
+
+// SECTION : red-black tree iterator
+template <typename T>
+struct _rb_tree_iterator {
+  typedef T value_type;
+  typedef T* pointer;
+  typedef T& reference;
+
+  typedef std::bidirectional_iterator_tag iterator_category;
+  typedef ptrdiff_t difference_type;
+
+  typedef _rb_tree_iterator<T> self;
+  typedef _rb_tree_node_base::base_ptr base_ptr;
+  typedef _rb_tree_node<T>* link_type;
+
+ private:
+  base_ptr _node;
+
+ public:
+  _rb_tree_iterator(void) : _node() {}
+
+  explicit _rb_tree_iterator(base_ptr x) : _node(x) {}
+
+  reference operator*(void) const {
+    return static_cast<link_type>(_node)->value;
+  }
+
+  pointer operator->(void) const { &(static_cast<link_type>(_node)->value); }
+
+  self& operator++(void) {
+    _node = _rb_tree_increament(_node);
+    return *this;
+  }
+
+  self operator++(int) {
+    self tmp = *this;
+    _node = _rb_tree_increment(_node);
+    return tmp;
+  }
+
+  self& operator--(void) {
+    _node = _rb_tree_decrement(_node);
+    return *this;
+  }
+
+  self operator--(int) {
+    self tmp = *this;
+    _node = _rb_tree_decrement(_node);
+    return tmp;
+  }
+
+  //// NOTE: STL uses friend keyword.
+  // bool operator==(const self& lhs, const self& rhs) const {
+  //   return lhs._node == rhs._node;  // private
+  // }
+
+  // bool operator!=(const self& lhs, const self& rhs) const {
+  //   return !(lhs == rhs);
+  // }
+
+  // SECTION : assginment operator
+};
+
+template <typename T>
+struct _rb_tree_const_iterator {
+  typedef T value_type;
+  typedef const T* pointer;
+  typedef const T& reference;
+
+  typedef _rb_tree_iterator<T> iterator;
+
+  typedef std::bidirectional_iterator_tag iterator_category;
+  typedef ptrdiff_t difference_type;
+
+  typedef _rb_tree_const_iterator<T> self;
+  typedef _rb_tree_node_base::const_base_ptr base_ptr;
+  typedef const _rb_tree_node<T>* link_type;
+
+ private:
+  base_ptr _node;
+
+ public:
+  _rb_tree_const_iterator(void) : _node() {}
+
+  explicit _rb_tree_const_iterator(base_ptr x) : _node(x) {}
+
+  _rb_tree_const_iterator(const iterator& it) : _node(it._node) {}
+
+  /**
+   * @brief const iterator to iterator casting
+   *
+   * @return iterator
+   */
+  iterator _const_cast(void) const {
+    return iterator(const_cast<typename iterator::base_ptr>(_node));
+  }
+
+  reference operator*(void) const {
+    return static_cast<link_type>(_node)->value;
+  }
+
+  pointer operator->(void) const { &(static_cast<link_type>(_node)->value); }
+
+  self& operator++(void) {
+    _node = _rb_tree_increament(_node);
+    return *this;
+  }
+
+  self operator++(int) {
+    self tmp = *this;
+    _node = _rb_tree_increment(_node);
+    return tmp;
+  }
+
+  self& operator--(void) {
+    _node = _rb_tree_decrement(_node);
+    return *this;
+  }
+
+  self operator--(int) {
+    self tmp = *this;
+    _node = _rb_tree_decrement(_node);
+    return tmp;
+  }
+
+  //// NOTE: STL uses friend keyword.
+  // bool operator==(const self& lhs, const self& rhs) const {
+  //   return lhs._node == rhs._node;  // private
+  // }
+
+  // bool operator!=(const self& lhs, const self& rhs) const {
+  //   return !(lhs == rhs);
+  // }
+};
+
+// !SECTION: red-black tree iterator
 
 // 트리 정보를  저장하는  header cell
 struct _rb_tree_header {
@@ -227,6 +227,21 @@ struct _rb_tree_header {
   _rb_tree_header(void) {
     _header.color = RED;
     _reset();
+  }
+
+  /**
+   * @brief tree 가 empty 이고 from 에서 데이터를 받아와야 할 경우 사용.
+   *
+   * @param from
+   */
+  void _move_data(_rb_tree_header& from) {
+    _header.parent = from._header.parent;
+    _header.left = from._header.left;
+    _header.right = from._header.right;
+    _header.parent->parent = &_header;  // update root data
+    _node_count = from._node_count;
+
+    from._reset();
   }
 
   /**
@@ -255,7 +270,8 @@ struct _rb_tree_impl : public _rb_tree_header, _rb_tree_key_compare<Compare> {
   _rb_tree_impl(void) {}
   _rb_tree_impl(const _rb_tree_impl& src)
       : _rb_tree_header(), _base_key_compare(src._compare) {}
-  explicit _rb_tree_impl(const Compare& comp) : _base_key_compare(comp) {}
+  explicit _rb_tree_impl(const Compare& comp)
+      : _rb_tree_header(), _base_key_compare(comp) {}
 };
 
 // SECTION: red-black tree
@@ -299,12 +315,12 @@ class _rb_tree {
 
   // SECTION : member
  private:
-  _rb_tree_impl _impl;
+  _rb_tree_impl<Compare> _impl;
   node_allocator _alloc;
 
  public:
   _rb_tree(void) {}
-  _rb_tree(const _rb_tree& src) : _rb_tree_impl(src._impl) {}
+  _rb_tree(const _rb_tree& src) : _rb_tree_impl<Compare>(src._impl) {}
   ~_rb_tree(void) {}
 
   _rb_tree& operator=(const _rb_tree& src) {}
@@ -319,13 +335,69 @@ class _rb_tree {
   size_type size(void) const { return _impl._node_count; }
   size_type max_size(void) const { return _alloc.max_size(); }
 
+  void swap(_rb_tree& x) {
+    /**
+     * 1. 나는 비었는데 얘는 있음
+     * 2. 나는 있는데 얘는 비었음
+     * 3. 나도 얘도 있음
+     * 4. 둘 다 업ㅆ~
+     *
+     *
+     * 비었을 경우 -> root 가 null. header (null, header, header)싱테
+     * 아닌 애 거를 빈 애에 넣어주고.. 뭐쩌구~
+     *
+     * 둘 다 찼을 경우 -> 걍 헤더 세 개 스왑하면 안되나? 흠~ 헤더노드 스왑하면
+     * 될 것 같은데 머임
+     */
+    if (_get_root() == NIL) {
+      if (x._get_root() != NIL) {
+        _impl_move_data(x);
+      }
+    } else if (x._get_root() == NIL) {
+      x._impl._move_data(_impl);
+    } else {
+      swap(_impl._header.parent, x._impl._header.parent);
+      swap(_impl._header.left, x._impl._header.left);
+      swap(_impl._header.right, x._impl._header.right);
+
+      _get_root()->parent = &_impl._header;  // header reset
+      x._get_root()->parent = &x._impl._header;
+      swap(_impl._node_count, x._impl._node_count);
+      swap(_impl._compare, x._impl._compare);
+    }
+  }
+
   // NOTHROW
   void clear(void) {
     _erase(_get_root());
     _impl._reset();
   }
 
-  node_allocator get_node_allocator(void) { return _alloc; }
+  /**
+   * @brief key 에 해당하는 노드를 찾는다.
+   *
+   * @param k key
+   * @return iterator 찾으면 찾은 iterator, 못찾으면 end.
+   */
+  iterator find(const key_type& key) {
+    iterator gte = lower_bound(key);
+    // 1. gte 가 end 이면 크거나 같은 키가 없음.
+    // 1 에서 || 이므로 key <= gte 인 것은 확실함!
+    // 거기서 key < gte 가 true 이면 같은 것이 아니라 더 큰 것이므로 return end
+    return (gte == end() || _impl.compare(key, _get_key(*gte))) ? end() : gte;
+  }
+
+  const_iterator find(const key_type& k) const {
+    const_iterator gte = lower_bound(key);
+    return (gte == end() || _impl.compare(key, _get_key(*gte))) ? end() : gte;
+  }
+
+  // distance of equal_range
+  size_type count(const key_type& key) const {
+    pair<const_iterator, const_iterator> p = equal_range(key);
+    const size_type n = distance(p.first, p.second);
+    return n;
+  }
 
   /**
    * @brief key 보다 같거나 큰 노드 중 가장 작은 노드 반환.
@@ -411,6 +483,8 @@ class _rb_tree {
     return make_pair(lower_bound(key), upper_bound(key));
   }
 
+  node_allocator get_node_allocator(void) { return _alloc; }
+
  private:
   // SECTION : about elements
   base_ptr _get_root(void) { return _header.parent; }
@@ -419,6 +493,18 @@ class _rb_tree {
 
   key_type _get_key(const value_type& value) const {
     return KeyOfValue()(x->value);
+  }
+
+  static link_type _left(base_ptr x) { return static_cast<link_type>(x->left); }
+  static const_link_type _left(const_base_ptr x) {
+    return static_cast<const_link_type>(x->left);
+  }
+
+  static link_type _right(base_ptr x) {
+    return static_cast<link_type>(x->right);
+  }
+  static const_link_type _right(const_base_ptr x) {
+    return static_cast<const_link_type>(x->right);
   }
 
   link_type _create_node(const KeyOfValue& key_value) {

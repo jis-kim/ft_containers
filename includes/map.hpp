@@ -101,8 +101,8 @@ class map {
    *
    * @return iterator
    */
-  iterator begin(void) {}
-  const_iterator begin(void) const {}
+  iterator begin(void) { return _tree.begin(); }
+  const_iterator begin(void) const { return _tree.begin(); }
 
   // NOTHROW
   /**
@@ -111,8 +111,8 @@ class map {
    *
    * @return iterator past-the-end 를 가리키는 iterator (bidirectional)
    */
-  iterator end(void) {}
-  const_iterator end(void) const {}
+  iterator end(void) { return _tree.end(); }
+  const_iterator end(void) const { return _tree.end(); }
 
   // NOTHROW
   /**
@@ -122,8 +122,8 @@ class map {
    * @return reverse_iterator 컨테이너의 마지막 element 를 가리키는 reverse
    * iterator (bidirectioinal)
    */
-  reverse_iterator rbegin(void) {}
-  const_reverse_iterator rbegin(void) const {}
+  reverse_iterator rbegin(void) { return _tree.rbegin(); }
+  const_reverse_iterator rbegin(void) const { return _tree.rbegin(); }
 
   // NOTHROW
   /**
@@ -133,8 +133,8 @@ class map {
    * @return reverse_iterator 컨테이너의 reverse end 를 가리키는 reverse
    * iterator (bidirectional)
    */
-  reverse_iterator rend(void) {}
-  const_reverse_iterator rend(void) const {}
+  reverse_iterator rend(void) { return _tree.rend(); }
+  const_reverse_iterator rend(void) const { return _tree.rend(); }
   // !SECTION : iterators
 
   // SECTION : capacity
@@ -147,7 +147,7 @@ class map {
    * @return true size is 0
    * @return false otherwise
    */
-  bool empty(void) const {}
+  bool empty(void) const { return _tree.empty(); }
 
   // NOTHROW
   /**
@@ -156,7 +156,7 @@ class map {
    *
    * @return size_type the number of elements in the container
    */
-  size_type size(void) const {}
+  size_type size(void) const { return _tree.size(); }
 
   // NOTHROW
   /**
@@ -165,7 +165,7 @@ class map {
    *
    * @return size_type
    */
-  size_type max_size(void) const {}
+  size_type max_size(void) const { return _tree.max_size(); }
 
   // !SECTION : capacity
 
@@ -186,7 +186,7 @@ class map {
    * @param k
    * @return mapped_type&
    */
-  mapped_type& operator[](const key_type& k) {}
+  mapped_type& operator[](const key_type& key) {}
 
   // STRONG
   /**
@@ -197,8 +197,8 @@ class map {
    * @param k
    * @return mapped_type&
    */
-  mapped_type& at(const key_type& k) {}
-  const mapped_type& at(const key_type& k) const {}
+  mapped_type& at(const key_type& key) {}
+  const mapped_type& at(const key_type& key) const {}
 
   // !SECTION:  element access
 
@@ -265,7 +265,7 @@ class map {
    * @return size_type 지워진 element 의 개수
    */
 
-  size_type erase(const key_type& k) {}
+  size_type erase(const key_type& key) {}
 
   /**
    * @brief [first, last) 를 삭제한다.
@@ -279,7 +279,7 @@ class map {
   // NOTHROW 두 컨테이너의 compare 가 같거나 allocator traits 가 allocator 가
   // 전파되어야 함을 알 경우(? 먼소리)
   // otherwise UB
-  void swap(map& x) {}
+  void swap(map& x) { _tree.swap(x._tree); }
 
   // NOTHROW
   /**
@@ -287,7 +287,7 @@ class map {
    * @complexity O(N) N is size - destruction
    *
    */
-  void clear(void) {}
+  void clear(void) { _tree.clear(); }
 
   // !SECTION : modifiers
 
@@ -330,8 +330,8 @@ class map {
    * @param k
    * @return k 라는 key 가 있으면 그 element 를 가리키는 iterator, 없으면 end
    */
-  iterator find(const key_type& k) {}
-  const_iterator find(const key_type& k) const {}
+  iterator find(const key_type& key) { return _tree.find(key); }
+  const_iterator find(const key_type& key) const { return _tree.find(key); }
 
   // STRONG
   /**
@@ -342,7 +342,7 @@ class map {
    * @param k
    * @return size_type k 라는 key 를 가진 element 가 있으면 1, 없으면 0
    */
-  size_type count(const key_type& k) const {}
+  size_type count(const key_type& key) const { return _tree.count(key); }
 
   // STRONG
   /**
@@ -352,18 +352,22 @@ class map {
    * @param k
    * @return iterator
    */
-  iterator lower_bound(const key_type& k) {}
-  const_iterator lower_bound(const key_type& k) const {}
+  iterator lower_bound(const key_type& key) { return _tree.lower_bound(key); }
+  const_iterator lower_bound(const key_type& key) const {
+    return _tree.lower_bound(key);
+  }
 
   // STRONG
   /**
-   * @brief
+   * @brief k 보다 뒤에 있는 첫번째 element 를 가리키는 iterator 를 리턴한다.
    *
    * @param k
    * @return iterator
    */
-  iterator upper_bound(const key_type& k) {}
-  const_iterator upper_bound(const key_type& k) const {}
+  iterator upper_bound(const key_type& key) { return _tree.upper_bound(key); }
+  const_iterator upper_bound(const key_type& key) const {
+    return _tree.upper_bound(key);
+  }
 
   // STRONG
   /**
@@ -374,8 +378,12 @@ class map {
    * @return pair<iterator, iterator> pair::first 는 lower_bound,
    * pair::second 는 upper_bound
    */
-  pair<iterator, iterator> equal_range(const key_type& k) {}
-  pair<const_iterator, const_iterator> equal_range(const key_type& k) const {}
+  pair<iterator, iterator> equal_range(const key_type& key) {
+    return _tree.equal_range(key);
+  }
+  pair<const_iterator, const_iterator> equal_range(const key_type& key) const {
+    return _tree.equal_range(key);
+  }
 
   // !SECTION : operations
 
@@ -389,6 +397,49 @@ class map {
    */
   allocator_type get_allocator(void) const { return _tree.get_allocator(); }
 };
+
+// SECTION : relational operators
+template <class Key, class T, class Compare, class Alloc>
+bool operator==(const map<Key, T, Compare, Alloc>& lhs,
+                const map<Key, T, Compare, Alloc>& rhs) {
+  return lhs._tree == rhs._tree;
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator!=(const map<Key, T, Compare, Alloc>& lhs,
+                const map<Key, T, Compare, Alloc>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator<(const map<Key, T, Compare, Alloc>& lhs,
+               const map<Key, T, Compare, Alloc>& rhs) {
+  return lhs._tree < rhs._tree;
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator>(const map<Key, T, Compare, Alloc>& lhs,
+               const map<Key, T, Compare, Alloc>& rhs) {
+  return rhs < lhs;
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator<=(const map<Key, T, Compare, Alloc>& lhs,
+                const map<Key, T, Compare, Alloc>& rhs) {
+  return !(rhs < lhs);
+}
+
+template <class Key, class T, class Compare, class Alloc>
+bool operator>=(const map<Key, T, Compare, Alloc>& lhs,
+                const map<Key, T, Compare, Alloc>& rhs) {
+  return !(lhs < rhs);
+}
+
+template <class Key, class T, class Compare, class Alloc>
+void swap(std::map<Key, T, Compare, Alloc>& lhs,
+          std::map<Key, T, Compare, Alloc>& rhs) {
+  lhs.swap(rhs);
+}  // !SECTION : relational operator
 
 }  // namespace ft
 

@@ -2,6 +2,7 @@
 #include <map>
 // #include <vector>
 
+#include "map.hpp"
 #include "testheader/print_vector.hpp"
 #include "vector.hpp"
 
@@ -23,4 +24,6 @@ int main(void) {
   std::cout << alloc.address(ad) << '\n';
 
   pair_test();
+
+  ft::map<int, std::string> map;
 }
