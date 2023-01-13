@@ -13,7 +13,7 @@
 namespace ft {
 template <typename Pair>
 struct _SelectKey {
-  typename Pair::first_type operator()(const Pair& x) const { return x.first; }
+  typename Pair::first_type& operator()(Pair& x) const { return x.first; }
 
   const typename Pair::first_type& operator()(const Pair& x) const {
     return x.first;

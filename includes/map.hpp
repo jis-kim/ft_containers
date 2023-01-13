@@ -11,7 +11,8 @@
 #define MAP_HPP_
 
 #include <functional>  // std::less
-#include <memory>      //std::allocator
+#include <map>
+#include <memory>  //std::allocator
 
 #include "_rb_tree.hpp"
 #include "function.hpp"
@@ -20,13 +21,8 @@
 namespace ft {
 
 template <typename Key, typename T, typename Compare = std::less<Key>,
-          typename Alloc = std::allocator<pair<const Key, T>>>
+          typename Alloc = std::allocator<pair<const Key, T> > >
 class map {
- private:
-  typedef _rb_tree<Key, T, _SelectKey, Compare, Alloc> _rep_type;
-
-  _rep_type _tree;  // structure
-
  public:
   typedef Key key_type;
   typedef T mapped_type;
@@ -40,13 +36,29 @@ class map {
   typedef value_type* pointer;
   typedef const value_type* const_pointer;
 
+ private:
+  typedef _rb_tree<key_type, value_type, _SelectKey<value_type>, key_compare,
+                   allocator_type>
+      _rep_type;
+
+  _rep_type _tree;  // structure
+
+ public:
   typedef typename _rep_type::iterator iterator;
   typedef typename _rep_type::const_iterator const_iterator;
   typedef typename _rep_type::reverse_iterator reverse_iterator;
   typedef typename _rep_type::const_reverse_iterator const_reverse_iterator;
 
-  struct key_compare {};
-  struct value_compare {};
+  struct value_compare {
+   protected:
+    Compare comp;
+    value_compare(Compare c) : comp(c) {}
+
+   public:
+    bool operator()(const value_type& x, const value_type& y) const {
+      return comp(x.first, y.first);
+    }
+  };
 
   // SECTION : constructor
   // STRONG
@@ -90,7 +102,10 @@ class map {
   // BASIC
   // allocator_traits::construct 가 적절한 인자를 받을 수 없거나
   // value_type 이 copy assignable 하지 않으면 UB.
-  map& operator=(const map& x) {}
+  map& operator=(const map& x) {
+    _tree = x._tree;
+    return *this;
+  }
 
   // SECTION : iterators
   // NOTHROW
@@ -184,9 +199,15 @@ class map {
    * @complexity O(log N) N is size
    *
    * @param k
-   * @return mapped_type&
+   * @return mapped_type& value 를 가리키는 reference
    */
-  mapped_type& operator[](const key_type& key) {}
+  mapped_type& operator[](const key_type& key) {
+    iterator it = find(key);
+    if (it == end()) {
+      it = insert(value_type(key, mapped_type())).first;
+    }
+    return it->second;
+  }
 
   // STRONG
   /**
@@ -197,8 +218,17 @@ class map {
    * @param k
    * @return mapped_type&
    */
-  mapped_type& at(const key_type& key) {}
-  const mapped_type& at(const key_type& key) const {}
+  mapped_type& at(const key_type& key) {
+    iterator it = find(key);
+    if (it == end()) throw std::out_of_range("ft::map::at key not found");
+    return it->second;
+  }
+
+  const mapped_type& at(const key_type& key) const {
+    const_iterator it = find(key);
+    if (it == end()) throw std::out_of_range("ft::map::at key not found");
+    return it->second;
+  }
 
   // !SECTION:  element access
 
@@ -218,7 +248,9 @@ class map {
    * 삽입에 실패했다면 first 는 이미 존재하는 element 를 가리키는 iterator,
    * second 는 false.
    */
-  pair<iterator, bool> insert(const value_type& val) {}
+  pair<iterator, bool> insert(const value_type& val) {
+    return _tree.insert(val);
+  }
 
   /**
    * @brief
@@ -230,7 +262,9 @@ class map {
    * @return iterator 삽입에 성공했다면 삽입된 element 를 가리키는 iterator
    * 실패했다면 key 가 같은 이미 존재하는 element 를 가리키는 iterator.
    */
-  iterator insert(iterator position, const value_type& val) {}
+  iterator insert(iterator position, const value_type& val) {
+    return _tree.insert(position, val);
+  }
 
   /**
    * @brief
@@ -243,7 +277,9 @@ class map {
    * @param last
    */
   template <typename InputIterator>
-  void insert(InputIterator first, InputIterator last) {}
+  void insert(InputIterator first, InputIterator last) {
+    _tree.insert(first, last);
+  }
 
   // NOTHROW 컨테이너의 comparison object 가 throw 하지 않는 이상 nothrow.
   // STRONG single element 가 지워지는 경우

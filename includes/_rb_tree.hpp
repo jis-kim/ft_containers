@@ -33,27 +33,6 @@ struct _rb_tree_node_base {
   base_ptr parent;
   base_ptr left;
   base_ptr right;
-
-  // SECTION : search - subtree 에서의 left, right most 를 찾는다.
-  static base_ptr _left_most(base_ptr x) {
-    while (x->left != NIL) x = x->left;
-    return x;
-  }
-
-  static const_base_ptr _left_most(const_base_ptr x) {
-    while (x->left != NIL) x = x->left;
-    return x;
-  }
-
-  static base_ptr _right_most(base_ptr x) {
-    while (x->right != NIL) x = x->right;
-    return x;
-  }
-
-  static const_base_ptr _right_most(const_base_ptr x) {
-    while (x->right != NIL) x = x->right;
-    return x;
-  }
 };
 
 template <typename Val>
@@ -286,7 +265,7 @@ struct _rb_tree_impl : public _rb_tree_header, _rb_tree_key_compare<Compare> {
  * @tparam Alloc
  */
 template <typename Key, typename Val, typename KeyOfValue, typename Compare,
-          typename Alloc = std::allocator<Val>>
+          typename Alloc = std::allocator<Val> >
 class _rb_tree {
  protected:
   typedef _rb_tree_node_base* base_ptr;
@@ -310,7 +289,7 @@ class _rb_tree {
   typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
 
   // rebind for nodes
-  typedef typename Alloc::template rebind<_rb_tree_node<value_type>>::other
+  typedef typename Alloc::template rebind<_rb_tree_node<value_type> >::other
       node_allocator;
 
   // SECTION : member
@@ -334,6 +313,14 @@ class _rb_tree {
   bool empty(void) const { return _impl._node_count == 0; }
   size_type size(void) const { return _impl._node_count; }
   size_type max_size(void) const { return _alloc.max_size(); }
+
+  // SECTION : insert
+  value_type insert(const value_type& val) {}
+
+  value_type insert(iterator position, const value_type& val) {}
+
+  template <typename InputIterator>
+  void insert(InputIterator first, InputIterator last) {}
 
   void swap(_rb_tree& x) {
     /**
@@ -384,19 +371,18 @@ class _rb_tree {
     // 1. gte 가 end 이면 크거나 같은 키가 없음.
     // 1 에서 || 이므로 key <= gte 인 것은 확실함!
     // 거기서 key < gte 가 true 이면 같은 것이 아니라 더 큰 것이므로 return end
-    return (gte == end() || _impl.compare(key, _get_key(*gte))) ? end() : gte;
+    return (gte == end() || _impl._compare(key, _get_key(*gte))) ? end() : gte;
   }
 
-  const_iterator find(const key_type& k) const {
+  const_iterator find(const key_type& key) const {
     const_iterator gte = lower_bound(key);
-    return (gte == end() || _impl.compare(key, _get_key(*gte))) ? end() : gte;
+    return (gte == end() || _impl._compare(key, _get_key(*gte))) ? end() : gte;
   }
 
   // distance of equal_range
   size_type count(const key_type& key) const {
     pair<const_iterator, const_iterator> p = equal_range(key);
-    const size_type n = distance(p.first, p.second);
-    return n;
+    return static_cast<size_type>(std::distance(p.first, p.second));
   }
 
   /**
@@ -487,12 +473,12 @@ class _rb_tree {
 
  private:
   // SECTION : about elements
-  base_ptr _get_root(void) { return _header.parent; }
-  base_ptr _get_left_most(void) { return _header.left; }
-  base_ptr _get_right_most(void) { return _header.right; }
+  base_ptr _get_root(void) { return _impl._header.parent; }
+  base_ptr _get_left_most(void) { return _impl._header.left; }
+  base_ptr _get_right_most(void) { return _impl._header.right; }
 
   key_type _get_key(const value_type& value) const {
-    return KeyOfValue()(x->value);
+    return KeyOfValue()(value);
   }
 
   static link_type _left(base_ptr x) { return static_cast<link_type>(x->left); }
@@ -550,15 +536,116 @@ class _rb_tree {
       node = tmp;
     }
   }
+
+  /**
+   * @brief find parent's position to insert new node
+   *
+   * @param key
+   * @return pair<base_ptr, base_ptr>
+   */
+  pair<base_ptr, base_ptr> _find_insert_pos(const key_type& key) {
+    typedef pair<base_ptr, base_ptr> pair_type;
+
+    base_ptr x = _get_root();
+    base_ptr y = end();  // header
+    bool comp = true;
+    while (x != NIL) {
+      y = x;
+      comp = _impl._compare(key, _get_key(x->value));
+      // left -> key가 작음. right -> 같거나 큼.
+      x = comp ? x->left : x->right;
+    }
+    // y는 넣을 자리의 부모 (왼쪽, 오른쪽 자식 결정!)
+    iterator tmp(y);
+    if (comp) {              // key < y.key x가 왼쪽이었어요
+      if (tmp == begin()) {  // 여기 넣어야 함!
+        return pair_type(x, y);
+      }
+      --tmp;
+    }
+    // tmp < key -> y보다 크고, tmp 보다 크다.
+    if (_impl._compare(_get_key(*tmp), key)) {
+      return pair_type(x, y);
+    }
+    // tmp == key
+    return pair_type(tmp._node, NIL);
+  }
+
+  // compexity O(log N)
+  pair<iterator, bool> _insert_unique(const value_type& value) {
+    key_type key = _get_key(value);
+    pair<base_ptr, base_ptr> res = _find_insert_pos(key);
+
+    if (res.second) {
+      return pair<iterator, bool>(_insert(res.first, res.second, value), true);
+    }
+    return pair<iterator, bool>(iterator(res.first), false);
+  }
+
+  iterator _insert(base_ptr x, base_ptr p, const value_type& value) {
+    bool _insert_left = (x != NIL || p == end() ||
+                         _impl._compare(_get_key(value), _get_key(p->value)));
+    link_type node = _create_node(value);
+    _insert_rebalance(_insert_left, x, p, node);
+    ++_impl._node_count;
+
+    return iterator(node);
+  }
+
+  // SECTION : TEST
+  void print_rb_tree() {
+    _rb_tree_node_base* x = _impl._header->parent;  // root
+    while (x != NIL) {
+      std::cout << x->value << " ";
+      x = _rb_tree_increment(x);
+    }
+    std::cout << std::endl;
+  }
 };
 // !SECTION: red-black tree
 
 // SECTION : search operation
+
+// SECTION : search - subtree 에서의 left, right most 를 찾는다.
+_rb_tree_node_base* _left_most(_rb_tree_node_base* x) {
+  while (x->left != NIL) x = x->left;
+  return x;
+}
+
+const _rb_tree_node_base* _left_most(const _rb_tree_node_base* x) {
+  while (x->left != NIL) x = x->left;
+  return x;
+}
+
+_rb_tree_node_base* _right_most(_rb_tree_node_base* x) {
+  while (x->right != NIL) x = x->right;
+  return x;
+}
+
+const _rb_tree_node_base* _right_most(const _rb_tree_node_base* x) {
+  while (x->right != NIL) x = x->right;
+  return x;
+}
+
 _rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x) {
   if (x->right != NIL) {
-    return _rb_tree_subtree_min(x->right);
+    return _left_most(x->right);
   } else {
     _rb_tree_node_base* xp = x->parent;
+    while (x == xp->right) {
+      x = xp;
+      xp = xp->parent;
+    }
+    if (x->right != xp) x = xp;
+  }
+  return x;
+}
+
+const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x) {
+  if (x->right != NIL) {
+    return _left_most(x->right);
+  } else {
+    const _rb_tree_node_base* xp = x->parent;
     while (x == xp->right) {
       x = xp;
       xp = xp->parent;
@@ -572,9 +659,25 @@ _rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x) {
   if (x->color == RED && x->parent->parent == x) {  // header node (end node)
     x = x->right;                                   // 바로 right most return
   } else if (x->left != NIL) {
-    return _rb_tree_subtree_max(x->left);  // max of left subtree
+    return _right_most(x->left);  // max of left subtree
   } else {
     _rb_tree_node_base* xp = x->parent;
+    while (x == xp->left) {
+      x = xp;
+      xp = xp->parent;
+    }
+    x = xp;
+  }
+  return x;
+}
+
+const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
+  if (x->color == RED && x->parent->parent == x) {
+    x = x->right;
+  } else if (x->left != NIL) {
+    return _right_most(x->left);
+  } else {
+    const _rb_tree_node_base* xp = x->parent;
     while (x == xp->left) {
       x = xp;
       xp = xp->parent;
@@ -606,6 +709,33 @@ _rb_tree_node_base* _rb_tree_subtree_min(_rb_tree_node_base* x) {
 
 _rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x) {
   while (x->right != NIL) x = x->right;
+  return x;
+}
+
+void _insert_rebalance(bool left, _rb_tree_node_base* x,
+                       _rb_tree_node_base* root, _rb_tree_node_base& header) {
+  // insert and rebalance tree
+}
+
+/**
+ * @brief x 를 기준으로 subtree 에서 successor 를 찾는다.
+ * successor 는 x 보다 큰 노드 중 가장 작은 노드이다.
+ *
+ * @param x
+ * @return _rb_tree_node_base*
+ */
+_rb_tree_node_base* _find_successor(_rb_tree_node_base* x) {
+  if (x->right != NIL) {  // x has right child
+    return _left_most(x->right);
+  }
+  _rb_tree_node_base* y = x->parent;
+  while (x == y->right) {
+    x = y;
+    y = y->parent;
+  }
+  if (x->right != y) {
+    x = y;
+  }
   return x;
 }
 
