@@ -10,6 +10,7 @@
 #ifndef PAIR_HPP_
 #define PAIR_HPP_
 
+#include <iostream>
 #include <utility>
 
 namespace ft {
@@ -39,6 +40,12 @@ struct pair {
     return *this;
   }
 };
+
+template <typename T1, typename T2>
+std::ostream& operator<<(std::ostream& os, const pair<T1, T2>& pr) {
+  os << "[ " << pr.first << ", " << pr.second << " ]";
+  return os;
+}
 
 // SECTION : non-member function
 template <typename T1, typename T2>

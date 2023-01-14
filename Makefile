@@ -59,7 +59,6 @@ fclean : clean
 re : fclean
 	@make all
 
-# 이게 최선입니까? 확실해요?
 .PHONY : debug
 debug : fclean
 	@make DEBUG=1

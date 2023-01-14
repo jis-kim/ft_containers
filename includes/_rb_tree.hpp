@@ -12,6 +12,7 @@
 
 #include "pair.hpp"
 #include "reverse_iterator.hpp"
+#include "testheader/print_vector.hpp"
 #define NIL NULL
 
 namespace ft {
@@ -20,7 +21,6 @@ enum _rb_tree_color { RED = 0, BLACK };
 /**
  * @brief base class of red-black tree node
  * _rb_tree_node 가 이를 상속받는다.
- * 얘왜템없????
  * 걍 타입이 필요없음 Value 가 없기 때문
  */
 struct _rb_tree_node_base {
@@ -40,19 +40,12 @@ struct _rb_tree_node : public _rb_tree_node_base {
   typedef _rb_tree_node<Val>* link_type;
   typedef Val value_type;
 
-  _rb_tree_color color;
-  base_ptr parent;
-  base_ptr left;
-  base_ptr right;
-
   value_type value;
 
   _rb_tree_node(const value_type& value = value_type(), link_type parent = 0,
                 link_type left = 0, link_type right = 0,
                 _rb_tree_color color = RED)
       : value(value), parent(parent), left(left), right(right), color(color) {}
-
-  void change_color(void) { color = (color == RED) ? BLACK : RED; }
 };
 template <typename Compare>
 struct _rb_tree_key_compare {
@@ -327,7 +320,7 @@ class _rb_tree {
      * 1. 나는 비었는데 얘는 있음
      * 2. 나는 있는데 얘는 비었음
      * 3. 나도 얘도 있음
-     * 4. 둘 다 업ㅆ~
+     * 4. 둘 다 없어
      *
      *
      * 비었을 경우 -> root 가 null. header (null, header, header)싱테
@@ -493,8 +486,16 @@ class _rb_tree {
     return static_cast<const_link_type>(x->right);
   }
 
+  static link_type _parent(base_ptr x) {
+    return static_cast<link_type>(x->parent);
+  }
+
+  static const_link_type _parent(const_base_ptr x) {
+    return static_cast<const_link_type>(x->parent);
+  }
+
   link_type _create_node(const KeyOfValue& key_value) {
-    link_type tmp = _alloc.allocate();
+    link_type tmp = _alloc.allocate(1);
     _construct_node(tmp, key_value);
     return tmp;
   }
@@ -513,7 +514,7 @@ class _rb_tree {
     _deallocate_node(node);
   }
 
-  void _deallocate_node(link_type node) { _alloc.deallocate(node); }
+  void _deallocate_node(link_type node) { _alloc.deallocate(node, 1); }
 
   /**
    * @brief node 를 기준으로 하는 subtree 를 모두 삭제한다.
@@ -551,13 +552,11 @@ class _rb_tree {
     bool comp = true;
     while (x != NIL) {
       y = x;
-      comp = _impl._compare(key, _get_key(x->value));
-      // left -> key가 작음. right -> 같거나 큼.
+      comp = _impl._compare(key, _get_key(*x));
       x = comp ? x->left : x->right;
     }
-    // y는 넣을 자리의 부모 (왼쪽, 오른쪽 자식 결정!)
     iterator tmp(y);
-    if (comp) {              // key < y.key x가 왼쪽이었어요
+    if (comp) {              // key < y.key x가 왼쪽에 있음
       if (tmp == begin()) {  // 여기 넣어야 함!
         return pair_type(x, y);
       }
@@ -575,38 +574,34 @@ class _rb_tree {
   pair<iterator, bool> _insert_unique(const value_type& value) {
     key_type key = _get_key(value);
     pair<base_ptr, base_ptr> res = _find_insert_pos(key);
-
     if (res.second) {
       return pair<iterator, bool>(_insert(res.first, res.second, value), true);
     }
     return pair<iterator, bool>(iterator(res.first), false);
   }
 
+  /**
+   * @brief 무조건 삽입하는 경우만 들어오는 데 왜지?
+   *
+   * @param x
+   * @param p
+   * @param value
+   * @return iterator insert 한 node 의 iterator
+   */
   iterator _insert(base_ptr x, base_ptr p, const value_type& value) {
-    bool _insert_left = (x != NIL || p == end() ||
-                         _impl._compare(_get_key(value), _get_key(p->value)));
+    // bool _insert_left = (x != NIL || p == end() ||
+    //                      _impl._compare(_get_key(value), _get_key(*p)));
+    bool _insert_left =
+        (p == end() || _impl._compare(_get_key(value), _get_key(*p)));
     link_type node = _create_node(value);
     _insert_rebalance(_insert_left, x, p, node);
     ++_impl._node_count;
 
     return iterator(node);
   }
-
-  // SECTION : TEST
-  void print_rb_tree() {
-    _rb_tree_node_base* x = _impl._header->parent;  // root
-    while (x != NIL) {
-      std::cout << x->value << " ";
-      x = _rb_tree_increment(x);
-    }
-    std::cout << std::endl;
-  }
 };
 // !SECTION: red-black tree
 
-// SECTION : search operation
-
-// SECTION : search - subtree 에서의 left, right most 를 찾는다.
 _rb_tree_node_base* _left_most(_rb_tree_node_base* x) {
   while (x->left != NIL) x = x->left;
   return x;
@@ -712,9 +707,40 @@ _rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x) {
   return x;
 }
 
-void _insert_rebalance(bool left, _rb_tree_node_base* x,
-                       _rb_tree_node_base* root, _rb_tree_node_base& header) {
+/**
+ * @brief
+ *
+ * @param left
+ * @param x
+ * @param p
+ * @param header
+ */
+void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
+                       _rb_tree_node_base& header) {
   // insert and rebalance tree
+  _rb_tree_node_base* root = header.parent;
+
+  // Initialize new node
+  x->parent = p;
+  x->left = NIL;
+  x->right = NIL;
+  x->color = RED;
+
+  // insert
+  if (left) {
+    p->left = x;
+    if (p == &header) {
+      header.parent = x;
+      header.right = x;
+    } else if (p == header.left) {
+      header.left = x;
+    }
+  } else {
+    p->right = x;
+    if (p == header.right) {  // right-most
+      header.right = x;
+    }
+  }
 }
 
 /**
