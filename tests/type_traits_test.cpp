@@ -178,8 +178,8 @@ void type_traits_test(void) {
   }
 
   {
-    std::cout
-        << "\n\n===============Makefile print test(assign)================\n\n";
+    std::cout << "\n\n===============Makefile printtest(assign) ==== == == == "
+                 "== == ==\n\n ";
     ft::vector<char> v;
     std::ifstream source("Makefile", std::ios::binary);
     v.assign(std::istreambuf_iterator<char>(source),
@@ -198,25 +198,26 @@ void type_traits_test(void) {
     for (int i = 0; i < 10; ++i) {
       v.push_back('0' + i);
     }
+    v.assign(10, 'a');
+    system("leaks ft_containers");
     print_vector(v.begin(), v.end());
     print_vector(v);
     std::cout
         << "--------------------------------------------------------------\n";
 
-    std::ifstream source("Makefile", std::ios::binary);
-    ft::vector<char> vec((std::istreambuf_iterator<char>(source)),
-                         std::istreambuf_iterator<char>());
+    std::ifstream source("aaa", std::ios::binary);
+    std::vector<char> vec((std::istreambuf_iterator<char>(source)),
+                          std::istreambuf_iterator<char>());
 
     print_vector(vec.begin(), vec.end());
     print_vector(vec);
-
     v.insert(v.begin() + 5, vec.begin(), vec.end());
 
     std::cout
         << "--------------------------------------------------------------\n";
     print_vector(v.begin(), v.end());
     print_vector(v);
-    // well done!
+    //  well done!
   }
 
   {
@@ -239,4 +240,6 @@ void type_traits_test(void) {
     std::cout
         << "--------------------------------------------------------------\n";
   }
+
+  //  system("leaks ft_containers");
 }

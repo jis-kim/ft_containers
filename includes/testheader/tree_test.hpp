@@ -58,8 +58,11 @@ void print_rb_tree(const std::string& prefix, const _rb_tree_node_base* node,
 }
 
 template <typename T>
-void print_rb_tree(_rb_tree_iterator<T> root) {
-  ::print_rb_tree<T>("", root._node, false);
+void print_rb_tree(_rb_tree_iterator<T> it) {
+  _rb_tree_node_base* header = it._node;
+
+  if (header->parent == NULL) return;
+  ::print_rb_tree<T>("", header->parent, false);
 }
 
 void tree_test(void);

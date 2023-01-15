@@ -94,7 +94,7 @@ struct _rb_tree_iterator {
   }
 
   self& operator++(void) {
-    _node = _rb_tree_increament(_node);
+    _node = _rb_tree_increment(_node);
     return *this;
   }
 
@@ -308,7 +308,7 @@ class _rb_tree {
 
   // SECTION : red-black tree operation
   iterator begin(void) { return iterator(_impl._header.left); }
-  iterator end(void) { return iterator(_impl._header.right); }
+  iterator end(void) { return iterator(&_impl._header); }
   reverse_iterator rbegin(void) { return reverse_iterator(end()); }
   reverse_iterator rend(void) { return reverse_iterator(begin()); }
 
@@ -605,9 +605,9 @@ class _rb_tree {
    * @return iterator insert 한 node 의 iterator
    */
   iterator _insert(base_ptr x, base_ptr p, const value_type& value) {
-    // bool _insert_left = (x !=z NIL || p == end() ||
+    // bool _insert_left = (x != NIL || p == end() ||
     //                      _impl._compare(_get_key(value), _get_key(*p)));
-    bool _insert_left = (x != NIL || p == this->_impl._header.right ||
+    bool _insert_left = (x != NIL || p == end()._node ||
                          _impl._compare(KeyOfValue()(value), _get_key(p)));
     link_type node = _create_node(value);
     _insert_rebalance(_insert_left, node, p, this->_impl._header);

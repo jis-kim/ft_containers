@@ -16,6 +16,9 @@
 #include "reverse_iterator.hpp"
 #include "type_traits.hpp"
 
+// FIXME : vector_const_iterator
+#include <iostream>
+
 namespace ft {
 // SECTION : vector iterator
 // Random access iterator
@@ -146,9 +149,11 @@ class vector_base {
   pointer _end;
   pointer _end_cap;
 
+  explicit vector_base(const allocator_type& allocator)
+      : _alloc(allocator), _begin(NULL), _end(NULL), _end_cap(NULL) {}
+
   vector_base(const allocator_type& allocator,
-              typename allocator_type::size_type n =
-                  typename allocator_type::size_type())
+              typename allocator_type::size_type n)
       : _alloc(allocator),
         _begin(_alloc.allocate(n)),
         _end(_begin),
@@ -186,7 +191,7 @@ class vector : private vector_base<T, Allocator> {
   // STRONG
   // default
   explicit vector(const allocator_type& alloc = allocator_type())
-      : base_(alloc, size_type()) {}
+      : base_(alloc) {}
 
   // fill
   explicit vector(size_type n, const value_type& val = value_type(),
@@ -538,8 +543,10 @@ class vector : private vector_base<T, Allocator> {
     if (this->_end >= this->_end_cap) {  // no more space
       // reallocation
       vector tmp;
+      // system("leaks ft_containers >/dev/null");
       tmp._allocate(_get_alloc_size(size() + 1));
       tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
+
       tmp._construct_at_end(1, val);
       swap(tmp);
     } else {
@@ -671,6 +678,7 @@ class vector : private vector_base<T, Allocator> {
     if (size() + n > capacity()) {
       // STRONG
       vector tmp;
+      std::cout << "tmp size : " << tmp.size() << std::endl;
       tmp._allocate(_get_alloc_size(size() + n));
       tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       tmp._end = std::uninitialized_copy(first, last, tmp._end);
@@ -799,6 +807,7 @@ class vector : private vector_base<T, Allocator> {
   void _allocate(size_type n) {
     this->_end = this->_begin = this->_alloc.allocate(n);
     this->_end_cap = this->_begin + n;
+    // std::cout << "end_cap " << *(this->_end_cap) << '\n';
   }
 
   /**
