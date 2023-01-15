@@ -17,17 +17,22 @@ endif
 NAME = ft_containers
 
 INCS_DIR = ./includes/
-SRCS_DIR = ./tests/
+SRCS_DIR = ./srcs/
+TESTS_DIR = ./tests/
 
 SRCS = $(addprefix $(SRCS_DIR), $(SRCS_FILES))
-OBJS = $(SRCS:.cpp=.o)
+TESTS = $(addprefix $(TESTS_DIR), $(TESTS_FILES))
+OBJS = $(SRCS:.cpp=.o) $(TESTS:.cpp=.o)
+
+SRCS_FILES = _rb_tree.cpp
 
 # wild card
-SRCS_FILES = main.cpp\
+TESTS_FILES = main.cpp\
 vector_test.cpp \
 vector_iterator_test.cpp \
 type_traits_test.cpp \
-pair_test.cpp
+pair_test.cpp \
+tree_test.cpp
 
 OBJS_FILES = $(OBJS)
 

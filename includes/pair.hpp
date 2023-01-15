@@ -16,11 +16,14 @@
 namespace ft {
 template <typename T1, typename T2>
 struct pair {
+  typedef T1 first_type;
+  typedef T2 second_type;
+
   T1 first;
   T2 second;
 
   // SECTION : constructor
-  pair(void) {}
+  pair(void) : first(), second() {}
 
   template <typename T, typename U>
   pair(const pair<T, U>& pr) : first(pr.first), second(pr.second) {}

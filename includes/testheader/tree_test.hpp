@@ -17,15 +17,15 @@
 #include "_rb_tree.hpp"
 #include "pair.hpp"
 
-#define RED "\033[0;31m"
-#define GREEN "\033[0;32m"
-#define YELLOW "\033[0;33m"
-#define BLUE "\033[0;34m"
-#define MAGENTA "\033[0;35m"
-#define CYAN "\033[0;36m"
-#define WHITE "\033[0;37m"
-#define GRAY "\033[0;38m"
-#define RESET "\033[0m"
+#define PRINT_RED "\033[0;31m"
+#define PRINT_GREEN "\033[0;32m"
+#define PRINT_YELLOW "\033[0;33m"
+#define PRINT_BLUE "\033[0;34m"
+#define PRINT_MAGENTA "\033[0;35m"
+#define PRINT_CYAN "\033[0;36m"
+#define PRINT_WHITE "\033[0;37m"
+#define PRINT_GRAY "\033[0;38m"
+#define PRINT_RESET "\033[0m"
 
 using namespace ft;
 
@@ -35,28 +35,33 @@ template <typename T>
 void print_rb_tree(const std::string& prefix, const _rb_tree_node_base* node,
                    bool isLeft) {
   if (node != NIL) {
-    typedef _rb_tree_node<T>* link_type;
+    typedef const _rb_tree_node<T>* link_type;
     link_type x = static_cast<link_type>(node);
     std::cout << prefix;
 
     std::cout << (isLeft ? "├──" : "└──");
 
     // print the value of the node
-    std::string color = RED;
-    x->color == RED ? color = RED : color = WHITE;
-    std::cout << color << x->value << RESET << '\n';
+    std::string color = PRINT_RED;
+    (x->color == RED) ? color = PRINT_RED : color = PRINT_WHITE;
+    std::cout << color << x->value << PRINT_RESET << std::endl;
 
     // enter the next tree level - left and right branch
-    print_rb_tree(prefix + (isLeft ? "│   " : "    "), node->left, true);
-    print_rb_tree(prefix + (isLeft ? "│   " : "    "), node->right, false);
+    ::print_rb_tree<T>(prefix + (isLeft ? "│   " : "    "), node->left, true);
+    ::print_rb_tree<T>(prefix + (isLeft ? "│   " : "    "), node->right, false);
   }
+  // else {
+  //   std::cout << prefix;
+  //   std::cout << (isLeft ? "├──" : "└──");
+  //   std::cout << PRINT_WHITE << "NIL" << PRINT_RESET << std::endl;
+  // }
 }
 
 template <typename T>
-void print_rb_tree(const _rb_tree_node_base& header) {
-  typedef _rb_tree_node<T>* link_type;
-  link_type x = static_cast<link_type>(header.parent);  // root
-  print_rb_tree("", header, false);
+void print_rb_tree(_rb_tree_iterator<T> root) {
+  ::print_rb_tree<T>("", root._node, false);
 }
 
-#endif  // TREE_TEST_HPP_
+void tree_test(void);
+
+#endif  // TREE_TEST_HPP

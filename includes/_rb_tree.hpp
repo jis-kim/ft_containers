@@ -54,6 +54,7 @@ struct _rb_tree_node : public _rb_tree_node_base {
   //              _rb_tree_color color = RED)
   //    : value(value), parent(parent), left(left), right(right), color(color)
   //    {}
+  _rb_tree_node(const value_type& value = value_type()) : value(value) {}
 };
 template <typename Compare>
 struct _rb_tree_key_compare {
@@ -77,7 +78,6 @@ struct _rb_tree_iterator {
   typedef _rb_tree_node_base::base_ptr base_ptr;
   typedef _rb_tree_node<T>* link_type;
 
- private:
   base_ptr _node;
 
  public:
@@ -89,7 +89,9 @@ struct _rb_tree_iterator {
     return static_cast<link_type>(_node)->value;
   }
 
-  pointer operator->(void) const { &(static_cast<link_type>(_node)->value); }
+  pointer operator->(void) const {
+    return &(static_cast<link_type>(_node)->value);
+  }
 
   self& operator++(void) {
     _node = _rb_tree_increament(_node);
@@ -113,14 +115,14 @@ struct _rb_tree_iterator {
     return tmp;
   }
 
-  //// NOTE: STL uses friend keyword.
-  // bool operator==(const self& lhs, const self& rhs) const {
-  //   return lhs._node == rhs._node;  // private
-  // }
+  // NOTE: STL uses friend keyword.
+  friend bool operator==(const self& lhs, const self& rhs) {
+    return lhs._node == rhs._node;  // private
+  }
 
-  // bool operator!=(const self& lhs, const self& rhs) const {
-  //   return !(lhs == rhs);
-  // }
+  friend bool operator!=(const self& lhs, const self& rhs) {
+    return !(lhs == rhs);
+  }
 
   // SECTION : assginment operator
 };
@@ -186,15 +188,14 @@ struct _rb_tree_const_iterator {
     _node = _rb_tree_decrement(_node);
     return tmp;
   }
+  // NOTE: STL uses friend keyword.
+  friend bool operator==(const self& lhs, const self& rhs) {
+    return lhs._node == rhs._node;  // private
+  }
 
-  //// NOTE: STL uses friend keyword.
-  // bool operator==(const self& lhs, const self& rhs) const {
-  //   return lhs._node == rhs._node;  // private
-  // }
-
-  // bool operator!=(const self& lhs, const self& rhs) const {
-  //   return !(lhs == rhs);
-  // }
+  friend bool operator!=(const self& lhs, const self& rhs) {
+    return !(lhs == rhs);
+  }
 };
 
 // !SECTION: red-black tree iterator
@@ -316,9 +317,11 @@ class _rb_tree {
   size_type max_size(void) const { return _alloc.max_size(); }
 
   // SECTION : insert
-  value_type insert(const value_type& val) {}
+  pair<iterator, bool> insert(const value_type& val) {
+    return _insert_unique(val);
+  }
 
-  value_type insert(iterator position, const value_type& val) {}
+  iterator insert(iterator position, const value_type& val) {}
 
   template <typename InputIterator>
   void insert(InputIterator first, InputIterator last) {}
@@ -372,12 +375,14 @@ class _rb_tree {
     // 1. gte 가 end 이면 크거나 같은 키가 없음.
     // 1 에서 || 이므로 key <= gte 인 것은 확실함!
     // 거기서 key < gte 가 true 이면 같은 것이 아니라 더 큰 것이므로 return end
-    return (gte == end() || _impl._compare(key, _get_key(*gte))) ? end() : gte;
+    return (gte == end() || _impl._compare(key, _get_key(*gte._node))) ? end()
+                                                                       : gte;
   }
 
   const_iterator find(const key_type& key) const {
     const_iterator gte = lower_bound(key);
-    return (gte == end() || _impl._compare(key, _get_key(*gte))) ? end() : gte;
+    return (gte == end() || _impl._compare(key, _get_key(*gte._node))) ? end()
+                                                                       : gte;
   }
 
   // distance of equal_range
@@ -399,7 +404,7 @@ class _rb_tree {
     link_type x = _get_root();
     link_type y = end();
     while (x != NIL) {
-      if (!_impl._compare(_get_key(x->value), key)) {
+      if (!_impl._compare(_get_key(x), key)) {
         y = x;
         x = _left(x);
       } else {
@@ -415,7 +420,7 @@ class _rb_tree {
     link_type y = end();
     while (x != NIL) {
       // x.key >= key -> go left (left most 찾아야 함)
-      if (!_impl._compare(_get_key(x->value), key)) {
+      if (!_impl._compare(_get_key(x), key)) {
         y = x;  // update
         x = _left(x);
       } else {
@@ -437,7 +442,7 @@ class _rb_tree {
     link_type y = end();
     while (x != NIL) {
       // key < x.key
-      if (_impl._compare(key, _get_key(x->value))) {
+      if (_impl._compare(key, _get_key(x))) {
         y = x;
         x = _left(x);
       } else {
@@ -452,7 +457,7 @@ class _rb_tree {
     link_type x = _get_root();
     link_type y = end();
     while (x != NIL) {
-      if (_impl._compare(key, _get_key(x->value))) {
+      if (_impl._compare(key, _get_key(x))) {
         y = x;
         x = _left(x);
       } else {
@@ -476,10 +481,12 @@ class _rb_tree {
   // SECTION : about elements
   base_ptr _get_root(void) { return _impl._header.parent; }
   base_ptr _get_left_most(void) { return _impl._header.left; }
-  base_ptr _get_right_most(void) { return _impl._header.right; }
+  base_ptr _get_end(void) { return _impl._header.right; }
 
-  key_type _get_key(const value_type& value) const {
-    return KeyOfValue()(value);
+  key_type _get_key(const_link_type x) const { return KeyOfValue()(x->value); }
+
+  key_type _get_key(const_base_ptr x) const {
+    return _get_key(static_cast<const_link_type>(x));
   }
 
   static link_type _left(base_ptr x) { return static_cast<link_type>(x->left); }
@@ -502,13 +509,14 @@ class _rb_tree {
     return static_cast<const_link_type>(x->parent);
   }
 
-  link_type _create_node(const KeyOfValue& key_value) {
+  link_type _create_node(const value_type& value) {
     link_type tmp = _alloc.allocate(1);
-    _construct_node(tmp, key_value);
+    _construct_node(tmp, value);
     return tmp;
   }
 
-  link_type _construct_node(link_type node, const value_type& value) {
+  // value-> pair (map)
+  void _construct_node(link_type node, const value_type& value) {
     try {
       _alloc.construct(node, value);
     } catch (...) {
@@ -556,11 +564,11 @@ class _rb_tree {
     typedef pair<base_ptr, base_ptr> pair_type;
 
     base_ptr x = _get_root();
-    base_ptr y = end();  // header
+    base_ptr y = _get_end();  // header
     bool comp = true;
     while (x != NIL) {
       y = x;
-      comp = _impl._compare(key, _get_key(*x));
+      comp = _impl._compare(key, _get_key(x));
       x = comp ? x->left : x->right;
     }
     iterator tmp(y);
@@ -571,7 +579,7 @@ class _rb_tree {
       --tmp;
     }
     // tmp < key -> y보다 크고, tmp 보다 크다.
-    if (_impl._compare(_get_key(*tmp), key)) {
+    if (_impl._compare(_get_key(tmp._node), key)) {
       return pair_type(x, y);
     }
     // tmp == key
@@ -580,7 +588,7 @@ class _rb_tree {
 
   // compexity O(log N)
   pair<iterator, bool> _insert_unique(const value_type& value) {
-    key_type key = _get_key(value);
+    key_type key = KeyOfValue()(value);
     pair<base_ptr, base_ptr> res = _find_insert_pos(key);
     if (res.second) {
       return pair<iterator, bool>(_insert(res.first, res.second, value), true);
@@ -597,12 +605,12 @@ class _rb_tree {
    * @return iterator insert 한 node 의 iterator
    */
   iterator _insert(base_ptr x, base_ptr p, const value_type& value) {
-    // bool _insert_left = (x != NIL || p == end() ||
+    // bool _insert_left = (x !=z NIL || p == end() ||
     //                      _impl._compare(_get_key(value), _get_key(*p)));
-    bool _insert_left =
-        (p == end() || _impl._compare(_get_key(value), _get_key(*p)));
+    bool _insert_left = (x != NIL || p == this->_impl._header.right ||
+                         _impl._compare(KeyOfValue()(value), _get_key(p)));
     link_type node = _create_node(value);
-    _insert_rebalance(_insert_left, x, p, node);
+    _insert_rebalance(_insert_left, node, p, this->_impl._header);
     ++_impl._node_count;
 
     return iterator(node);
@@ -610,85 +618,20 @@ class _rb_tree {
 };
 // !SECTION: red-black tree
 
-_rb_tree_node_base* _left_most(_rb_tree_node_base* x) {
-  while (x->left != NIL) x = x->left;
-  return x;
-}
+_rb_tree_node_base* _left_most(_rb_tree_node_base* x);
 
-const _rb_tree_node_base* _left_most(const _rb_tree_node_base* x) {
-  while (x->left != NIL) x = x->left;
-  return x;
-}
+const _rb_tree_node_base* _left_most(const _rb_tree_node_base* x);
 
-_rb_tree_node_base* _right_most(_rb_tree_node_base* x) {
-  while (x->right != NIL) x = x->right;
-  return x;
-}
+_rb_tree_node_base* _right_most(_rb_tree_node_base* x);
+const _rb_tree_node_base* _right_most(const _rb_tree_node_base* x);
 
-const _rb_tree_node_base* _right_most(const _rb_tree_node_base* x) {
-  while (x->right != NIL) x = x->right;
-  return x;
-}
+_rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x);
 
-_rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x) {
-  if (x->right != NIL) {
-    return _left_most(x->right);
-  } else {
-    _rb_tree_node_base* xp = x->parent;
-    while (x == xp->right) {
-      x = xp;
-      xp = xp->parent;
-    }
-    if (x->right != xp) x = xp;
-  }
-  return x;
-}
+const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x);
 
-const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x) {
-  if (x->right != NIL) {
-    return _left_most(x->right);
-  } else {
-    const _rb_tree_node_base* xp = x->parent;
-    while (x == xp->right) {
-      x = xp;
-      xp = xp->parent;
-    }
-    if (x->right != xp) x = xp;
-  }
-  return x;
-}
+_rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x);
 
-_rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x) {
-  if (x->color == RED && x->parent->parent == x) {  // header node (end node)
-    x = x->right;                                   // 바로 right most return
-  } else if (x->left != NIL) {
-    return _right_most(x->left);  // max of left subtree
-  } else {
-    _rb_tree_node_base* xp = x->parent;
-    while (x == xp->left) {
-      x = xp;
-      xp = xp->parent;
-    }
-    x = xp;
-  }
-  return x;
-}
-
-const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
-  if (x->color == RED && x->parent->parent == x) {
-    x = x->right;
-  } else if (x->left != NIL) {
-    return _right_most(x->left);
-  } else {
-    const _rb_tree_node_base* xp = x->parent;
-    while (x == xp->left) {
-      x = xp;
-      xp = xp->parent;
-    }
-    x = xp;
-  }
-  return x;
-}
+const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x);
 
 /**
  * @brief subtree 를 왼쪽으로 회전
@@ -697,128 +640,20 @@ const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
  * @param root
  */
 void _rb_tree_rotate_left(_rb_tree_node_base* const x,
-                          _rb_tree_node_base*& root) {}
+                          _rb_tree_node_base*& root);
 
 void _rb_tree_rotate_right(_rb_tree_node_base* const x,
-                           _rb_tree_node_base*& root) {}
+                           _rb_tree_node_base*& root);
 
-void _rb_tree_recolorize(_rb_tree_node_base* x, _rb_tree_node_base* xp) {}
+void _rb_tree_recolorize(_rb_tree_node_base* x, _rb_tree_node_base* xp);
 
-// SECTION : for simple BST search
-_rb_tree_node_base* _rb_tree_subtree_min(_rb_tree_node_base* x) {
-  while (x->left != NIL) x = x->left;
-  return x;
-}
+_rb_tree_node_base* _rb_tree_subtree_min(_rb_tree_node_base* x);
 
-_rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x) {
-  while (x->right != NIL) x = x->right;
-  return x;
-}
+_rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x);
 
-/**
- * @brief
- *
- * @param left
- * @param x
- * @param p
- * @param header
- */
 void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
-                       _rb_tree_node_base& header) {
-  // insert and rebalance tree
-  _rb_tree_node_base* root = header.parent;
-
-  // Initialize new node
-  x->_rb_tree_init(p);
-
-  // insert
-  // root, leftmost, rightmost 를 갱신해준다.
-  // empty 이면 left 이다.
-  if (left) {
-    p->left = x;         // also makes leftmost = x when p == header
-    if (p == &header) {  // root 자리에 들어갈 경우
-      header.parent = x;
-      header.right = x;
-      x->color = BLACK;
-    } else if (p == header.left) {  // leftmost update
-      header.left = x;
-    }
-  } else {
-    p->right = x;
-    if (p == header.right) {  // rightmost update
-      header.right = x;
-    }
-  }
-
-  // rotate
-  while (x != root && x->parent->color == RED) {  // header -> no pp
-    _rb_tree_node_base* const xpp = x->parent->parent;
-    if (x->parent == xpp->left) {                 // 부모가 왼쪽 자식임
-      _rb_tree_node_base* const xu = xpp->right;  // uncle
-      if (xu && xu->color == RED) {
-        // case 1
-        // 삼촌과 부모가 빨간색, 나는 왼쪽 자식 -> color 교체만 해주면 됨
-        // 이미 할아버지는 BLACK 인 게 확실함
-        x->parent->color = BLACK;
-        xu->color = BLACK;
-        xpp->color = RED;
-        x = xpp;  // 다시 확인할 노드를 할아버지 (xpp) 로 바꿔줌
-      } else {  // 부모가 왼쪽, 삼촌이 없거나 (이것도 BLACK) 삼촌이 검은색
-        if (x == x->parent->right) {  // 나 오른쪽 자식
-                                      // case 2
-          x = x->parent;
-          // 부모 기준으로 왼쪽 회전 후 case 3으로 넘어감
-          _rb_tree_rotate_left(x, root);
-        }
-        // case 3
-        // 부모와 할아버지의 색을 바꾸고 할아버지 기준으로 오른쪽 회전.
-        x->parent->color = BLACK;
-        xpp->color = RED;
-        _rb_tree_rotate_right(xpp, root);
-      }
-    } else {
-      // 순서만 바뀌고 위랑 똑같!!
-      _rb_tree_node_base* const xu = xpp->left;
-      if (xu && xu->color == RED) {
-        x->parent->color = BLACK;
-        xu->color = BLACK;
-        xpp->color = RED;
-        x = xpp;
-      } else {
-        if (x == x->parent->left) {
-          x = x->parent;
-          _rb_tree_rotate_right(x, root);
-        }
-        x->parent->color = BLACK;
-        xpp->color = RED;
-        _rb_tree_rotate_left(xpp, root);
-      }
-    }
-  }
-  root->color = BLACK;  // while 을 바로 빠져나온 경우를 위해 setting.
-}
-
-/**
- * @brief x 를 기준으로 subtree 에서 successor 를 찾는다.
- * successor 는 x 보다 큰 노드 중 가장 작은 노드이다.
- *
- * @param x
- * @return _rb_tree_node_base*
- */
-_rb_tree_node_base* _find_successor(_rb_tree_node_base* x) {
-  if (x->right != NIL) {  // x has right child
-    return _left_most(x->right);
-  }
-  _rb_tree_node_base* y = x->parent;
-  while (x == y->right) {
-    x = y;
-    y = y->parent;
-  }
-  if (x->right != y) {
-    x = y;
-  }
-  return x;
-}
+                       _rb_tree_node_base& header);
+_rb_tree_node_base* _find_successor(_rb_tree_node_base* x);
 
 }  // namespace ft
 
