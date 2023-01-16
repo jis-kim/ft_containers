@@ -67,6 +67,7 @@ void print_rb_tree(_rb_tree_iterator<T> it) {
 
   if (header->parent == NULL) return;
   ::print_rb_tree<T>("", header->parent, false);
+  std::cout << "\n\n";
 }
 
 void tree_test(void);

@@ -16,6 +16,20 @@ class A {
   A(int num = int()) { a = num; }
 };
 
+class Allocated {
+ public:
+  A* pa;
+
+  Allocated(void) { pa = new A(3); }
+  Allocated(const Allocated& src) { pa = new A(*(src.pa)); }
+  Allocated& operator=(const Allocated& rhs) {
+    delete pa;
+    pa = new A(*(rhs.pa));
+    return *this;
+  }
+  ~Allocated(void) { delete pa; }
+};
+
 std::ostream& operator<<(const std::ostream& os, const A& a) {
   return os << a.a;
 }
@@ -131,6 +145,7 @@ void vector_test(void) {
       std::cout << e.what() << '\n';
     }
   }
+
   std::cout << "============= basic guarantee test =============\n";
   // assign is basic guarantee
   std::cout << "\n\nstd::vector !!!!!\n\n";
@@ -181,7 +196,7 @@ void vector_test(void) {
   std::cout << "size of ft::vector : " << ft_int_vec.size() << '\n';
 
   {
-    std::cout << "\n\n===========std::vector real notassign?============\n";
+    std::cout << "≈===========std::vector real notassign?============\n";
     std::vector<Test> test_vec(10);
 
     std::cout << "size of test_vec : " << test_vec.size() << '\n';
@@ -204,4 +219,14 @@ void vector_test(void) {
   std::allocator<A> b;
 
   std::cout << std::boolalpha << (a == b) << "\n";
+
+  std::cout << "\n\n============= vector destroy test ==============\n";
+
+  {
+    ft::vector<Allocated> ft_alloc_vec(10);
+    std::cout << "size of ft_alloc_vec : " << ft_alloc_vec.size() << '\n';
+    std::cout << "capacity of ft_alloc_ vec : " << ft_alloc_vec.capacity()
+              << '\n';
+    std::cout << (ft_alloc_vec.at(2).pa)->a << '\n';
+  }
 }

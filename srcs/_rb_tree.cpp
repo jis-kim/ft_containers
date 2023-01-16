@@ -92,15 +92,51 @@ const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
 
 /**
  * @brief subtree 를 왼쪽으로 회전
+ *  할아버지가 오른쪽 자식, 부모가 루트, 자식이 왼쪽 자식이 된다.
  *
- * @param x
- * @param root
+ * @param x 얘가 섭트리 root 인듯???
+ * @param root ?? ㄹㅇ 루트임... 뭐임?
  */
 void _rb_tree_rotate_left(_rb_tree_node_base* const x,
-                          _rb_tree_node_base*& root) {}
+                          _rb_tree_node_base*& root) {
+  _rb_tree_node_base* const y = x->right;  // 기준노드
+  x->right = y->left;
+  if (y->left != NIL) {
+    y->left->parent = x;
+  }
+  y->parent = x->parent;
+
+  if (x == root) {
+    root = y;
+  } else if (x == x->parent->left) {
+    x->parent->left = y;
+  } else {
+    x->parent->right = y;
+  }
+  y->left = x;
+  x->parent = y;
+}
 
 void _rb_tree_rotate_right(_rb_tree_node_base* const x,
-                           _rb_tree_node_base*& root) {}
+                           _rb_tree_node_base*& root) {
+  _rb_tree_node_base* const y = x->left;
+
+  x->left = y->right;
+  if (y->right != NIL) {
+    y->right->parent = x;
+  }
+  y->parent = x->parent;
+
+  if (x == root) {
+    root = y;
+  } else if (x == x->parent->right) {
+    x->parent->right = y;
+  } else {
+    x->parent->left = y;
+  }
+  y->right = x;
+  x->parent = y;
+}
 
 void _rb_tree_recolorize(_rb_tree_node_base* x, _rb_tree_node_base* xp) {}
 
@@ -127,10 +163,6 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header) {
   // insert and rebalance tree
   _rb_tree_node_base*& root = header.parent;
-
-  if (p != &header) {
-    std::cout << "p != header\n";
-  }
   // Initialize new node
   x->_rb_tree_init(p);
 
@@ -138,7 +170,6 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
   // root, leftmost, rightmost 를 갱신해준다.
   // empty 이면 left 이다.
   if (left) {
-    std::cout << "left insert\n";
     p->left = x;         // also makes leftmost = x when p == header
     if (p == &header) {  // root 자리에 들어갈 경우
       header.parent = x;
@@ -146,61 +177,58 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
       x->color = BLACK;
     } else if (p == header.left) {  // leftmost update
       header.left = x;
-      std::cout << "left most update\n";
     }
   } else {
-    std::cout << "right insert\n";
     p->right = x;
     if (p == header.right) {  // rightmost update
       header.right = x;
-      std::cout << "right most update\n";
     }
   }
   // rotate
-  // while (x != root && x->parent->color == RED) {  // header -> no pp
-  //  _rb_tree_node_base* const xpp = x->parent->parent;
-  //  if (x->parent == xpp->left) {                 // 부모가 왼쪽 자식임
-  //    _rb_tree_node_base* const xu = xpp->right;  // uncle
-  //    if (xu && xu->color == RED) {
-  //      // case 1
-  //      // 삼촌과 부모가 빨간색, 나는 왼쪽 자식 -> color 교체만 해주면 됨
-  //      // 이미 할아버지는 BLACK 인 게 확실함
-  //      x->parent->color = BLACK;
-  //      xu->color = BLACK;
-  //      xpp->color = RED;
-  //      x = xpp;  // 다시 확인할 노드를 할아버지 (xpp) 로 바꿔줌
-  //    } else {  // 부모가 왼쪽, 삼촌이 없거나 (이것도 BLACK) 삼촌이 검은색
-  //      if (x == x->parent->right) {  // 나 오른쪽 자식
-  //                                    // case 2
-  //        x = x->parent;
-  //        // 부모 기준으로 왼쪽 회전 후 case 3으로 넘어감
-  //        _rb_tree_rotate_left(x, root);
-  //      }
-  //      // case 3
-  //      // 부모와 할아버지의 색을 바꾸고 할아버지 기준으로 오른쪽 회전.
-  //      x->parent->color = BLACK;
-  //      xpp->color = RED;
-  //      _rb_tree_rotate_right(xpp, root);
-  //    }
-  //  } else {
-  //    // 좌우만 바뀌고 위랑 똑같!!
-  //    _rb_tree_node_base* const xu = xpp->left;
-  //    if (xu && xu->color == RED) {
-  //      x->parent->color = BLACK;
-  //      xu->color = BLACK;
-  //      xpp->color = RED;
-  //      x = xpp;
-  //    } else {
-  //      if (x == x->parent->left) {
-  //        x = x->parent;
-  //        _rb_tree_rotate_right(x, root);
-  //      }
-  //      x->parent->color = BLACK;
-  //      xpp->color = RED;
-  //      _rb_tree_rotate_left(xpp, root);
-  //    }
-  //  }
-  //}
+  while (x != root && x->parent->color == RED) {  // header -> no pp
+    _rb_tree_node_base* const xpp = x->parent->parent;
+    if (x->parent == xpp->left) {                 // 부모가 왼쪽 자식임
+      _rb_tree_node_base* const xu = xpp->right;  // uncle
+      if (xu && xu->color == RED) {
+        // case 1
+        // 삼촌과 부모가 빨간색, 나는 왼쪽 자식 -> color 교체만 해주면 됨
+        // 이미 할아버지는 BLACK 인 게 확실함
+        x->parent->color = BLACK;
+        xu->color = BLACK;
+        xpp->color = RED;
+        x = xpp;  // 다시 확인할 노드를 할아버지 (xpp) 로 바꿔줌
+      } else {  // 부모가 왼쪽, 삼촌이 없거나 (이것도 BLACK) 삼촌이 검은색
+        if (x == x->parent->right) {  // 나 오른쪽 자식
+                                      // case 2
+          x = x->parent;
+          // 부모 기준으로 왼쪽 회전 후 case 3으로 넘어감
+          _rb_tree_rotate_left(x, root);
+        }
+        // case 3
+        // 부모와 할아버지의 색을 바꾸고 할아버지 기준으로 오른쪽 회전.
+        x->parent->color = BLACK;
+        xpp->color = RED;
+        _rb_tree_rotate_right(xpp, root);
+      }
+    } else {
+      // 좌우만 바뀌고 위랑 똑같!!
+      _rb_tree_node_base* const xu = xpp->left;
+      if (xu && xu->color == RED) {
+        x->parent->color = BLACK;
+        xu->color = BLACK;
+        xpp->color = RED;
+        x = xpp;
+      } else {
+        if (x == x->parent->left) {
+          x = x->parent;
+          _rb_tree_rotate_right(x, root);
+        }
+        x->parent->color = BLACK;
+        xpp->color = RED;
+        _rb_tree_rotate_left(xpp, root);
+      }
+    }
+  }
   root->color = BLACK;  // while 을 바로 빠져나온 경우를 위해 setting.
 }
 

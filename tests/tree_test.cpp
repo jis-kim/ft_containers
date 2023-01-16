@@ -38,14 +38,35 @@ void tree_test(void) {
   tree_type tree;
   tree_type::iterator it;
   std::cout << "size : " << tree.size() << '\n';
-  insert_print_result(tree, value_type(3, "three"));
-  insert_print_result(tree, value_type(5, "five"));
-  insert_print_result(tree, value_type(4, "four"));
-  insert_print_result(tree, value_type(2, "two"));
   insert_print_result(tree, value_type(1, "one"));
+  insert_print_result(tree, value_type(2, "two"));
+  insert_print_result(tree, value_type(3, "three"));
+  insert_print_result(tree, value_type(4, "four"));
+  insert_print_result(tree, value_type(5, "five"));
 
-  std::cout << "\n\n================================tree "
-               "info====================================\n\n";
+  std::cout << "\n\n================================ < tree "
+               "info > ================================\n\n";
   std::cout << "size : " << tree.size() << "\n\n";
   ::print_rb_tree<value_type>(tree.end());
+  std::cout
+      << "\n\n============================================================="
+         "==================\n\n";
+
+  tree_type tree2;
+  insert_print_result(tree2, value_type(20, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
+  insert_print_result(tree2, value_type(10, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
+  insert_print_result(tree2, value_type(50, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
+  insert_print_result(tree2, value_type(30, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
+  insert_print_result(tree2, value_type(80, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
+  insert_print_result(tree2, value_type(40, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
+  insert_print_result(tree2, value_type(35, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
+  insert_print_result(tree2, value_type(25, "a"));
+  ::print_rb_tree<value_type>(tree2.end());
 }
