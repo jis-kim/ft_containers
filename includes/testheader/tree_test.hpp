@@ -38,8 +38,12 @@ void print_rb_tree(const std::string& prefix, const _rb_tree_node_base* node,
     typedef const _rb_tree_node<T>* link_type;
     link_type x = static_cast<link_type>(node);
     std::cout << prefix;
-
-    std::cout << (isLeft ? "├──" : "└──");
+    if (prefix.size() > 0)
+      std::cout << (!isLeft ? "├── (R)" : "└── (L)");
+    else {
+      std::cout << "└── (root)";
+      isLeft = true;
+    }
 
     // print the value of the node
     std::string color = PRINT_RED;
@@ -47,14 +51,14 @@ void print_rb_tree(const std::string& prefix, const _rb_tree_node_base* node,
     std::cout << color << x->value << PRINT_RESET << std::endl;
 
     // enter the next tree level - left and right branch
-    ::print_rb_tree<T>(prefix + (isLeft ? "│   " : "    "), node->left, true);
-    ::print_rb_tree<T>(prefix + (isLeft ? "│   " : "    "), node->right, false);
+    ::print_rb_tree<T>(prefix + (!isLeft ? "│   " : "    "), node->right,
+                       false);
+    ::print_rb_tree<T>(prefix + (!isLeft ? "│   " : "    "), node->left, true);
+  } else {
+    std::cout << prefix;
+    std::cout << (!isLeft ? "├── (R) " : "└── (L) ");
+    std::cout << PRINT_WHITE << "NIL" << PRINT_RESET << std::endl;
   }
-  // else {
-  //   std::cout << prefix;
-  //   std::cout << (isLeft ? "├──" : "└──");
-  //   std::cout << PRINT_WHITE << "NIL" << PRINT_RESET << std::endl;
-  // }
 }
 
 template <typename T>

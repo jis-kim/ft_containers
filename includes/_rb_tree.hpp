@@ -302,7 +302,7 @@ class _rb_tree {
  public:
   _rb_tree(void) {}
   _rb_tree(const _rb_tree& src) : _rb_tree_impl<Compare>(src._impl) {}
-  ~_rb_tree(void) {}
+  ~_rb_tree(void) { _erase(_root()); }
 
   _rb_tree& operator=(const _rb_tree& src) {}
 
@@ -487,6 +487,10 @@ class _rb_tree {
 
   key_type _get_key(const_base_ptr x) const {
     return _get_key(static_cast<const_link_type>(x));
+  }
+
+  link_type _root(void) const {
+    return static_cast<link_type>(_impl._header.parent);
   }
 
   static link_type _left(base_ptr x) { return static_cast<link_type>(x->left); }

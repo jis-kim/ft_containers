@@ -46,7 +46,7 @@ struct pair {
 
 template <typename T1, typename T2>
 std::ostream& operator<<(std::ostream& os, const pair<T1, T2>& pr) {
-  os << "[ " << pr.first << ", " << pr.second << " ]";
+  os << "[" << pr.first << "]";
   return os;
 }
 

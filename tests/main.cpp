@@ -10,9 +10,9 @@ const std::string a = "abcdefg";
 enum hi { first = true, second };
 
 int main(void) {
-  type_traits_test();
-  // vector_test();
-  // vector_iterator_test();
+  // type_traits_test();
+  //  vector_test();
+  //  vector_iterator_test();
 
   // ft::vector<const int> const_vec;
 
@@ -23,6 +23,6 @@ int main(void) {
   // std::cout << alloc.address(ad) << '\n';
 
   // pair_test();
-  // tree_test();
+  tree_test();
   system("leaks ft_containers");
 }

@@ -38,11 +38,11 @@ void tree_test(void) {
   tree_type tree;
   tree_type::iterator it;
   std::cout << "size : " << tree.size() << '\n';
-  // insert_print_result(tree, value_type(3, "three"));
-  //  it = insert_print_result(tree, value_type(1, "one"));
-  //  insert_print_result(tree, value_type(2, "two"));
-  //  insert_print_result(tree, value_type(4, "four"));
-  //  insert_print_result(tree, value_type(5, "five"));
+  insert_print_result(tree, value_type(3, "three"));
+  insert_print_result(tree, value_type(5, "five"));
+  insert_print_result(tree, value_type(4, "four"));
+  insert_print_result(tree, value_type(2, "two"));
+  insert_print_result(tree, value_type(1, "one"));
 
   std::cout << "\n\n================================tree "
                "info====================================\n\n";
