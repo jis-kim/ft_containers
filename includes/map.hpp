@@ -69,8 +69,9 @@ class map {
    * @complexity O(1)
    *
    */
-  map(void) {}
-  explicit map(const Compare& comp, const Alloc alloc = Alloc()) {}
+  map(void) : _tree() {}
+  explicit map(const Compare& comp, const Alloc alloc = Alloc())
+      : _tree(comp, alloc) {}
 
   /**
    * @brief Range constructor. 범위 안에 key 값이 같은 element 가 있다면 어떤
@@ -86,7 +87,10 @@ class map {
    */
   template <typename InputIterator>
   map(InputIterator first, InputIterator last, const Compare& comp = Compare(),
-      const Alloc& alloc = Alloc()) {}
+      const Alloc& alloc = Alloc())
+      : _tree(comp, alloc) {
+    _tree.insert(first, last);
+  }
 
   /**
    * @brief x의 allocator 와 comparison object 의 복사본을 사용하는 container
@@ -94,7 +98,7 @@ class map {
    *
    * @param x Key, T, Compare, Alloc 이 같은 map 객체.
    */
-  map(const map& x) {}
+  map(const map& x) : _tree(x._tree) {}
 
   // NOTHROW
   ~map(void) {}
@@ -291,7 +295,7 @@ class map {
    *
    * @param position
    */
-  void erase(iterator position) {}
+  // void erase(iterator position) {}
 
   /**
    * @brief
@@ -301,7 +305,7 @@ class map {
    * @return size_type 지워진 element 의 개수
    */
 
-  size_type erase(const key_type& key) {}
+  // size_type erase(const key_type& key) {}
 
   /**
    * @brief [first, last) 를 삭제한다.
@@ -310,7 +314,7 @@ class map {
    * @param first
    * @param last
    */
-  void erase(iterator first, iterator last) {}
+  // void erase(iterator first, iterator last) {}
 
   // NOTHROW 두 컨테이너의 compare 가 같거나 allocator traits 가 allocator 가
   // 전파되어야 함을 알 경우(? 먼소리)

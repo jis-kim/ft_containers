@@ -24,11 +24,9 @@ enum _rb_tree_color { RED = 0, BLACK };
  * 걍 타입이 필요없음 Value 가 없기 때문
  */
 struct _rb_tree_node_base {
-  // SECTION : typedef
   typedef _rb_tree_node_base* base_ptr;
   typedef const _rb_tree_node_base* const_base_ptr;
 
-  // SECTION : member
   _rb_tree_color color;
   base_ptr parent;
   base_ptr left;
@@ -49,13 +47,9 @@ struct _rb_tree_node : public _rb_tree_node_base {
 
   value_type value;
 
-  //_rb_tree_node(const value_type& value = value_type(), link_type parent = 0,
-  //              link_type left = 0, link_type right = 0,
-  //              _rb_tree_color color = RED)
-  //    : value(value), parent(parent), left(left), right(right), color(color)
-  //    {}
   _rb_tree_node(const value_type& value = value_type()) : value(value) {}
 };
+
 template <typename Compare>
 struct _rb_tree_key_compare {
   Compare _compare;
@@ -165,10 +159,12 @@ struct _rb_tree_const_iterator {
     return static_cast<link_type>(_node)->value;
   }
 
-  pointer operator->(void) const { &(static_cast<link_type>(_node)->value); }
+  pointer operator->(void) const {
+    return &(static_cast<link_type>(_node)->value);
+  }
 
   self& operator++(void) {
-    _node = _rb_tree_increament(_node);
+    _node = _rb_tree_increment(_node);
     return *this;
   }
 
@@ -262,7 +258,7 @@ struct _rb_tree_impl : public _rb_tree_header, _rb_tree_key_compare<Compare> {
  *
  * @tparam Key T key type
  * @tparam Val pair<Key, Val>
- * @tparam KeyOfValue
+ * @tparam KeyOfValue map: first of value, set: value itself
  * @tparam Compare
  * @tparam Alloc
  */
@@ -301,16 +297,37 @@ class _rb_tree {
 
  public:
   _rb_tree(void) {}
-  _rb_tree(const _rb_tree& src) : _rb_tree_impl<Compare>(src._impl) {}
+  _rb_tree(const Compare& comp, const node_allocator& alloc = node_allocator())
+      : _impl(comp), _alloc(alloc) {}
+  _rb_tree(const _rb_tree& src) : _impl(src._impl) {}
   ~_rb_tree(void) { _erase(_root()); }
 
-  _rb_tree& operator=(const _rb_tree& src) {}
+  _rb_tree& operator=(const _rb_tree& src) {
+    if (this != &src) {
+      _erase(_root());
+      _impl._move_data(src._impl);
+    }
+    return *this;
+  }
 
   // SECTION : red-black tree operation
   iterator begin(void) { return iterator(_impl._header.left); }
+  const_iterator begin(void) const {
+    return const_iterator(_impl._header.left);
+  }
+
   iterator end(void) { return iterator(&_impl._header); }
+  const_iterator end(void) const { return const_iterator(&_impl._header); }
+
   reverse_iterator rbegin(void) { return reverse_iterator(end()); }
+  const_reverse_iterator rbegin(void) const {
+    return const_reverse_iterator(end());
+  }
+
   reverse_iterator rend(void) { return reverse_iterator(begin()); }
+  const_reverse_iterator rend(void) const {
+    return const_reverse_iterator(begin());
+  }
 
   bool empty(void) const { return _impl._node_count == 0; }
   size_type size(void) const { return _impl._node_count; }
@@ -321,10 +338,25 @@ class _rb_tree {
     return _insert_unique(val);
   }
 
-  iterator insert(iterator position, const value_type& val) {}
+  /**
+   * @brief
+   *
+   * @param position
+   * @param val
+   * @return iterator 성공 -> 새 element, 실패 -> 기존 element
+   */
+  // iterator insert(iterator position, const value_type& val) {
+  //  position 이 begin
+  //  position 이 end
+  //  else
+  //}
 
   template <typename InputIterator>
-  void insert(InputIterator first, InputIterator last) {}
+  void insert(InputIterator first, InputIterator last) {
+    for (; first != last; ++first) {
+      insert(*first);
+    }
+  }
 
   void swap(_rb_tree& x) {
     /**
