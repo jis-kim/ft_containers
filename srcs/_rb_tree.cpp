@@ -138,8 +138,6 @@ void _rb_tree_rotate_right(_rb_tree_node_base* const x,
   x->parent = y;
 }
 
-void _rb_tree_recolorize(_rb_tree_node_base* x, _rb_tree_node_base* xp) {}
-
 // SECTION : for simple BST search
 _rb_tree_node_base* _rb_tree_subtree_min(_rb_tree_node_base* x) {
   while (x->left != NIL) x = x->left;

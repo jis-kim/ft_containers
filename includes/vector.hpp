@@ -11,6 +11,7 @@
 #define VECTOR_HPP
 
 #include <memory>
+#include <vector>
 
 #include "algorithm.hpp"
 #include "reverse_iterator.hpp"
@@ -543,7 +544,6 @@ class vector : private vector_base<T, Allocator> {
     if (this->_end >= this->_end_cap) {  // no more space
       // reallocation
       vector tmp;
-      // system("leaks ft_containers >/dev/null");
       tmp._allocate(_get_alloc_size(size() + 1));
       tmp._end = std::uninitialized_copy(this->_begin, this->_end, tmp._begin);
 
@@ -678,7 +678,6 @@ class vector : private vector_base<T, Allocator> {
     if (size() + n > capacity()) {
       // STRONG
       vector tmp;
-      std::cout << "tmp size : " << tmp.size() << std::endl;
       tmp._allocate(_get_alloc_size(size() + n));
       tmp._end = std::uninitialized_copy(this->_begin, p, tmp._begin);
       tmp._end = std::uninitialized_copy(first, last, tmp._end);
@@ -807,7 +806,6 @@ class vector : private vector_base<T, Allocator> {
   void _allocate(size_type n) {
     this->_end = this->_begin = this->_alloc.allocate(n);
     this->_end_cap = this->_begin + n;
-    // std::cout << "end_cap " << *(this->_end_cap) << '\n';
   }
 
   /**

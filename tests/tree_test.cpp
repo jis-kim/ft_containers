@@ -69,4 +69,6 @@ void tree_test(void) {
   ::print_rb_tree<value_type>(tree2.end());
   insert_print_result(tree2, value_type(25, "a"));
   ::print_rb_tree<value_type>(tree2.end());
+
+  tree.clear();
 }

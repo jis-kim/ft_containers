@@ -51,6 +51,7 @@ class map {
 
   struct value_compare {
    protected:
+    friend class map;
     Compare comp;
     value_compare(Compare c) : comp(c) {}
 
@@ -356,7 +357,7 @@ class map {
    *
    * @return value_compare (nested class type)
    */
-  value_compare value_comp(void) const { return value_compare(); }
+  value_compare value_comp(void) const { return value_compare(key_compare()); }
 
   // !SECTION : observers
 

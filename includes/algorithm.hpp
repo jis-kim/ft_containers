@@ -23,7 +23,7 @@ const T& max(const T& a, const T& b) {
 }
 
 template <typename T>
-void swap(T& a, T& b) {
+void _swap(T& a, T& b) {
   T tmp(a);
   a = b;
   b = tmp;

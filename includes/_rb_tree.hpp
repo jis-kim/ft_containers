@@ -10,6 +10,7 @@
 #ifndef _RB_TREE_HPP_
 #define _RB_TREE_HPP_
 
+#include "algorithm.hpp"
 #include "pair.hpp"
 #include "reverse_iterator.hpp"
 #include "testheader/print_vector.hpp"
@@ -304,8 +305,15 @@ class _rb_tree {
 
   _rb_tree& operator=(const _rb_tree& src) {
     if (this != &src) {
-      _erase(_root());
-      _impl._move_data(src._impl);
+      clear();
+      _impl._reset();
+      _impl._compare = src._impl._compare;
+
+      if (src._root() != NIL) {
+        _impl._header.parent = _copy(src._root(), _root());  // update root
+        _impl._header.left = _left_most(_impl._header.parent);
+        _impl._header.right = _right_most(_impl._header.parent);
+      }
     }
     return *this;
   }
@@ -345,11 +353,18 @@ class _rb_tree {
    * @param val
    * @return iterator 성공 -> 새 element, 실패 -> 기존 element
    */
-  // iterator insert(iterator position, const value_type& val) {
-  //  position 이 begin
-  //  position 이 end
-  //  else
-  //}
+  iterator insert(iterator position, const value_type& val) {
+    // position 이 end
+    if (position._node == _get_end()) {
+      if (size() > 0 && _impl._compare(_key(_impl._header.right), _key(val))) {
+        return _insert(_impl._header.right, val);
+      } else {
+        return _insert_unique(val).first;
+      }
+    }
+
+    // else
+  }
 
   template <typename InputIterator>
   void insert(InputIterator first, InputIterator last) {
@@ -359,40 +374,27 @@ class _rb_tree {
   }
 
   void swap(_rb_tree& x) {
-    /**
-     * 1. 나는 비었는데 얘는 있음
-     * 2. 나는 있는데 얘는 비었음
-     * 3. 나도 얘도 있음
-     * 4. 둘 다 없어
-     *
-     *
-     * 비었을 경우 -> root 가 null. header (null, header, header)싱테
-     * 아닌 애 거를 빈 애에 넣어주고.. 뭐쩌구~
-     *
-     * 둘 다 찼을 경우 -> 걍 헤더 세 개 스왑하면 안되나? 흠~ 헤더노드 스왑하면
-     * 될 것 같은데 머임
-     */
     if (_get_root() == NIL) {
       if (x._get_root() != NIL) {
-        _impl_move_data(x);
+        _impl._move_data(x._impl);
       }
     } else if (x._get_root() == NIL) {
       x._impl._move_data(_impl);
     } else {
-      swap(_impl._header.parent, x._impl._header.parent);
-      swap(_impl._header.left, x._impl._header.left);
-      swap(_impl._header.right, x._impl._header.right);
+      _swap(_impl._header.parent, x._impl._header.parent);
+      _swap(_impl._header.left, x._impl._header.left);
+      _swap(_impl._header.right, x._impl._header.right);
 
       _get_root()->parent = &_impl._header;  // header reset
       x._get_root()->parent = &x._impl._header;
-      swap(_impl._node_count, x._impl._node_count);
-      swap(_impl._compare, x._impl._compare);
+      _swap(_impl._node_count, x._impl._node_count);
+      _swap(_impl._compare, x._impl._compare);
     }
   }
 
   // NOTHROW
   void clear(void) {
-    _erase(_get_root());
+    _erase(_root());
     _impl._reset();
   }
 
@@ -407,14 +409,14 @@ class _rb_tree {
     // 1. gte 가 end 이면 크거나 같은 키가 없음.
     // 1 에서 || 이므로 key <= gte 인 것은 확실함!
     // 거기서 key < gte 가 true 이면 같은 것이 아니라 더 큰 것이므로 return end
-    return (gte == end() || _impl._compare(key, _get_key(*gte._node))) ? end()
-                                                                       : gte;
+    return (gte == end() || _impl._compare(key, _get_key(gte._node))) ? end()
+                                                                      : gte;
   }
 
   const_iterator find(const key_type& key) const {
     const_iterator gte = lower_bound(key);
-    return (gte == end() || _impl._compare(key, _get_key(*gte._node))) ? end()
-                                                                       : gte;
+    return (gte == end() || _impl._compare(key, _get_key(gte._node))) ? end()
+                                                                      : gte;
   }
 
   // distance of equal_range
@@ -433,8 +435,8 @@ class _rb_tree {
    * @return iterator
    */
   iterator lower_bound(const key_type& key) {
-    link_type x = _get_root();
-    link_type y = end();
+    link_type x = _root();
+    base_ptr y = _get_end();
     while (x != NIL) {
       if (!_impl._compare(_get_key(x), key)) {
         y = x;
@@ -448,8 +450,8 @@ class _rb_tree {
 
   const_iterator lower_bound(const key_type& key) const {
     // casting 하는 이유 - 부모 -> 자식은 형변환이 안돼서..
-    link_type x = static_cast<link_type>(_get_root());
-    link_type y = end();
+    link_type x = _root();
+    base_ptr y = _get_end();
     while (x != NIL) {
       // x.key >= key -> go left (left most 찾아야 함)
       if (!_impl._compare(_get_key(x), key)) {
@@ -470,7 +472,7 @@ class _rb_tree {
    * @return iterator
    */
   iterator upper_bound(const key_type& key) {
-    link_type x = _get_root();
+    link_type x = _root();
     link_type y = end();
     while (x != NIL) {
       // key < x.key
@@ -486,7 +488,7 @@ class _rb_tree {
   }
 
   const_iterator upper_bound(const key_type& key) const {
-    link_type x = _get_root();
+    link_type x = _root();
     link_type y = end();
     while (x != NIL) {
       if (_impl._compare(key, _get_key(x))) {
@@ -576,14 +578,14 @@ class _rb_tree {
   void _erase(link_type node) {
     // 재귀
     // if (node == NIL) return;
-    //_erase(node->left);  // const 어캄이거 아니? 그럴 일 없다.
-    //_erase(node->right);
+    //_erase(_left(node));  // const 어캄이거 아니? 그럴 일 없다.
+    //_erase(_right(node));
     //_destroy_node(node);
     // node = NIL;
 
-    // 재귀 + while  왜지?
+    //// 재귀 + while  왜지?
     while (node != NIL) {
-      _erase(_right(node));  // 왜 반만 재귀하지
+      _erase(_right(node));
       link_type tmp = _left(node);
       _destroy_node(node);
       node = tmp;
@@ -641,8 +643,6 @@ class _rb_tree {
    * @return iterator insert 한 node 의 iterator
    */
   iterator _insert(base_ptr x, base_ptr p, const value_type& value) {
-    // bool _insert_left = (x != NIL || p == end() ||
-    //                      _impl._compare(_get_key(value), _get_key(*p)));
     bool _insert_left = (x != NIL || p == end()._node ||
                          _impl._compare(KeyOfValue()(value), _get_key(p)));
     link_type node = _create_node(value);
@@ -650,6 +650,50 @@ class _rb_tree {
     ++_impl._node_count;
 
     return iterator(node);
+  }
+
+  /**
+   * @brief 완성된 tree 를 그대로 복사한다.
+   *
+   * @param x 복사할 node
+   * @param p x를 달 parent - operator= 에서는 원본의 header 가 불림.
+   * @return iterator
+   */
+  link_type _copy(link_type x, base_ptr p) {
+    link_type top = _clone_node(x);
+    top->parent = p;
+
+    try {
+      if (x->right) {
+        // right 있을 경우 -> top의 right 도 달아준다.
+        top->right = _copy(_right(x), top);  // right top 에 copy
+      }
+      p = top;
+      x = _left(x);  // 이제 left 할 준비
+
+      while (x != NIL) {                   // 얘는 또 while 으로 돈다.
+        link_type y = _clone_node(x);      // 왼쪽거 카피할 거임..
+        p->left = y;                       // 달아줌
+        y->parent = p;                     // 연결해줌
+        if (x->right) {                    // 오른쪽 있어??
+          y->right = _copy(_right(x), y);  // 오른쪽 달아줘
+        }
+        p = y;
+        x = _left(x);  // 다시 left 준비해.
+      }
+    } catch (...) {
+      _erase(top);  // rollback
+      throw;
+    }
+    return top;
+  }
+
+  link_type _clone_node(link_type x) {
+    link_type tmp = _create_node(x->value);
+    tmp->color = x->color;
+    tmp->left = NIL;
+    tmp->right = NIL;
+    return tmp;
   }
 };
 // !SECTION: red-black tree
