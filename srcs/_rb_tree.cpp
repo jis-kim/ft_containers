@@ -11,27 +11,27 @@
 
 namespace ft {
 _rb_tree_node_base* _left_most(_rb_tree_node_base* x) {
-  while (x->left != NIL) x = x->left;
+  while (x->left != NULL) x = x->left;
   return x;
 }
 
 const _rb_tree_node_base* _left_most(const _rb_tree_node_base* x) {
-  while (x->left != NIL) x = x->left;
+  while (x->left != NULL) x = x->left;
   return x;
 }
 
 _rb_tree_node_base* _right_most(_rb_tree_node_base* x) {
-  while (x->right != NIL) x = x->right;
+  while (x->right != NULL) x = x->right;
   return x;
 }
 
 const _rb_tree_node_base* _right_most(const _rb_tree_node_base* x) {
-  while (x->right != NIL) x = x->right;
+  while (x->right != NULL) x = x->right;
   return x;
 }
 
 _rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x) {
-  if (x->right != NIL) {
+  if (x->right != NULL) {
     return _left_most(x->right);
   } else {
     _rb_tree_node_base* xp = x->parent;
@@ -45,7 +45,7 @@ _rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x) {
 }
 
 const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x) {
-  if (x->right != NIL) {
+  if (x->right != NULL) {
     return _left_most(x->right);
   } else {
     const _rb_tree_node_base* xp = x->parent;
@@ -61,7 +61,7 @@ const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x) {
 _rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x) {
   if (x->color == RED && x->parent->parent == x) {  // header node (end node)
     x = x->right;                                   // 바로 right most return
-  } else if (x->left != NIL) {
+  } else if (x->left != NULL) {
     return _right_most(x->left);  // max of left subtree
   } else {
     _rb_tree_node_base* xp = x->parent;
@@ -77,7 +77,7 @@ _rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x) {
 const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
   if (x->color == RED && x->parent->parent == x) {
     x = x->right;
-  } else if (x->left != NIL) {
+  } else if (x->left != NULL) {
     return _right_most(x->left);
   } else {
     const _rb_tree_node_base* xp = x->parent;
@@ -101,7 +101,7 @@ void _rb_tree_rotate_left(_rb_tree_node_base* const x,
                           _rb_tree_node_base*& root) {
   _rb_tree_node_base* const y = x->right;  // 기준노드
   x->right = y->left;
-  if (y->left != NIL) {
+  if (y->left != NULL) {
     y->left->parent = x;
   }
   y->parent = x->parent;
@@ -122,7 +122,7 @@ void _rb_tree_rotate_right(_rb_tree_node_base* const x,
   _rb_tree_node_base* const y = x->left;
 
   x->left = y->right;
-  if (y->right != NIL) {
+  if (y->right != NULL) {
     y->right->parent = x;
   }
   y->parent = x->parent;
@@ -140,12 +140,12 @@ void _rb_tree_rotate_right(_rb_tree_node_base* const x,
 
 // SECTION : for simple BST search
 _rb_tree_node_base* _rb_tree_subtree_min(_rb_tree_node_base* x) {
-  while (x->left != NIL) x = x->left;
+  while (x->left != NULL) x = x->left;
   return x;
 }
 
 _rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x) {
-  while (x->right != NIL) x = x->right;
+  while (x->right != NULL) x = x->right;
   return x;
 }
 
@@ -238,7 +238,7 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
  * @return _rb_tree_node_base*
  */
 _rb_tree_node_base* _find_successor(_rb_tree_node_base* x) {
-  if (x->right != NIL) {  // x has right child
+  if (x->right != NULL) {  // x has right child
     return _left_most(x->right);
   }
   _rb_tree_node_base* y = x->parent;

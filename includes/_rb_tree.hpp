@@ -14,7 +14,6 @@
 #include "pair.hpp"
 #include "reverse_iterator.hpp"
 #include "testheader/print_vector.hpp"
-#define NIL NULL
 
 namespace ft {
 enum _rb_tree_color { RED = 0, BLACK };
@@ -36,8 +35,8 @@ struct _rb_tree_node_base {
   void _rb_tree_init(base_ptr p) {
     color = RED;
     parent = p;
-    left = NIL;
-    right = NIL;
+    left = NULL;
+    right = NULL;
   }
 };
 
@@ -79,6 +78,13 @@ struct _rb_tree_iterator {
   _rb_tree_iterator(void) : _node() {}
 
   explicit _rb_tree_iterator(base_ptr x) : _node(x) {}
+
+  _rb_tree_iterator(const self& rhs) : _node(rhs._node) {}
+
+  self& operator=(const self& rhs) {
+    _node = rhs._node;
+    return *this;
+  }
 
   reference operator*(void) const {
     return static_cast<link_type>(_node)->value;
@@ -146,6 +152,11 @@ struct _rb_tree_const_iterator {
   explicit _rb_tree_const_iterator(base_ptr x) : _node(x) {}
 
   _rb_tree_const_iterator(const iterator& it) : _node(it._node) {}
+
+  self& operator=(const self& rhs) {
+    _node = rhs._node;
+    return *this;
+  }
 
   /**
    * @brief const iterator to iterator casting
@@ -224,12 +235,12 @@ struct _rb_tree_header {
 
   /**
    * @brief
-   * 초기 상태 : root 는 NIL, leftmost, rightmost 는 header 자신 (end)
+   * 초기 상태 : root 는 NULL, leftmost, rightmost 는 header 자신 (end)
    * 삽입 : left-most, right-most 를 갱신
    *
    */
   void _reset(void) {
-    _header.parent = NIL;
+    _header.parent = NULL;
     _header.left = &_header;
     _header.right = &_header;
     _node_count = 0;
@@ -309,7 +320,7 @@ class _rb_tree {
       _impl._reset();
       _impl._compare = src._impl._compare;
 
-      if (src._root() != NIL) {
+      if (src._root() != NULL) {
         _impl._header.parent = _copy(src._root(), _root());  // update root
         _impl._header.left = _left_most(_impl._header.parent);
         _impl._header.right = _right_most(_impl._header.parent);
@@ -343,7 +354,11 @@ class _rb_tree {
 
   // SECTION : insert
   pair<iterator, bool> insert(const value_type& val) {
-    return _insert_unique(val);
+    pair<base_ptr, base_ptr> res = _find_insert_pos(KeyOfValue()(val));
+    if (res.second) {
+      return pair<iterator, bool>(_insert(res.first, res.second, val), true);
+    }
+    return pair<iterator, bool>(iterator(res.first), false);
   }
 
   /**
@@ -354,16 +369,12 @@ class _rb_tree {
    * @return iterator 성공 -> 새 element, 실패 -> 기존 element
    */
   iterator insert(iterator position, const value_type& val) {
-    // position 이 end
-    if (position._node == _get_end()) {
-      if (size() > 0 && _impl._compare(_key(_impl._header.right), _key(val))) {
-        return _insert(_impl._header.right, val);
-      } else {
-        return _insert_unique(val).first;
-      }
+    pair<base_ptr, base_ptr> res =
+        _find_insert_hint_pos(position, KeyOfValue()(val));
+    if (res.second) {
+      return _insert(res.first, res.second, val);
     }
-
-    // else
+    return iterator(res.first);
   }
 
   template <typename InputIterator>
@@ -374,11 +385,11 @@ class _rb_tree {
   }
 
   void swap(_rb_tree& x) {
-    if (_get_root() == NIL) {
-      if (x._get_root() != NIL) {
+    if (_get_root() == NULL) {
+      if (x._get_root() != NULL) {
         _impl._move_data(x._impl);
       }
-    } else if (x._get_root() == NIL) {
+    } else if (x._get_root() == NULL) {
       x._impl._move_data(_impl);
     } else {
       _swap(_impl._header.parent, x._impl._header.parent);
@@ -437,7 +448,7 @@ class _rb_tree {
   iterator lower_bound(const key_type& key) {
     link_type x = _root();
     base_ptr y = _get_end();
-    while (x != NIL) {
+    while (x != NULL) {
       if (!_impl._compare(_get_key(x), key)) {
         y = x;
         x = _left(x);
@@ -452,7 +463,7 @@ class _rb_tree {
     // casting 하는 이유 - 부모 -> 자식은 형변환이 안돼서..
     link_type x = _root();
     base_ptr y = _get_end();
-    while (x != NIL) {
+    while (x != NULL) {
       // x.key >= key -> go left (left most 찾아야 함)
       if (!_impl._compare(_get_key(x), key)) {
         y = x;  // update
@@ -473,8 +484,8 @@ class _rb_tree {
    */
   iterator upper_bound(const key_type& key) {
     link_type x = _root();
-    link_type y = end();
-    while (x != NIL) {
+    base_ptr y = _get_end();
+    while (x != NULL) {
       // key < x.key
       if (_impl._compare(key, _get_key(x))) {
         y = x;
@@ -489,8 +500,8 @@ class _rb_tree {
 
   const_iterator upper_bound(const key_type& key) const {
     link_type x = _root();
-    link_type y = end();
-    while (x != NIL) {
+    base_ptr y = _get_end();
+    while (x != NULL) {
       if (_impl._compare(key, _get_key(x))) {
         y = x;
         x = _left(x);
@@ -513,9 +524,10 @@ class _rb_tree {
 
  private:
   // SECTION : about elements
-  base_ptr _get_root(void) { return _impl._header.parent; }
-  base_ptr _get_left_most(void) { return _impl._header.left; }
-  base_ptr _get_end(void) { return _impl._header.right; }
+  base_ptr _get_root(void) const { return _impl._header.parent; }
+  base_ptr _get_left_most(void) const { return _impl._header.left; }
+  base_ptr _get_right_most(void) const { return _impl._header.right; }
+  base_ptr _get_end(void) const { return &(_impl._header); }
 
   key_type _get_key(const_link_type x) const { return KeyOfValue()(x->value); }
 
@@ -576,15 +588,7 @@ class _rb_tree {
    * @param node
    */
   void _erase(link_type node) {
-    // 재귀
-    // if (node == NIL) return;
-    //_erase(_left(node));  // const 어캄이거 아니? 그럴 일 없다.
-    //_erase(_right(node));
-    //_destroy_node(node);
-    // node = NIL;
-
-    //// 재귀 + while  왜지?
-    while (node != NIL) {
+    while (node != NULL) {
       _erase(_right(node));
       link_type tmp = _left(node);
       _destroy_node(node);
@@ -596,15 +600,16 @@ class _rb_tree {
    * @brief find parent's position to insert new node
    *
    * @param key
-   * @return pair<base_ptr, base_ptr>
+   * @return pair<base_ptr, base_ptr> success - first : null, second : parent
+   * fail - first : equal node, second : null
    */
   pair<base_ptr, base_ptr> _find_insert_pos(const key_type& key) {
     typedef pair<base_ptr, base_ptr> pair_type;
 
     base_ptr x = _get_root();
-    base_ptr y = _get_end();  // header
+    base_ptr y = &_impl._header;  // header
     bool comp = true;
-    while (x != NIL) {
+    while (x != NULL) {
       y = x;
       comp = _impl._compare(key, _get_key(x));
       x = comp ? x->left : x->right;
@@ -621,17 +626,69 @@ class _rb_tree {
       return pair_type(x, y);
     }
     // tmp == key
-    return pair_type(tmp._node, NIL);
+    return pair_type(tmp._node, NULL);
   }
 
-  // compexity O(log N)
-  pair<iterator, bool> _insert_unique(const value_type& value) {
-    key_type key = KeyOfValue()(value);
-    pair<base_ptr, base_ptr> res = _find_insert_pos(key);
-    if (res.second) {
-      return pair<iterator, bool>(_insert(res.first, res.second, value), true);
+  /**
+   * @brief position 과 최대한 가까운 위치에 있는 node 를 찾는다.
+   *
+   * @param position
+   * @param key
+   * @return pair<base_ptr, base_ptr>
+   */
+  pair<base_ptr, base_ptr> _find_insert_hint_pos(const_iterator position,
+                                                 const key_type& key) {
+    typedef pair<base_ptr, base_ptr> pair_type;
+    iterator pos = position._const_cast();
+
+    if (pos._node == &_impl._header) {  // end
+      if (size() > 0 && _impl._compare(_get_key(_get_right_most()), key)) {
+        // key가  rightmost 보다 크다면 rightmost 뒤에 삽입
+        return pair_type(NULL, _get_right_most());
+      } else {
+        // 아니면 허위사실이므로 새로 찾아야 함
+        return _find_insert_pos(key);
+      }
+    } else if (_impl._compare(key, _get_key(pos._node))) {
+      // key < pos
+      iterator before = pos;
+      if (pos._node == _get_left_most()) {  // begin()
+        // 근데 pos 가 left most 이면 left most 앞에 삽입.
+        return pair_type(_get_left_most(), _get_left_most());
+      } else if (_impl._compare(_get_key((--before)._node), key)) {
+        // before < key < pos
+        if (_right(before._node) == NULL) {
+          // before 의 right 가 없으면 before 자식으로 삽입 (오른쪽)
+          return pair_type(NULL, before._node);
+        } else {
+          // 있으면 pos 의... 몰?루?
+          return pair_type(pos._node, pos._node);
+        }
+      } else {
+        return _find_insert_pos(key);
+      }
+    } else if (_impl._compare(_get_key(pos._node), key)) {
+      // pos < key
+      iterator after = pos;
+      if (pos._node == _get_right_most()) {
+        // pos 가 right most 이면 right most 뒤에 삽입
+        return pair_type(NULL, _get_right_most());
+      } else if (_impl._compare(key, _get_key((++after)._node))) {
+        // pos < key < after
+        if (_right(pos._node) == NULL) {
+          // right 가 없으면 right 자식으로 삽입
+          return pair_type(NULL, pos._node);
+        } else {
+          // 있으면.... :(
+          return pair_type(after._node, after._node);
+        }
+      } else {
+        return _find_insert_pos(key);
+      }
+    } else {
+      // pos == key
+      return pair_type(pos._node, NULL);
     }
-    return pair<iterator, bool>(iterator(res.first), false);
   }
 
   /**
@@ -643,7 +700,7 @@ class _rb_tree {
    * @return iterator insert 한 node 의 iterator
    */
   iterator _insert(base_ptr x, base_ptr p, const value_type& value) {
-    bool _insert_left = (x != NIL || p == end()._node ||
+    bool _insert_left = (x != NULL || p == end()._node ||
                          _impl._compare(KeyOfValue()(value), _get_key(p)));
     link_type node = _create_node(value);
     _insert_rebalance(_insert_left, node, p, this->_impl._header);
@@ -671,7 +728,7 @@ class _rb_tree {
       p = top;
       x = _left(x);  // 이제 left 할 준비
 
-      while (x != NIL) {                   // 얘는 또 while 으로 돈다.
+      while (x != NULL) {                  // 얘는 또 while 으로 돈다.
         link_type y = _clone_node(x);      // 왼쪽거 카피할 거임..
         p->left = y;                       // 달아줌
         y->parent = p;                     // 연결해줌
@@ -691,26 +748,23 @@ class _rb_tree {
   link_type _clone_node(link_type x) {
     link_type tmp = _create_node(x->value);
     tmp->color = x->color;
-    tmp->left = NIL;
-    tmp->right = NIL;
+    tmp->left = NULL;
+    tmp->right = NULL;
     return tmp;
   }
 };
 // !SECTION: red-black tree
 
 _rb_tree_node_base* _left_most(_rb_tree_node_base* x);
-
 const _rb_tree_node_base* _left_most(const _rb_tree_node_base* x);
 
 _rb_tree_node_base* _right_most(_rb_tree_node_base* x);
 const _rb_tree_node_base* _right_most(const _rb_tree_node_base* x);
 
 _rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x);
-
 const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x);
 
 _rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x);
-
 const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x);
 
 /**
@@ -733,6 +787,7 @@ _rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x);
 
 void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header);
+
 _rb_tree_node_base* _find_successor(_rb_tree_node_base* x);
 
 }  // namespace ft
