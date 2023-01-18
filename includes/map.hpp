@@ -320,7 +320,9 @@ class map {
   // NOTHROW 두 컨테이너의 compare 가 같거나 allocator traits 가 allocator 가
   // 전파되어야 함을 알 경우(? 먼소리)
   // otherwise UB
-  void swap(map& x) { _tree.swap(x._tree); }
+  void swap(map& x) {
+    _tree.swap(x._tree);
+  }
 
   // NOTHROW
   /**
@@ -437,48 +439,55 @@ class map {
    * @return allocator_type map 의 allocator
    */
   allocator_type get_allocator(void) const { return _tree.get_allocator(); }
+
+  template <typename Key1, typename T1, typename Compare1, typename Alloc1>
+  friend bool operator==(const map<Key1, T1, Compare1, Alloc1>& lhs,
+                         const map<Key1, T1, Compare1, Alloc1>& rhs);
+
+  template <typename Key1, typename T1, typename Compare1, typename Alloc1>
+  friend bool operator<(const map<Key1, T1, Compare1, Alloc1>& lhs,
+                        const map<Key1, T1, Compare1, Alloc1>& rhs);
 };
 
 // SECTION : relational operators
-template <class Key, class T, class Compare, class Alloc>
+template <typename Key, typename T, typename Compare, typename Alloc>
 bool operator==(const map<Key, T, Compare, Alloc>& lhs,
                 const map<Key, T, Compare, Alloc>& rhs) {
   return lhs._tree == rhs._tree;
 }
 
-template <class Key, class T, class Compare, class Alloc>
+template <typename Key, typename T, typename Compare, typename Alloc>
 bool operator!=(const map<Key, T, Compare, Alloc>& lhs,
                 const map<Key, T, Compare, Alloc>& rhs) {
   return !(lhs == rhs);
 }
 
-template <class Key, class T, class Compare, class Alloc>
+template <typename Key, typename T, typename Compare, typename Alloc>
 bool operator<(const map<Key, T, Compare, Alloc>& lhs,
                const map<Key, T, Compare, Alloc>& rhs) {
   return lhs._tree < rhs._tree;
 }
 
-template <class Key, class T, class Compare, class Alloc>
+template <typename Key, typename T, typename Compare, typename Alloc>
 bool operator>(const map<Key, T, Compare, Alloc>& lhs,
                const map<Key, T, Compare, Alloc>& rhs) {
   return rhs < lhs;
 }
 
-template <class Key, class T, class Compare, class Alloc>
+template <typename Key, typename T, typename Compare, typename Alloc>
 bool operator<=(const map<Key, T, Compare, Alloc>& lhs,
                 const map<Key, T, Compare, Alloc>& rhs) {
   return !(rhs < lhs);
 }
 
-template <class Key, class T, class Compare, class Alloc>
+template <typename Key, typename T, typename Compare, typename Alloc>
 bool operator>=(const map<Key, T, Compare, Alloc>& lhs,
                 const map<Key, T, Compare, Alloc>& rhs) {
   return !(lhs < rhs);
 }
 
-template <class Key, class T, class Compare, class Alloc>
-void swap(std::map<Key, T, Compare, Alloc>& lhs,
-          std::map<Key, T, Compare, Alloc>& rhs) {
+template <typename Key, typename T, typename Compare, typename Alloc>
+void swap(map<Key, T, Compare, Alloc>& lhs, map<Key, T, Compare, Alloc>& rhs) {
   lhs.swap(rhs);
 }  // !SECTION : relational operator
 

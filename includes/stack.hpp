@@ -14,7 +14,7 @@
 
 namespace ft {
 
-template <class T, class Container = vector<T> >
+template <typename T, typename Container = vector<T> >
 class stack {
  public:
   typedef Container container_type;

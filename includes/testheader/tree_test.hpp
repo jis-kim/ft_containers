@@ -34,7 +34,7 @@ using namespace ft;
 template <typename T>
 void print_rb_tree(const std::string& prefix, const _rb_tree_node_base* node,
                    bool isLeft) {
-  if (node != NIL) {
+  if (node != NULL) {
     typedef const _rb_tree_node<T>* link_type;
     link_type x = static_cast<link_type>(node);
     std::cout << prefix;

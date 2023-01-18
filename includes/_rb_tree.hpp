@@ -13,7 +13,6 @@
 #include "algorithm.hpp"
 #include "pair.hpp"
 #include "reverse_iterator.hpp"
-#include "testheader/print_vector.hpp"
 
 namespace ft {
 enum _rb_tree_color { RED = 0, BLACK };
@@ -256,7 +255,7 @@ template <typename Compare>
 struct _rb_tree_impl : public _rb_tree_header, _rb_tree_key_compare<Compare> {
   typedef _rb_tree_key_compare<Compare> _base_key_compare;
 
-  _rb_tree_impl(void) {}
+  _rb_tree_impl(void) : _rb_tree_header(), _base_key_compare() {}
   _rb_tree_impl(const _rb_tree_impl& src)
       : _rb_tree_header(), _base_key_compare(src._compare) {}
   explicit _rb_tree_impl(const Compare& comp)
@@ -308,10 +307,21 @@ class _rb_tree {
   node_allocator _alloc;
 
  public:
-  _rb_tree(void) {}
+  _rb_tree(void){}
+
   _rb_tree(const Compare& comp, const node_allocator& alloc = node_allocator())
       : _impl(comp), _alloc(alloc) {}
-  _rb_tree(const _rb_tree& src) : _impl(src._impl) {}
+
+  _rb_tree(const _rb_tree& src) : _impl(src._impl) {
+    if (src._root() != NULL) {
+      _impl._header.parent = _copy(src._root(), _root());
+      _impl._header.left = _left_most(_impl._header.parent);
+      _impl._header.right = _right_most(_impl._header.parent);
+      _get_root()->parent = _get_end();
+      _impl._node_count = src._impl._node_count;
+    }
+  }
+
   ~_rb_tree(void) { _erase(_root()); }
 
   _rb_tree& operator=(const _rb_tree& src) {
@@ -321,9 +331,11 @@ class _rb_tree {
       _impl._compare = src._impl._compare;
 
       if (src._root() != NULL) {
-        _impl._header.parent = _copy(src._root(), _root());  // update root
+        _impl._header.parent = _copy(src._root(), _root());
         _impl._header.left = _left_most(_impl._header.parent);
         _impl._header.right = _right_most(_impl._header.parent);
+        _get_root()->parent = _get_end();
+        _impl._node_count = src._impl._node_count;
       }
     }
     return *this;
@@ -386,12 +398,17 @@ class _rb_tree {
 
   void swap(_rb_tree& x) {
     if (_get_root() == NULL) {
+      // 나 empty
       if (x._get_root() != NULL) {
+        // 넌 empty 아님
         _impl._move_data(x._impl);
+        //너 reset, 내꺼로 move
       }
     } else if (x._get_root() == NULL) {
+      // 나 empty 고 너 empty 아님
       x._impl._move_data(_impl);
     } else {
+      // 둘 다 empty 아님
       _swap(_impl._header.parent, x._impl._header.parent);
       _swap(_impl._header.left, x._impl._header.left);
       _swap(_impl._header.right, x._impl._header.right);
@@ -527,7 +544,9 @@ class _rb_tree {
   base_ptr _get_root(void) const { return _impl._header.parent; }
   base_ptr _get_left_most(void) const { return _impl._header.left; }
   base_ptr _get_right_most(void) const { return _impl._header.right; }
-  base_ptr _get_end(void) const { return &(_impl._header); }
+  base_ptr _get_end(void) const {
+    return const_cast<base_ptr>(&(_impl._header));
+  }
 
   key_type _get_key(const_link_type x) const { return KeyOfValue()(x->value); }
 
@@ -676,7 +695,7 @@ class _rb_tree {
       } else if (_impl._compare(key, _get_key((++after)._node))) {
         // pos < key < after
         if (_right(pos._node) == NULL) {
-          // right 가 없으면 right 자식으로 삽입
+          // pos 의 right 가 없으면 right 자식으로 삽입
           return pair_type(NULL, pos._node);
         } else {
           // 있으면.... :(
@@ -752,6 +771,14 @@ class _rb_tree {
     tmp->right = NULL;
     return tmp;
   }
+
+  friend bool operator==(const _rb_tree& x, const _rb_tree& y) {
+    return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
+  }
+
+  friend bool operator<(const _rb_tree& x, const _rb_tree& y) {
+    return lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
+  }
 };
 // !SECTION: red-black tree
 
@@ -789,6 +816,49 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header);
 
 _rb_tree_node_base* _find_successor(_rb_tree_node_base* x);
+
+// SECTION : relational operators
+template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+          typename Alloc>
+bool operator==(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+  return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
+}
+
+template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+          typename Alloc>
+bool operator!=(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+  return !(x == y);
+}
+
+template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+          typename Alloc>
+bool operator<(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+               const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+  return lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
+}
+
+template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+          typename Alloc>
+bool operator>(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+               const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+  return y < x;
+}
+
+template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+          typename Alloc>
+bool operator<=(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+  return !(y < x);
+}
+
+template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+          typename Alloc>
+bool operator>=(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+  return !(x < y);
+}
 
 }  // namespace ft
 
