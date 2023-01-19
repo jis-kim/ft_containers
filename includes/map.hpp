@@ -296,7 +296,9 @@ class map {
    *
    * @param position
    */
-  // void erase(iterator position) {}
+   void erase(iterator position) {
+    _tree.erase(position);
+   }
 
   /**
    * @brief
@@ -306,7 +308,9 @@ class map {
    * @return size_type 지워진 element 의 개수
    */
 
-  // size_type erase(const key_type& key) {}
+   size_type erase(const key_type& key) {
+    return _tree.erase(key);
+   }
 
   /**
    * @brief [first, last) 를 삭제한다.
@@ -315,7 +319,11 @@ class map {
    * @param first
    * @param last
    */
-  // void erase(iterator first, iterator last) {}
+   void erase(iterator first, iterator last) {
+    while (first != last) {
+      _tree.erase(first++);
+    }
+  }
 
   // NOTHROW 두 컨테이너의 compare 가 같거나 allocator traits 가 allocator 가
   // 전파되어야 함을 알 경우(? 먼소리)

@@ -322,7 +322,7 @@ class _rb_tree {
     }
   }
 
-  ~_rb_tree(void) { _erase(_root()); }
+  ~_rb_tree(void) { _erase_all(_root()); }
 
   _rb_tree& operator=(const _rb_tree& src) {
     if (this != &src) {
@@ -396,6 +396,16 @@ class _rb_tree {
     }
   }
 
+  // SECTION : erase
+  void erase(iterator position) {
+    _erase(position._node);
+    _impl._node_count--;
+  }
+
+  size_type erase(const key_type& key) {
+    pair<iterator, iterator> = equal_range(key);
+  }
+
   void swap(_rb_tree& x) {
     if (_get_root() == NULL) {
       // 나 empty
@@ -422,7 +432,7 @@ class _rb_tree {
 
   // NOTHROW
   void clear(void) {
-    _erase(_root());
+    _erase_all(_root());
     _impl._reset();
   }
 
@@ -606,9 +616,9 @@ class _rb_tree {
    *
    * @param node
    */
-  void _erase(link_type node) {
+  void _erase_all(link_type node) {
     while (node != NULL) {
-      _erase(_right(node));
+      _erase_all(_right(node));
       link_type tmp = _left(node);
       _destroy_node(node);
       node = tmp;
@@ -760,7 +770,7 @@ class _rb_tree {
         x = _left(x);  // 다시 left 준비해.
       }
     } catch (...) {
-      _erase(top);  // rollback
+      _erase_all(top);  // rollback
       throw;
     }
     return top;
@@ -818,21 +828,6 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header);
 
 _rb_tree_node_base* _find_successor(_rb_tree_node_base* x);
-
-//// SECTION : relational operators
-//template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-//          typename Alloc>
-//bool operator==(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-//                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-//  return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
-//}
-
-//template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-//          typename Alloc>
-//bool operator<(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-//               const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-//  return lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
-//}
 
 }  // namespace ft
 
