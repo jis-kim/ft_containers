@@ -680,7 +680,8 @@ class _rb_tree {
           // before 의 right 가 없으면 before 자식으로 삽입 (오른쪽)
           return pair_type(NULL, before._node);
         } else {
-          // 있으면 pos 의... 몰?루?
+          // pos._node != NULL 이므로 왼편에 들어갈 것이다.
+          // 근데 Pos 왼쪽자식 없는 건 어케 알아?...
           return pair_type(pos._node, pos._node);
         }
       } else {
@@ -730,6 +731,7 @@ class _rb_tree {
 
   /**
    * @brief 완성된 tree 를 그대로 복사한다.
+   * tree 가 정렬된 것이 확실하면 _insert_rebalance 를 사용하지 않고 더 빠르게 복사할 수 있다.
    *
    * @param x 복사할 node
    * @param p x를 달 parent - operator= 에서는 원본의 header 가 불림.
@@ -817,48 +819,20 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
 
 _rb_tree_node_base* _find_successor(_rb_tree_node_base* x);
 
-// SECTION : relational operators
-template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-          typename Alloc>
-bool operator==(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-  return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
-}
+//// SECTION : relational operators
+//template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+//          typename Alloc>
+//bool operator==(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+//                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+//  return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
+//}
 
-template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-          typename Alloc>
-bool operator!=(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-  return !(x == y);
-}
-
-template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-          typename Alloc>
-bool operator<(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-               const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-  return lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
-}
-
-template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-          typename Alloc>
-bool operator>(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-               const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-  return y < x;
-}
-
-template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-          typename Alloc>
-bool operator<=(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-  return !(y < x);
-}
-
-template <typename Key, typename Value, typename KeyOfValue, typename Compare,
-          typename Alloc>
-bool operator>=(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
-                const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
-  return !(x < y);
-}
+//template <typename Key, typename Value, typename KeyOfValue, typename Compare,
+//          typename Alloc>
+//bool operator<(const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& x,
+//               const _rb_tree<Key, Value, KeyOfValue, Compare, Alloc>& y) {
+//  return lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
+//}
 
 }  // namespace ft
 

@@ -748,9 +748,9 @@ class vector : private vector_base<T, Allocator> {
    * @param x
    */
   void swap(vector& x) {
-    _swap_pointer(this->_begin, x._begin);
-    _swap_pointer(this->_end, x._end);
-    _swap_pointer(this->_end_cap, x._end_cap);
+    _swap(this->_begin, x._begin);
+    _swap(this->_end, x._end);
+    _swap(this->_end_cap, x._end_cap);
   }
 
   // NOTHROW
@@ -790,12 +790,6 @@ class vector : private vector_base<T, Allocator> {
       return _max_size;
     }
     return max(2 * cap, new_size);
-  }
-
-  void _swap_pointer(pointer& p1, pointer& p2) {
-    pointer tmp = p1;
-    p1 = p2;
-    p2 = tmp;
   }
 
   /**
@@ -930,9 +924,29 @@ bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
 }
 
 template <typename T, typename Alloc>
+bool operator!=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return !(lhs == rhs);
+}
+
+template <typename T, typename Alloc>
 bool operator<(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
   return lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(),
                                  rhs.end());
+}
+
+template <typename T, typename Alloc>
+bool operator>(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return rhs < lhs;
+}
+
+template <typename T, typename Alloc>
+bool operator<=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return !(rhs < lhs);
+}
+
+template <typename T, typename Alloc>
+bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
+  return !(lhs < rhs);
 }
 
 // NOTHROW allocator in both vectors compare equal
