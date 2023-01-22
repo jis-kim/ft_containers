@@ -94,8 +94,8 @@ const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
  * @brief subtree 를 왼쪽으로 회전
  *  할아버지가 오른쪽 자식, 부모가 루트, 자식이 왼쪽 자식이 된다.
  *
- * @param x 얘가 섭트리 root 인듯???
- * @param root ?? ㄹㅇ 루트임... 뭐임?
+ * @param x 서브트리 root
+ * @param root 트리의 root
  */
 void _rb_tree_rotate_left(_rb_tree_node_base* const x,
                           _rb_tree_node_base*& root) {
@@ -228,6 +228,149 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
     }
   }
   root->color = BLACK;  // while 을 바로 빠져나온 경우를 위해 setting.
+}
+
+_rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
+                                         _rb_tree_node_base& header) {
+  _rb_tree_node_base*& root = header.parent;
+  _rb_tree_node_base*& leftmost = header.left;
+  _rb_tree_node_base*& rightmost = header.right;
+
+  _rb_tree_node_base* y = z;
+  _rb_tree_node_base* x = NULL;
+  _rb_tree_node_base* xp = NULL;
+
+  if (y->left == NULL) {
+    x = y->right;
+  } else if (y->right == NULL) {
+    x = y->left;
+  } else {
+    y = _find_successor(z);
+  }
+
+  if (y != z) {
+    // relink y in place of z.  y is z's successor
+    z->left->parent = y;
+    y->left = z->left;
+    if (y != z->right) {
+      xp = y->parent;
+      if (x != NULL) {
+        x->parent = y->parent;
+      }
+      y->parent->left = x;  // y must be a child of left
+      y->right = z->right;
+      z->right->parent = y;
+    } else {
+      xp = y;
+    }
+
+    if (root == z) {
+      root = y;
+    } else if (z->parent->left == z) {
+      // z is left child
+      z->parent->left = y;
+    } else {
+      // z is right child
+      z->parent->right = y;
+    }
+    y->parent = z->parent;
+    _swap(y->color, z->color);
+    y = z;
+    // y-> 실제로 삭제되어야 하는 node 를 가리킴 (z)
+  } else {  // y == z
+    xp = y->parent;
+    if (x != NULL) {
+      x->parent = y->parent;
+    }
+    if (root == z) {
+      root = x;
+    } else if (z->parent->left == z) {
+      // 왼쪽 자식
+      z->parent->left = x;
+    } else {
+      z->parent->right = x;
+    }
+    if (leftmost == z) {
+      if (z->right == NULL) {
+        leftmost = z->parent;
+      } else {
+        leftmost = _left_most(x);
+      }
+    }
+    if (rightmost == z) {
+      if (z->left == NULL) {
+        rightmost = z->parent;
+      } else {
+        rightmost = _right_most(x);
+      }
+    }
+  }
+  // 재정렬!
+  if (y->color != RED) {
+    while (x != root && (x == NULL || x->color == BLACK)) {
+      if (x == xp->left) {
+        _rb_tree_node_base* w = xp->right;
+        if (w->color == RED) {
+          w->color = BLACK;
+          xp->color = RED;
+          _rb_tree_rotate_left(xp, root);
+          w = xp->right;
+        }
+        if ((w->left == NULL || w->left->color == BLACK) &&
+            (w->right == NULL || w->right->color == BLACK)) {
+          w->color = RED;
+          x = xp;
+          xp = xp->parent;
+        } else {
+          if (w->right == NULL || w->right->color == BLACK) {
+            w->left->color = BLACK;
+            w->color = RED;
+            _rb_tree_rotate_right(w, root);
+            w = xp->right;
+          }
+          w->color = xp->color;
+          xp->color = BLACK;
+          if (w->right != NULL) {
+            w->right->color = BLACK;
+          }
+          _rb_tree_rotate_left(xp, root);
+          break;
+        }
+      } else {
+        _rb_tree_node_base* w = xp->left;
+        if (w->color == RED) {
+          w->color = BLACK;
+          xp->color = RED;
+          _rb_tree_rotate_right(xp, root);
+          w = xp->left;
+        }
+        if ((w->right == NULL || w->right->color == BLACK) &&
+            (w->left == NULL || w->left->color == BLACK)) {
+          w->color = RED;
+          x = xp;
+          xp = xp->parent;
+        } else {
+          if (w->left == NULL || w->left->color == BLACK) {
+            w->right->color = BLACK;
+            w->color = RED;
+            _rb_tree_rotate_left(w, root);
+            w = xp->left;
+          }
+          w->color = xp->color;
+          xp->color = BLACK;
+          if (w->left != NULL) {
+            w->left->color = BLACK;
+          }
+          _rb_tree_rotate_right(xp, root);
+          break;
+        }
+      }
+    }
+    if (x != NULL) {
+      x->color = BLACK;
+    }
+  }
+  return y;
 }
 
 /**

@@ -71,4 +71,33 @@ void tree_test(void) {
   ::print_rb_tree<value_type>(tree2.end());
 
   tree.clear();
+
+  tree2.clear();
+
+  std::cout << "\n\n ======= tree delete test ======== \n\n";
+  insert_print_result(tree2, value_type(35, "a"));
+  insert_print_result(tree2, value_type(20, "a"));
+  insert_print_result(tree2, value_type(50, "a"));
+  insert_print_result(tree2, value_type(10, "a"));
+  insert_print_result(tree2, value_type(30, "a"));
+  insert_print_result(tree2, value_type(80, "a"));
+  insert_print_result(tree2, value_type(40, "a"));
+  insert_print_result(tree2, value_type(5, "a"));
+  insert_print_result(tree2, value_type(15, "a"));
+  insert_print_result(tree2, value_type(25, "a"));
+  insert_print_result(tree2, value_type(35, "a"));
+  insert_print_result(tree2, value_type(45, "a"));
+  insert_print_result(tree2, value_type(37, "a"));
+  insert_print_result(tree2, value_type(2, "a"));
+  insert_print_result(tree2, value_type(27, "a"));
+
+  std::cout << "\n\n================================ < tree "
+               "info > ================================\n\n";
+  ::print_rb_tree(tree2.end());
+
+  tree2.erase(20);
+  ::print_rb_tree(tree2.end());
+
+  tree2.erase(++tree2.begin());
+  ::print_rb_tree(tree2.end());
 }

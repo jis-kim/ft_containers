@@ -115,9 +115,8 @@ struct _rb_tree_iterator {
     return tmp;
   }
 
-  // NOTE: STL uses friend keyword.
   friend bool operator==(const self& lhs, const self& rhs) {
-    return lhs._node == rhs._node;  // private
+    return lhs._node == rhs._node;
   }
 
   friend bool operator!=(const self& lhs, const self& rhs) {
@@ -195,9 +194,9 @@ struct _rb_tree_const_iterator {
     _node = _rb_tree_decrement(_node);
     return tmp;
   }
-  // NOTE: STL uses friend keyword.
+
   friend bool operator==(const self& lhs, const self& rhs) {
-    return lhs._node == rhs._node;  // private
+    return lhs._node == rhs._node;
   }
 
   friend bool operator!=(const self& lhs, const self& rhs) {
@@ -207,7 +206,7 @@ struct _rb_tree_const_iterator {
 
 // !SECTION: red-black tree iterator
 
-// 트리 정보를  저장하는  header cell
+// 트리 정보를 저장하는 header cell
 struct _rb_tree_header {
   _rb_tree_node_base _header;
   size_t _node_count;
@@ -307,7 +306,7 @@ class _rb_tree {
   node_allocator _alloc;
 
  public:
-  _rb_tree(void){}
+  _rb_tree(void) {}
 
   _rb_tree(const Compare& comp, const node_allocator& alloc = node_allocator())
       : _impl(comp), _alloc(alloc) {}
@@ -403,7 +402,13 @@ class _rb_tree {
   }
 
   size_type erase(const key_type& key) {
-    pair<iterator, iterator> = equal_range(key);
+    pair<iterator, iterator> range = equal_range(key);
+    size_type count = 0;
+    while (range.first != range.second) {
+      erase(range.first++);
+      ++count;
+    }
+    return count;
   }
 
   void swap(_rb_tree& x) {
@@ -412,7 +417,7 @@ class _rb_tree {
       if (x._get_root() != NULL) {
         // 넌 empty 아님
         _impl._move_data(x._impl);
-        //너 reset, 내꺼로 move
+        // 너 reset, 내꺼로 move
       }
     } else if (x._get_root() == NULL) {
       // 나 empty 고 너 empty 아님
@@ -540,11 +545,11 @@ class _rb_tree {
   }
 
   pair<iterator, iterator> equal_range(const key_type& key) {
-    return make_pair(lower_bound(key), upper_bound(key));
+    return ft::make_pair(lower_bound(key), upper_bound(key));
   }
 
   pair<const_iterator, const_iterator> equal_range(const key_type& key) const {
-    return make_pair(lower_bound(key), upper_bound(key));
+    return ft::make_pair(lower_bound(key), upper_bound(key));
   }
 
   node_allocator get_node_allocator(void) { return _alloc; }
@@ -722,7 +727,7 @@ class _rb_tree {
   }
 
   /**
-   * @brief 무조건 삽입하는 경우만 들어오는 데 왜지?
+   * @brief
    *
    * @param x
    * @param p
@@ -739,13 +744,21 @@ class _rb_tree {
     return iterator(node);
   }
 
+  void _erase(base_ptr x) {
+    link_type y =
+        static_cast<link_type>(_rebalance_for_erase(x, this->_impl._header));
+    _destroy_node(y);
+    --_impl._node_count;
+  }
+
   /**
    * @brief 완성된 tree 를 그대로 복사한다.
-   * tree 가 정렬된 것이 확실하면 _insert_rebalance 를 사용하지 않고 더 빠르게 복사할 수 있다.
+   * tree 가 정렬된 것이 확실하면 _insert_rebalance 를 사용하지 않고 더 빠르게
+   * 복사할 수 있다.
    *
    * @param x 복사할 node
    * @param p x를 달 parent - operator= 에서는 원본의 header 가 불림.
-   * @return iterator
+   * @return iterator 복사된 node 의 iterator
    */
   link_type _copy(link_type x, base_ptr p) {
     link_type top = _clone_node(x);
@@ -826,6 +839,9 @@ _rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x);
 
 void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header);
+
+_rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
+                                         _rb_tree_node_base& header);
 
 _rb_tree_node_base* _find_successor(_rb_tree_node_base* x);
 
