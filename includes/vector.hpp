@@ -136,10 +136,10 @@ bool operator>=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
 // !SECTION : comparision operators
 
 // SECTION : vector base
-template <typename T, typename Allocator = std::allocator<T> >
+template <typename T, typename Alloc = std::allocator<T> >
 class vector_base {
  protected:
-  typedef Allocator allocator_type;
+  typedef Alloc allocator_type;
   typedef typename allocator_type::reference reference;              // T&
   typedef typename allocator_type::const_reference const_reference;  // const T&
   typedef typename allocator_type::pointer pointer;                  // T*
@@ -169,11 +169,11 @@ class vector_base {
 };  // !SECTION : vector_base
 
 // SECTION : vector
-template <typename T, typename Allocator = std::allocator<T> >
-class vector : private vector_base<T, Allocator> {
+template <typename T, typename Alloc = std::allocator<T> >
+class vector : private vector_base<T, Alloc> {
  public:
   typedef T value_type;
-  typedef Allocator allocator_type;
+  typedef Alloc allocator_type;
   typedef typename allocator_type::reference reference;
   typedef typename allocator_type::const_reference const_reference;
   typedef typename allocator_type::pointer pointer;
@@ -771,7 +771,7 @@ class vector : private vector_base<T, Allocator> {
 
   // SECTION : private functions
  private:
-  typedef vector_base<T, Allocator> base_;
+  typedef vector_base<T, Alloc> base_;
 
   /**
    * @brief 적절히 resize 할 크기를 리턴한다.

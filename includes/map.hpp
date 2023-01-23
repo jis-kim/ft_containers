@@ -27,14 +27,16 @@ class map {
   typedef Key key_type;
   typedef T mapped_type;
   typedef pair<const Key, T> value_type;
+  typedef Alloc allocator_type;
+
+  typedef typename allocator_type::reference reference;
+  typedef typename allocator_type::const_reference const_reference;
+  typedef typename allocator_type::pointer pointer;
+  typedef typename allocator_type::const_pointer const_pointer;
+
   typedef size_t size_type;
   typedef ptrdiff_t difference_type;
   typedef Compare key_compare;
-  typedef Alloc allocator_type;
-  typedef value_type& reference;
-  typedef const value_type& const_reference;
-  typedef value_type* pointer;
-  typedef const value_type* const_pointer;
 
  private:
   typedef _rb_tree<key_type, value_type, _SelectKey<value_type>, key_compare,
@@ -296,9 +298,7 @@ class map {
    *
    * @param position
    */
-   void erase(iterator position) {
-    _tree.erase(position);
-   }
+  void erase(iterator position) { _tree.erase(position); }
 
   /**
    * @brief
@@ -308,18 +308,16 @@ class map {
    * @return size_type 지워진 element 의 개수
    */
 
-   size_type erase(const key_type& key) {
-    return _tree.erase(key);
-   }
+  size_type erase(const key_type& key) { return _tree.erase(key); }
 
   /**
    * @brief [first, last) 를 삭제한다.
-   * @complexity O(N) N is distance between first and last
+   * @complexity O(N * log N) N is distance between first and last
    *
    * @param first
    * @param last
    */
-   void erase(iterator first, iterator last) {
+  void erase(iterator first, iterator last) {
     while (first != last) {
       _tree.erase(first++);
     }
@@ -328,9 +326,7 @@ class map {
   // NOTHROW 두 컨테이너의 compare 가 같거나 allocator traits 가 allocator 가
   // 전파되어야 함을 알 경우(? 먼소리)
   // otherwise UB
-  void swap(map& x) {
-    _tree.swap(x._tree);
-  }
+  void swap(map& x) { _tree.swap(x._tree); }
 
   // NOTHROW
   /**

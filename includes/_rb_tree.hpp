@@ -73,7 +73,6 @@ struct _rb_tree_iterator {
 
   base_ptr _node;
 
- public:
   _rb_tree_iterator(void) : _node() {}
 
   explicit _rb_tree_iterator(base_ptr x) : _node(x) {}
@@ -141,10 +140,8 @@ struct _rb_tree_const_iterator {
   typedef _rb_tree_node_base::const_base_ptr base_ptr;
   typedef const _rb_tree_node<T>* link_type;
 
- private:
   base_ptr _node;
 
- public:
   _rb_tree_const_iterator(void) : _node() {}
 
   explicit _rb_tree_const_iterator(base_ptr x) : _node(x) {}
@@ -314,8 +311,8 @@ class _rb_tree {
   _rb_tree(const _rb_tree& src) : _impl(src._impl) {
     if (src._root() != NULL) {
       _impl._header.parent = _copy(src._root(), _root());
-      _impl._header.left = _left_most(_impl._header.parent);
-      _impl._header.right = _right_most(_impl._header.parent);
+      _impl._header.left = _get_subtree_min(_impl._header.parent);
+      _impl._header.right = _get_subtree_max(_impl._header.parent);
       _get_root()->parent = _get_end();
       _impl._node_count = src._impl._node_count;
     }
@@ -331,8 +328,8 @@ class _rb_tree {
 
       if (src._root() != NULL) {
         _impl._header.parent = _copy(src._root(), _root());
-        _impl._header.left = _left_most(_impl._header.parent);
-        _impl._header.right = _right_most(_impl._header.parent);
+        _impl._header.left = _get_subtree_min(_impl._header.parent);
+        _impl._header.right = _get_subtree_max(_impl._header.parent);
         _get_root()->parent = _get_end();
         _impl._node_count = src._impl._node_count;
       }
@@ -396,10 +393,7 @@ class _rb_tree {
   }
 
   // SECTION : erase
-  void erase(iterator position) {
-    _erase(position._node);
-    _impl._node_count--;
-  }
+  void erase(iterator position) { _erase(position._node); }
 
   size_type erase(const key_type& key) {
     pair<iterator, iterator> range = equal_range(key);
@@ -472,7 +466,7 @@ class _rb_tree {
    * @brief key 보다 같거나 큰 노드 중 가장 작은 노드 반환.
    * Compare : comp(a,b) 는 a 가 b 보다 앞에 있다고 판단되면 true 를 리턴한다.
    * 기준은 함수가 정의한 strict weak ordering 에 따른다.
-   * ... 이기 때문에 compare true -> small, false-> big 임.
+   * ... 이기 때문에 compare true -> small, false-> big.
    *
    * @param key
    * @return iterator
@@ -492,7 +486,6 @@ class _rb_tree {
   }
 
   const_iterator lower_bound(const key_type& key) const {
-    // casting 하는 이유 - 부모 -> 자식은 형변환이 안돼서..
     link_type x = _root();
     base_ptr y = _get_end();
     while (x != NULL) {
@@ -599,7 +592,6 @@ class _rb_tree {
     return tmp;
   }
 
-  // value-> pair (map)
   void _construct_node(link_type node, const value_type& value) {
     try {
       _alloc.construct(node, value);
@@ -807,11 +799,11 @@ class _rb_tree {
 };
 // !SECTION: red-black tree
 
-_rb_tree_node_base* _left_most(_rb_tree_node_base* x);
-const _rb_tree_node_base* _left_most(const _rb_tree_node_base* x);
+_rb_tree_node_base* _get_subtree_min(_rb_tree_node_base* x);
+const _rb_tree_node_base* _get_subtree_min(const _rb_tree_node_base* x);
 
-_rb_tree_node_base* _right_most(_rb_tree_node_base* x);
-const _rb_tree_node_base* _right_most(const _rb_tree_node_base* x);
+_rb_tree_node_base* _get_subtree_max(_rb_tree_node_base* x);
+const _rb_tree_node_base* _get_subtree_max(const _rb_tree_node_base* x);
 
 _rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x);
 const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x);
@@ -830,12 +822,6 @@ void _rb_tree_rotate_left(_rb_tree_node_base* const x,
 
 void _rb_tree_rotate_right(_rb_tree_node_base* const x,
                            _rb_tree_node_base*& root);
-
-void _rb_tree_recolorize(_rb_tree_node_base* x, _rb_tree_node_base* xp);
-
-_rb_tree_node_base* _rb_tree_subtree_min(_rb_tree_node_base* x);
-
-_rb_tree_node_base* _rb_tree_subtree_max(_rb_tree_node_base* x);
 
 void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header);
