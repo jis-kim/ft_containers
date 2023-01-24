@@ -30,10 +30,6 @@ class Allocated {
   ~Allocated(void) { delete pa; }
 };
 
-std::ostream& operator<<(const std::ostream& os, const A& a) {
-  return os << a.a;
-}
-
 static int num = 0;
 struct BASIC {
   int* a;
@@ -97,7 +93,7 @@ void vector_test(void) {
       int_vec.push_back(i);
     }
 
-    // int_vec.clear();
+    int_vec.clear();
     std::cout << "\nafter insert & clear vector\n";
     std::cout << "\nbegin : " << int_vec.begin().base() << "\n";
     std::cout << "end : " << int_vec.end().base() << "\n";

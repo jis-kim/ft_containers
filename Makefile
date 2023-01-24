@@ -1,7 +1,7 @@
 #Makefile for ft_containers
 CXX = c++
 
-#WFLAGS = -Wall -Wextra -Werror
+WFLAGS = -Wall -Wextra -Werror
 STDFLAGS = -std=c++98 -ferror-limit=50
 DEBUGFLAGS = -g3 -fsanitize=address
 LEAKSFLAGS = -g3
@@ -32,7 +32,8 @@ vector_test.cpp \
 vector_iterator_test.cpp \
 type_traits_test.cpp \
 pair_test.cpp \
-tree_test.cpp
+tree_test.cpp \
+map_test.cpp \
 
 OBJS_FILES = $(OBJS)
 

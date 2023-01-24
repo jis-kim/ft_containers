@@ -243,19 +243,19 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
     x = y->left;
   } else {  // z 의 자식이 둘 다 있음
     y = _get_subtree_min(z->right);
-    x = y->right;  // 어차피 NULL 인데 왜하는?
+    x = y->right;
   }
 
   if (y != z) {
     // y가 z의 successor 인 경우 relink y in place of z.
-    z->left->parent = y;  // z의 왼쪽 자식의 y에 달아줌
+    z->left->parent = y;
     y->left = z->left;  // y의 왼쪽 자식을 z의 왼쪽 자식으로 바꿔줌
     if (y != z->right) {  // y가 z의 오른 자식이 아닌 손자 이상의 successor
       xp = y->parent;  // y의 부모를 xp에 저장
-      // if (x != NULL) {
-      //   x->parent = y->parent;  // y의 부모를 x 의 부모로..??..?
-      // }
-      y->parent->left = x;  // y의 부모의 왼쪽 자식을 x로 바꿔줌 -> 형제노드
+      if (x != NULL) {
+        x->parent = y->parent;
+      }
+      y->parent->left = x;  // y의 부모의 왼쪽 자식을 x로 바꿔줌 -> y의 형제노드
       y->right = z->right;
       z->right->parent = y;
     } else {
@@ -265,16 +265,13 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
     if (root == z) {
       root = y;
     } else if (z->parent->left == z) {
-      // z is left child
       z->parent->left = y;
     } else {
-      // z is right child
       z->parent->right = y;
     }
     y->parent = z->parent;
     _swap(y->color, z->color);
     y = z;
-    // y-> 실제로 삭제되어야 하는 node 를 가리킴
   } else {  // y == z
     // z의 자식이 0 또는 1개인 경우
     xp = y->parent;
@@ -284,7 +281,6 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
     if (root == z) {
       root = x;
     } else if (z->parent->left == z) {
-      // 왼쪽 자식
       z->parent->left = x;
     } else {
       z->parent->right = x;

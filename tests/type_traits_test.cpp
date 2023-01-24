@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "testheader/print_vector.hpp"
+#include "testheader/vector_test.hpp"
 #include "type_traits.hpp"
 #include "vector.hpp"
 
@@ -23,11 +23,8 @@ void type_traits_test(void) {
 
   std::cout
       << "==================random access iterator test==================\n";
-  std::vector<int> v;
 
-  std::vector<int>::iterator it = v.begin();
-
-  std::cout << "vector<int> iterator is input access iterator? : "
+  std::cout << "random access iterator is forward access iterator? : "
             << std::boolalpha
             << ft::is_base_of<std::forward_iterator_tag,
                               std::random_access_iterator_tag>::value
@@ -147,10 +144,11 @@ void type_traits_test(void) {
         "std::istreambuf_iterator<char>()) ");
     std::ifstream source("Makefile", std::ios::binary);
 
-    std::cout << ft::is_input_iterator<
-        std::istreambuf_iterator<char> >::type::value &&
-        !ft::is_forward_iterator<std::istreambuf_iterator<char> >::type::value
-            << '\n';
+    std::cout << (ft::is_input_iterator<
+                      std::istreambuf_iterator<char> >::type::value &&
+                  !(ft::is_forward_iterator<
+                      std::istreambuf_iterator<char> >::type::value))
+              << '\n';
 
     std::cout << "\n\n===============Makefile print test "
                  "(constructor)================\n\n";

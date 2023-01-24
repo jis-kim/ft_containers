@@ -71,5 +71,7 @@ void print_rb_tree(_rb_tree_iterator<T> it) {
 }
 
 void tree_test(void);
+void map_test(void);
+void set_test(void);
 
 #endif  // TREE_TEST_HPP

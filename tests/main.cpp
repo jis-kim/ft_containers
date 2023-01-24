@@ -1,8 +1,8 @@
 #include <iostream>
 #include <map>
 // #include <vector>
-#include "testheader/print_vector.hpp"
 #include "testheader/tree_test.hpp"
+#include "testheader/vector_test.hpp"
 #include "vector.hpp"
 
 const std::string a = "abcdefg";
@@ -23,6 +23,7 @@ int main(void) {
   // std::cout << alloc.address(ad) << '\n';
 
   // pair_test();
-  tree_test();
-  // system("leaks ft_containers");
+  // tree_test();
+  map_test();
+  system("leaks ft_containers");
 }
