@@ -11,7 +11,6 @@
 #define PAIR_HPP_
 
 #include <iostream>
-#include <utility>
 
 namespace ft {
 template <typename T1, typename T2>
@@ -30,13 +29,9 @@ struct pair {
 
   pair(const T1& a, const T2& b) : first(a), second(b) {}
 
+  ~pair(void) {}
+
   // SECTION : member function
-  /**
-   * @brief
-   *
-   * @param pr
-   * @return pair&
-   */
   pair& operator=(const pair& pr) {
     first = pr.first;
     second = pr.second;

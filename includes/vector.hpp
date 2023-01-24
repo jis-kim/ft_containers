@@ -11,14 +11,10 @@
 #define VECTOR_HPP
 
 #include <memory>
-#include <vector>
 
 #include "algorithm.hpp"
 #include "reverse_iterator.hpp"
 #include "type_traits.hpp"
-
-// FIXME : vector_const_iterator
-#include <iostream>
 
 namespace ft {
 // SECTION : vector iterator
@@ -67,7 +63,6 @@ class vector_iterator
   }
   self operator--(int) { return vector_iterator(_current--); }
 
-  // NOTE : 이 경우는 iterator + n 의 경우고 n + iterator 도 가능해야 한다.
   self operator+(difference_type n) const {
     return vector_iterator(_current + n);
   }
@@ -111,7 +106,7 @@ bool operator==(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
 
 template <typename T, typename U>
 bool operator!=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
-  return lhs.base() != rhs.base();
+  return !(lhs == rhs);
 }
 
 template <typename T, typename U>
@@ -121,17 +116,17 @@ bool operator<(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
 
 template <typename T, typename U>
 bool operator>(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
-  return lhs.base() > rhs.base();
+  return rhs.base() < lhs.base();
 }
 
 template <typename T, typename U>
 bool operator<=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
-  return lhs.base() <= rhs.base();
+  return !(rhs < lhs);
 }
 
 template <typename T, typename U>
 bool operator>=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
-  return lhs.base() >= rhs.base();
+  return !(lhs < rhs);
 }
 // !SECTION : comparision operators
 

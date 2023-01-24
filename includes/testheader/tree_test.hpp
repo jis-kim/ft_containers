@@ -11,7 +11,6 @@
 #define TREE_TEST_HPP_
 
 #include <iostream>
-#include <queue>
 #include <string>
 
 #include "_rb_tree.hpp"
@@ -66,6 +65,7 @@ void print_rb_tree(_rb_tree_iterator<T> it) {
   _rb_tree_node_base* header = it._node;
 
   if (header->parent == NULL) return;
+  // root 시작
   ::print_rb_tree<T>("", header->parent, false);
   std::cout << "\n\n";
 }

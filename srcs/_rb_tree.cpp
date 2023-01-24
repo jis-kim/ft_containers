@@ -10,6 +10,55 @@
 #include "_rb_tree.hpp"
 
 namespace ft {
+
+/**
+ * @brief subtree 를 왼쪽으로 회전
+ *  할아버지가 오른쪽 자식, 부모가 루트, 자식이 왼쪽 자식이 된다.
+ *
+ * @param x 서브트리 root
+ * @param root 트리의 root
+ */
+static void _rotate_left(_rb_tree_node_base* const x,
+                         _rb_tree_node_base*& root) {
+  _rb_tree_node_base* const y = x->right;
+  x->right = y->left;
+  if (y->left != NULL) {
+    y->left->parent = x;
+  }
+  y->parent = x->parent;
+
+  if (x == root) {
+    root = y;
+  } else if (x == x->parent->left) {
+    x->parent->left = y;
+  } else {
+    x->parent->right = y;
+  }
+  y->left = x;
+  x->parent = y;
+}
+
+static void _rotate_right(_rb_tree_node_base* const x,
+                          _rb_tree_node_base*& root) {
+  _rb_tree_node_base* const y = x->left;
+
+  x->left = y->right;
+  if (y->right != NULL) {
+    y->right->parent = x;
+  }
+  y->parent = x->parent;
+
+  if (x == root) {
+    root = y;
+  } else if (x == x->parent->right) {
+    x->parent->right = y;
+  } else {
+    x->parent->left = y;
+  }
+  y->right = x;
+  x->parent = y;
+}
+
 _rb_tree_node_base* _get_subtree_min(_rb_tree_node_base* x) {
   while (x->left != NULL) x = x->left;
   return x;
@@ -30,7 +79,7 @@ const _rb_tree_node_base* _get_subtree_max(const _rb_tree_node_base* x) {
   return x;
 }
 
-_rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x) {
+_rb_tree_node_base* _node_increment(_rb_tree_node_base* x) {
   if (x->right != NULL) {
     return _get_subtree_min(x->right);
   } else {
@@ -44,7 +93,7 @@ _rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x) {
   return x;
 }
 
-const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x) {
+const _rb_tree_node_base* _node_increment(const _rb_tree_node_base* x) {
   if (x->right != NULL) {
     return _get_subtree_min(x->right);
   } else {
@@ -58,11 +107,11 @@ const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x) {
   return x;
 }
 
-_rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x) {
-  if (x->color == RED && x->parent->parent == x) {  // header node (end node)
-    x = x->right;                                   // 바로 right most return
+_rb_tree_node_base* _node_decrement(_rb_tree_node_base* x) {
+  if (x->color == RED && x->parent->parent == x) {
+    x = x->right;
   } else if (x->left != NULL) {
-    return _get_subtree_max(x->left);  // max of left subtree
+    return _get_subtree_max(x->left);
   } else {
     _rb_tree_node_base* xp = x->parent;
     while (x == xp->left) {
@@ -74,7 +123,7 @@ _rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x) {
   return x;
 }
 
-const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
+const _rb_tree_node_base* _node_decrement(const _rb_tree_node_base* x) {
   if (x->color == RED && x->parent->parent == x) {
     x = x->right;
   } else if (x->left != NULL) {
@@ -90,56 +139,9 @@ const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x) {
   return x;
 }
 
+// NOTHROW
 /**
- * @brief subtree 를 왼쪽으로 회전
- *  할아버지가 오른쪽 자식, 부모가 루트, 자식이 왼쪽 자식이 된다.
- *
- * @param x 서브트리 root
- * @param root 트리의 root
- */
-void _rb_tree_rotate_left(_rb_tree_node_base* const x,
-                          _rb_tree_node_base*& root) {
-  _rb_tree_node_base* const y = x->right;  // 기준노드
-  x->right = y->left;
-  if (y->left != NULL) {
-    y->left->parent = x;
-  }
-  y->parent = x->parent;
-
-  if (x == root) {
-    root = y;
-  } else if (x == x->parent->left) {
-    x->parent->left = y;
-  } else {
-    x->parent->right = y;
-  }
-  y->left = x;
-  x->parent = y;
-}
-
-void _rb_tree_rotate_right(_rb_tree_node_base* const x,
-                           _rb_tree_node_base*& root) {
-  _rb_tree_node_base* const y = x->left;
-
-  x->left = y->right;
-  if (y->right != NULL) {
-    y->right->parent = x;
-  }
-  y->parent = x->parent;
-
-  if (x == root) {
-    root = y;
-  } else if (x == x->parent->right) {
-    x->parent->right = y;
-  } else {
-    x->parent->left = y;
-  }
-  y->right = x;
-  x->parent = y;
-}
-
-/**
- * @brief
+ * @brief insert and rebalance tree
  *
  * @param left
  * @param x
@@ -148,10 +150,8 @@ void _rb_tree_rotate_right(_rb_tree_node_base* const x,
  */
 void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header) {
-  // insert and rebalance tree
   _rb_tree_node_base*& root = header.parent;
-  // Initialize new node
-  x->_rb_tree_init(p);
+  x->_node_init(p);
 
   // insert
   // root, leftmost, rightmost 를 갱신해준다.
@@ -179,7 +179,7 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
       if (xu && xu->color == RED) {
         // case 1
         // 삼촌과 부모가 빨간색, 나는 왼쪽 자식 -> color 교체만 해주면 됨
-        // 이미 할아버지는 BLACK 인 게 확실함
+        // 이미 할아버지는 BLACK 인 게 확실함 (rb tree 의 성질)
         x->parent->color = BLACK;
         xu->color = BLACK;
         xpp->color = RED;
@@ -189,13 +189,13 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                                       // case 2
           x = x->parent;
           // 부모 기준으로 왼쪽 회전 후 case 3으로 넘어감
-          _rb_tree_rotate_left(x, root);
+          _rotate_left(x, root);
         }
         // case 3
         // 부모와 할아버지의 색을 바꾸고 할아버지 기준으로 오른쪽 회전.
         x->parent->color = BLACK;
         xpp->color = RED;
-        _rb_tree_rotate_right(xpp, root);
+        _rotate_right(xpp, root);
       }
     } else {
       // 좌우만 바뀌고 위랑 똑같!!
@@ -208,17 +208,24 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
       } else {
         if (x == x->parent->left) {
           x = x->parent;
-          _rb_tree_rotate_right(x, root);
+          _rotate_right(x, root);
         }
         x->parent->color = BLACK;
         xpp->color = RED;
-        _rb_tree_rotate_left(xpp, root);
+        _rotate_left(xpp, root);
       }
     }
   }
   root->color = BLACK;  // while 을 바로 빠져나온 경우를 위해 setting.
 }
 
+/**
+ * @brief 노드를 진짜 삭제하기 전 맛있게 리밸런싱 해준다.
+ *
+ * @param z 삭제하고자 하는 node 값
+ * @param header tree 정보를 담은 header node
+ * @return _rb_tree_node_base* 삭제할 실제 노드
+ */
 _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
                                          _rb_tree_node_base& header) {
   _rb_tree_node_base*& root = header.parent;
@@ -229,24 +236,26 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
   _rb_tree_node_base* x = NULL;
   _rb_tree_node_base* xp = NULL;
 
-  if (y->left == NULL) {
+  // 자식이 0 또는 1개인 경우 y 는 z 이고, 2개인 경우 y 는 z 의 successor
+  if (y->left == NULL) {  // z 오른쪽 자식이 있을 수도.. 없을 수도...
     x = y->right;
-  } else if (y->right == NULL) {
+  } else if (y->right == NULL) {  // z 왼쪽 자식 있음
     x = y->left;
-  } else {
-    y = _find_successor(z);
+  } else {  // z 의 자식이 둘 다 있음
+    y = _get_subtree_min(z->right);
+    x = y->right;  // 어차피 NULL 인데 왜하는?
   }
 
   if (y != z) {
-    // relink y in place of z.  y is z's successor
-    z->left->parent = y;
-    y->left = z->left;
-    if (y != z->right) {
-      xp = y->parent;
-      if (x != NULL) {
-        x->parent = y->parent;
-      }
-      y->parent->left = x;  // y must be a child of left
+    // y가 z의 successor 인 경우 relink y in place of z.
+    z->left->parent = y;  // z의 왼쪽 자식의 y에 달아줌
+    y->left = z->left;  // y의 왼쪽 자식을 z의 왼쪽 자식으로 바꿔줌
+    if (y != z->right) {  // y가 z의 오른 자식이 아닌 손자 이상의 successor
+      xp = y->parent;  // y의 부모를 xp에 저장
+      // if (x != NULL) {
+      //   x->parent = y->parent;  // y의 부모를 x 의 부모로..??..?
+      // }
+      y->parent->left = x;  // y의 부모의 왼쪽 자식을 x로 바꿔줌 -> 형제노드
       y->right = z->right;
       z->right->parent = y;
     } else {
@@ -265,8 +274,9 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
     y->parent = z->parent;
     _swap(y->color, z->color);
     y = z;
-    // y-> 실제로 삭제되어야 하는 node 를 가리킴 (z)
+    // y-> 실제로 삭제되어야 하는 node 를 가리킴
   } else {  // y == z
+    // z의 자식이 0 또는 1개인 경우
     xp = y->parent;
     if (x != NULL) {
       x->parent = y->parent;
@@ -294,7 +304,8 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
       }
     }
   }
-  // 재정렬!
+  // 재정렬
+  // y가 삭제되어야 하는 노드인데 RED 면 이상이 없으므로 BLACK 인 경우만 rotate
   if (y->color != RED) {
     while (x != root && (x == NULL || x->color == BLACK)) {
       if (x == xp->left) {
@@ -302,7 +313,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
         if (w->color == RED) {
           w->color = BLACK;
           xp->color = RED;
-          _rb_tree_rotate_left(xp, root);
+          _rotate_left(xp, root);
           w = xp->right;
         }
         if ((w->left == NULL || w->left->color == BLACK) &&
@@ -314,7 +325,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
           if (w->right == NULL || w->right->color == BLACK) {
             w->left->color = BLACK;
             w->color = RED;
-            _rb_tree_rotate_right(w, root);
+            _rotate_right(w, root);
             w = xp->right;
           }
           w->color = xp->color;
@@ -322,7 +333,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
           if (w->right != NULL) {
             w->right->color = BLACK;
           }
-          _rb_tree_rotate_left(xp, root);
+          _rotate_left(xp, root);
           break;
         }
       } else {
@@ -330,7 +341,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
         if (w->color == RED) {
           w->color = BLACK;
           xp->color = RED;
-          _rb_tree_rotate_right(xp, root);
+          _rotate_right(xp, root);
           w = xp->left;
         }
         if ((w->right == NULL || w->right->color == BLACK) &&
@@ -342,7 +353,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
           if (w->left == NULL || w->left->color == BLACK) {
             w->right->color = BLACK;
             w->color = RED;
-            _rb_tree_rotate_left(w, root);
+            _rotate_left(w, root);
             w = xp->left;
           }
           w->color = xp->color;
@@ -350,7 +361,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
           if (w->left != NULL) {
             w->left->color = BLACK;
           }
-          _rb_tree_rotate_right(xp, root);
+          _rotate_right(xp, root);
           break;
         }
       }
@@ -362,25 +373,4 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
   return y;
 }
 
-/**
- * @brief x 를 기준으로 subtree 에서 successor 를 찾는다.
- * successor 는 x 보다 큰 노드 중 가장 작은 노드이다.
- *
- * @param x
- * @return _rb_tree_node_base*
- */
-_rb_tree_node_base* _find_successor(_rb_tree_node_base* x) {
-  if (x->right != NULL) {  // x has right child
-    return _get_subtree_min(x->right);
-  }
-  _rb_tree_node_base* y = x->parent;
-  while (x == y->right) {
-    x = y;
-    y = y->parent;
-  }
-  if (x->right != y) {
-    x = y;
-  }
-  return x;
-}
 }  // namespace ft

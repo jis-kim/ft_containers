@@ -12,7 +12,7 @@ enum hi { first = true, second };
 int main(void) {
   // type_traits_test();
   // vector_test();
-  //  vector_iterator_test();
+  // vector_iterator_test();
 
   // ft::vector<const int> const_vec;
 
@@ -24,5 +24,5 @@ int main(void) {
 
   // pair_test();
   tree_test();
-  system("leaks ft_containers");
+  // system("leaks ft_containers");
 }

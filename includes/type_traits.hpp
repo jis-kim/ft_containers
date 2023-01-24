@@ -10,8 +10,6 @@
 #ifndef TYPE_TRAITS_HPP
 #define TYPE_TRAITS_HPP
 
-#include <algorithm>
-
 #include "iterator.hpp"
 
 namespace ft {

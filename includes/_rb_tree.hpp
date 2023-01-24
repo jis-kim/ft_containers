@@ -15,12 +15,13 @@
 #include "reverse_iterator.hpp"
 
 namespace ft {
+
 enum _rb_tree_color { RED = 0, BLACK };
 
 /**
  * @brief base class of red-black tree node
  * _rb_tree_node 가 이를 상속받는다.
- * 걍 타입이 필요없음 Value 가 없기 때문
+ * value 가 없기 때문에 template 이 필요하지 않다.
  */
 struct _rb_tree_node_base {
   typedef _rb_tree_node_base* base_ptr;
@@ -31,7 +32,7 @@ struct _rb_tree_node_base {
   base_ptr left;
   base_ptr right;
 
-  void _rb_tree_init(base_ptr p) {
+  void _node_init(base_ptr p) {
     color = RED;
     parent = p;
     left = NULL;
@@ -93,24 +94,24 @@ struct _rb_tree_iterator {
   }
 
   self& operator++(void) {
-    _node = _rb_tree_increment(_node);
+    _node = _node_increment(_node);
     return *this;
   }
 
   self operator++(int) {
     self tmp = *this;
-    _node = _rb_tree_increment(_node);
+    _node = _node_increment(_node);
     return tmp;
   }
 
   self& operator--(void) {
-    _node = _rb_tree_decrement(_node);
+    _node = _node_decrement(_node);
     return *this;
   }
 
   self operator--(int) {
     self tmp = *this;
-    _node = _rb_tree_decrement(_node);
+    _node = _node_decrement(_node);
     return tmp;
   }
 
@@ -153,15 +154,6 @@ struct _rb_tree_const_iterator {
     return *this;
   }
 
-  /**
-   * @brief const iterator to iterator casting
-   *
-   * @return iterator
-   */
-  iterator _const_cast(void) const {
-    return iterator(const_cast<typename iterator::base_ptr>(_node));
-  }
-
   reference operator*(void) const {
     return static_cast<link_type>(_node)->value;
   }
@@ -171,25 +163,34 @@ struct _rb_tree_const_iterator {
   }
 
   self& operator++(void) {
-    _node = _rb_tree_increment(_node);
+    _node = _node_increment(_node);
     return *this;
   }
 
   self operator++(int) {
     self tmp = *this;
-    _node = _rb_tree_increment(_node);
+    _node = _node_increment(_node);
     return tmp;
   }
 
   self& operator--(void) {
-    _node = _rb_tree_decrement(_node);
+    _node = _node_decrement(_node);
     return *this;
   }
 
   self operator--(int) {
     self tmp = *this;
-    _node = _rb_tree_decrement(_node);
+    _node = _node_decrement(_node);
     return tmp;
+  }
+
+  /**
+   * @brief const iterator to iterator casting
+   *
+   * @return iterator
+   */
+  iterator _const_cast(void) const {
+    return iterator(const_cast<typename iterator::base_ptr>(_node));
   }
 
   friend bool operator==(const self& lhs, const self& rhs) {
@@ -308,30 +309,20 @@ class _rb_tree {
   _rb_tree(const Compare& comp, const node_allocator& alloc = node_allocator())
       : _impl(comp), _alloc(alloc) {}
 
-  _rb_tree(const _rb_tree& src) : _impl(src._impl) {
-    if (src._root() != NULL) {
-      _impl._header.parent = _copy(src._root(), _root());
-      _impl._header.left = _get_subtree_min(_impl._header.parent);
-      _impl._header.right = _get_subtree_max(_impl._header.parent);
-      _get_root()->parent = _get_end();
-      _impl._node_count = src._impl._node_count;
+  _rb_tree(const _rb_tree& x) : _impl(x._impl), _alloc(x._alloc) {
+    if (x._root() != NULL) {
+      _copy_tree(x);
     }
   }
 
   ~_rb_tree(void) { _erase_all(_root()); }
 
-  _rb_tree& operator=(const _rb_tree& src) {
-    if (this != &src) {
+  _rb_tree& operator=(const _rb_tree& x) {
+    if (this != &x) {
       clear();
-      _impl._reset();
-      _impl._compare = src._impl._compare;
-
-      if (src._root() != NULL) {
-        _impl._header.parent = _copy(src._root(), _root());
-        _impl._header.left = _get_subtree_min(_impl._header.parent);
-        _impl._header.right = _get_subtree_max(_impl._header.parent);
-        _get_root()->parent = _get_end();
-        _impl._node_count = src._impl._node_count;
+      _impl._compare = x._impl._compare;
+      if (x._root() != NULL) {
+        _copy_tree(x);
       }
     }
     return *this;
@@ -370,7 +361,7 @@ class _rb_tree {
   }
 
   /**
-   * @brief
+   * @brief insert with hint
    *
    * @param position
    * @param val
@@ -407,22 +398,17 @@ class _rb_tree {
 
   void swap(_rb_tree& x) {
     if (_get_root() == NULL) {
-      // 나 empty
       if (x._get_root() != NULL) {
-        // 넌 empty 아님
         _impl._move_data(x._impl);
-        // 너 reset, 내꺼로 move
       }
     } else if (x._get_root() == NULL) {
-      // 나 empty 고 너 empty 아님
       x._impl._move_data(_impl);
     } else {
-      // 둘 다 empty 아님
       _swap(_impl._header.parent, x._impl._header.parent);
       _swap(_impl._header.left, x._impl._header.left);
       _swap(_impl._header.right, x._impl._header.right);
 
-      _get_root()->parent = &_impl._header;  // header reset
+      _get_root()->parent = &_impl._header;
       x._get_root()->parent = &x._impl._header;
       _swap(_impl._node_count, x._impl._node_count);
       _swap(_impl._compare, x._impl._compare);
@@ -444,16 +430,16 @@ class _rb_tree {
   iterator find(const key_type& key) {
     iterator gte = lower_bound(key);
     // 1. gte 가 end 이면 크거나 같은 키가 없음.
-    // 1 에서 || 이므로 key <= gte 인 것은 확실함!
-    // 거기서 key < gte 가 true 이면 같은 것이 아니라 더 큰 것이므로 return end
-    return (gte == end() || _impl._compare(key, _get_key(gte._node))) ? end()
-                                                                      : gte;
+    // 2. 1 에서 || 이므로 key <= gte.
+    // 거기서 key < gte 가 true 이면 같은 것이 아니라 더 큰 것이므로 end return.
+    return (gte == end() || _impl._compare(key, KeyOfValue()(*gte))) ? end()
+                                                                     : gte;
   }
 
   const_iterator find(const key_type& key) const {
     const_iterator gte = lower_bound(key);
-    return (gte == end() || _impl._compare(key, _get_key(gte._node))) ? end()
-                                                                      : gte;
+    return (gte == end() || _impl._compare(key, KeyOfValue()(*gte))) ? end()
+                                                                     : gte;
   }
 
   // distance of equal_range
@@ -463,7 +449,7 @@ class _rb_tree {
   }
 
   /**
-   * @brief key 보다 같거나 큰 노드 중 가장 작은 노드 반환.
+   * @brief key 보다 크거나 같은 노드 중 가장 작은 노드 반환.
    * Compare : comp(a,b) 는 a 가 b 보다 앞에 있다고 판단되면 true 를 리턴한다.
    * 기준은 함수가 정의한 strict weak ordering 에 따른다.
    * ... 이기 때문에 compare true -> small, false-> big.
@@ -489,12 +475,10 @@ class _rb_tree {
     link_type x = _root();
     base_ptr y = _get_end();
     while (x != NULL) {
-      // x.key >= key -> go left (left most 찾아야 함)
       if (!_impl._compare(_get_key(x), key)) {
-        y = x;  // update
+        y = x;
         x = _left(x);
       } else {
-        // x.key < key => go right (큰 것 찾아야 함)
         x = _right(x);
       }
     }
@@ -511,12 +495,10 @@ class _rb_tree {
     link_type x = _root();
     base_ptr y = _get_end();
     while (x != NULL) {
-      // key < x.key
       if (_impl._compare(key, _get_key(x))) {
         y = x;
         x = _left(x);
       } else {
-        // key >= x.key
         x = _right(x);
       }
     }
@@ -566,62 +548,22 @@ class _rb_tree {
     return static_cast<link_type>(_impl._header.parent);
   }
 
-  static link_type _left(base_ptr x) { return static_cast<link_type>(x->left); }
-  static const_link_type _left(const_base_ptr x) {
-    return static_cast<const_link_type>(x->left);
-  }
+  link_type _left(base_ptr x) const { return static_cast<link_type>(x->left); }
 
-  static link_type _right(base_ptr x) {
+  link_type _right(base_ptr x) const {
     return static_cast<link_type>(x->right);
   }
-  static const_link_type _right(const_base_ptr x) {
-    return static_cast<const_link_type>(x->right);
+
+  // copy constructor, assignment operator 에서 호출
+  void _copy_tree(const _rb_tree& x) {
+    _impl._header.parent = _copy_nodes(x._root(), _root());
+    _impl._header.left = _get_subtree_min(_impl._header.parent);
+    _impl._header.right = _get_subtree_max(_impl._header.parent);
+    _impl._header.parent->parent = _get_end();
+    _impl._node_count = x._impl._node_count;
   }
 
-  static link_type _parent(base_ptr x) {
-    return static_cast<link_type>(x->parent);
-  }
-
-  static const_link_type _parent(const_base_ptr x) {
-    return static_cast<const_link_type>(x->parent);
-  }
-
-  link_type _create_node(const value_type& value) {
-    link_type tmp = _alloc.allocate(1);
-    _construct_node(tmp, value);
-    return tmp;
-  }
-
-  void _construct_node(link_type node, const value_type& value) {
-    try {
-      _alloc.construct(node, value);
-    } catch (...) {
-      _deallocate_node(node);
-      throw;
-    }
-  }
-
-  void _destroy_node(link_type node) {
-    _alloc.destroy(node);
-    _deallocate_node(node);
-  }
-
-  void _deallocate_node(link_type node) { _alloc.deallocate(node, 1); }
-
-  /**
-   * @brief node 를 기준으로 하는 subtree 를 모두 삭제한다.
-   *
-   * @param node
-   */
-  void _erase_all(link_type node) {
-    while (node != NULL) {
-      _erase_all(_right(node));
-      link_type tmp = _left(node);
-      _destroy_node(node);
-      node = tmp;
-    }
-  }
-
+  // SECTION: tree modification
   /**
    * @brief find parent's position to insert new node
    *
@@ -633,8 +575,9 @@ class _rb_tree {
     typedef pair<base_ptr, base_ptr> pair_type;
 
     base_ptr x = _get_root();
-    base_ptr y = &_impl._header;  // header
+    base_ptr y = &_impl._header;
     bool comp = true;
+
     while (x != NULL) {
       y = x;
       comp = _impl._compare(key, _get_key(x));
@@ -648,7 +591,7 @@ class _rb_tree {
       --tmp;
     }
     // tmp < key -> y보다 크고, tmp 보다 크다.
-    if (_impl._compare(_get_key(tmp._node), key)) {
+    if (_impl._compare(KeyOfValue()(*tmp), key)) {
       return pair_type(x, y);
     }
     // tmp == key
@@ -676,7 +619,7 @@ class _rb_tree {
         return _find_insert_pos(key);
       }
     } else if (_impl._compare(key, _get_key(pos._node))) {
-      // key < pos
+      // key < pos && key != end
       iterator before = pos;
       if (pos._node == _get_left_most()) {  // begin()
         // 근데 pos 가 left most 이면 left most 앞에 삽입.
@@ -687,7 +630,7 @@ class _rb_tree {
           // before 의 right 가 없으면 before 자식으로 삽입 (오른쪽)
           return pair_type(NULL, before._node);
         } else {
-          // pos._node != NULL 이므로 왼편에 들어갈 것이다.
+          // pos._node != NULL 이므로 pos 의 왼편에 들어갈 것이다.
           // 근데 Pos 왼쪽자식 없는 건 어케 알아?...
           return pair_type(pos._node, pos._node);
         }
@@ -706,7 +649,6 @@ class _rb_tree {
           // pos 의 right 가 없으면 right 자식으로 삽입
           return pair_type(NULL, pos._node);
         } else {
-          // 있으면.... :(
           return pair_type(after._node, after._node);
         }
       } else {
@@ -719,7 +661,7 @@ class _rb_tree {
   }
 
   /**
-   * @brief
+   * @brief insert node 내부 동작 함수
    *
    * @param x
    * @param p
@@ -738,9 +680,23 @@ class _rb_tree {
 
   void _erase(base_ptr x) {
     link_type y =
-        static_cast<link_type>(_rebalance_for_erase(x, this->_impl._header));
+        static_cast<link_type>(_rebalance_for_erase(x, _impl._header));
     _destroy_node(y);
     --_impl._node_count;
+  }
+
+  /**
+   * @brief node 를 기준으로 하는 subtree 를 모두 삭제한다.
+   *
+   * @param node
+   */
+  void _erase_all(link_type node) {
+    while (node != NULL) {
+      _erase_all(_right(node));
+      link_type tmp = _left(node);
+      _destroy_node(node);
+      node = tmp;
+    }
   }
 
   /**
@@ -749,27 +705,28 @@ class _rb_tree {
    * 복사할 수 있다.
    *
    * @param x 복사할 node
-   * @param p x를 달 parent - operator= 에서는 원본의 header 가 불림.
-   * @return iterator 복사된 node 의 iterator
+   * @param p x를 달 parent
+   * @return link_type 복사된 node 의 포인터
    */
-  link_type _copy(link_type x, base_ptr p) {
+  link_type _copy_nodes(link_type x, base_ptr p) {
+    // x 는 NULL 이 아닌 것이 보장되어 있다.
     link_type top = _clone_node(x);
     top->parent = p;
 
     try {
       if (x->right) {
         // right 있을 경우 -> top의 right 도 달아준다.
-        top->right = _copy(_right(x), top);  // right top 에 copy
+        top->right = _copy_nodes(_right(x), top);  // right top 에 copy
       }
       p = top;
       x = _left(x);  // 이제 left 할 준비
 
-      while (x != NULL) {                  // 얘는 또 while 으로 돈다.
-        link_type y = _clone_node(x);      // 왼쪽거 카피할 거임..
-        p->left = y;                       // 달아줌
-        y->parent = p;                     // 연결해줌
-        if (x->right) {                    // 오른쪽 있어??
-          y->right = _copy(_right(x), y);  // 오른쪽 달아줘
+      while (x != NULL) {
+        link_type y = _clone_node(x);            // 왼쪽거 카피할 거임..
+        p->left = y;                             // 달아줌
+        y->parent = p;                           // 연결해줌
+        if (x->right) {                          // 오른쪽 있어??
+          y->right = _copy_nodes(_right(x), y);  // 오른쪽 달아줘
         }
         p = y;
         x = _left(x);  // 다시 left 준비해.
@@ -781,6 +738,31 @@ class _rb_tree {
     return top;
   }
 
+  // !SECTION : tree modification
+
+  // SECTION : node memory management
+  void _construct_node(link_type node, const value_type& value) {
+    try {
+      _alloc.construct(node, value);
+    } catch (...) {
+      _deallocate_node(node);
+      throw;
+    }
+  }
+
+  link_type _create_node(const value_type& value) {
+    link_type tmp = _alloc.allocate(1);
+    _construct_node(tmp, value);
+    return tmp;
+  }
+
+  void _deallocate_node(link_type node) { _alloc.deallocate(node, 1); }
+
+  void _destroy_node(link_type node) {
+    _alloc.destroy(node);
+    _deallocate_node(node);
+  }
+
   link_type _clone_node(link_type x) {
     link_type tmp = _create_node(x->value);
     tmp->color = x->color;
@@ -788,6 +770,7 @@ class _rb_tree {
     tmp->right = NULL;
     return tmp;
   }
+  // !SECTION : node memory management
 
   friend bool operator==(const _rb_tree& x, const _rb_tree& y) {
     return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
@@ -805,31 +788,17 @@ const _rb_tree_node_base* _get_subtree_min(const _rb_tree_node_base* x);
 _rb_tree_node_base* _get_subtree_max(_rb_tree_node_base* x);
 const _rb_tree_node_base* _get_subtree_max(const _rb_tree_node_base* x);
 
-_rb_tree_node_base* _rb_tree_increment(_rb_tree_node_base* x);
-const _rb_tree_node_base* _rb_tree_increment(const _rb_tree_node_base* x);
+_rb_tree_node_base* _node_increment(_rb_tree_node_base* x);
+const _rb_tree_node_base* _node_increment(const _rb_tree_node_base* x);
 
-_rb_tree_node_base* _rb_tree_decrement(_rb_tree_node_base* x);
-const _rb_tree_node_base* _rb_tree_decrement(const _rb_tree_node_base* x);
-
-/**
- * @brief subtree 를 왼쪽으로 회전
- *
- * @param x
- * @param root
- */
-void _rb_tree_rotate_left(_rb_tree_node_base* const x,
-                          _rb_tree_node_base*& root);
-
-void _rb_tree_rotate_right(_rb_tree_node_base* const x,
-                           _rb_tree_node_base*& root);
+_rb_tree_node_base* _node_decrement(_rb_tree_node_base* x);
+const _rb_tree_node_base* _node_decrement(const _rb_tree_node_base* x);
 
 void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
                        _rb_tree_node_base& header);
 
 _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
                                          _rb_tree_node_base& header);
-
-_rb_tree_node_base* _find_successor(_rb_tree_node_base* x);
 
 }  // namespace ft
 

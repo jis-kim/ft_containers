@@ -11,8 +11,7 @@
 #define MAP_HPP_
 
 #include <functional>  // std::less
-#include <map>
-#include <memory>  //std::allocator
+#include <memory>      //std::allocator
 
 #include "_rb_tree.hpp"
 #include "function.hpp"
