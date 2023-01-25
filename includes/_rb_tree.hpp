@@ -378,8 +378,8 @@ class _rb_tree {
 
   template <typename InputIterator>
   void insert(InputIterator first, InputIterator last) {
-    for (; first != last; ++first) {
-      insert(end(), *first);
+    for (iterator it = end(); first != last; ++first) {
+      insert(it, *first);
     }
   }
 
@@ -581,17 +581,15 @@ class _rb_tree {
       x = comp ? x->left : x->right;
     }
     iterator tmp(y);
-    if (comp) {              // key < y.key x가 왼쪽에 있음
-      if (tmp == begin()) {  // 여기 넣어야 함!
+    if (comp) {
+      if (tmp == begin()) {
         return pair_type(x, y);
       }
       --tmp;
     }
-    // tmp < key -> y보다 크고, tmp 보다 크다.
     if (_impl._compare(KeyOfValue()(*tmp), key)) {
       return pair_type(x, y);
     }
-    // tmp == key
     return pair_type(tmp._node, NULL);
   }
 
@@ -611,43 +609,29 @@ class _rb_tree {
 
     if (pos._node == &_impl._header) {  // end
       if (size() > 0 && _impl._compare(_get_key(_get_right_most()), key)) {
-        // key가  rightmost 보다 크다면 rightmost 뒤에 삽입
         return pair_type(NULL, _get_right_most());
       } else {
-        // 아니면 허위사실이므로 새로 찾아야 함
         return _find_insert_pos(key);
       }
     } else if (_impl._compare(key, _get_key(pos._node))) {
-      // key < pos -> pos 의 왼쪽에 삽입
       iterator before = pos;
       if (pos._node == _get_left_most()) {  // begin()
-        // pos 가 left most 이면 left most 앞에 삽입.
         return pair_type(_get_left_most(), _get_left_most());
       } else if (_impl._compare(_get_key((--before)._node), key)) {
-        // before < key < pos
         if (_right(before._node) == NULL) {
-          // before 의 right 가 없으면 before 자식으로 삽입 (오른쪽)
           return pair_type(NULL, before._node);
         } else {
-          // before 의 right 가 있으므로 pos 가 before 의 right. (확실함..)
-          // before 가 pos-- 이다.. 만약 pos 의 왼쪽 자식이 있었으면 before 가
-          // pos->left 였을 것이다.
-          // pos._node != NULL 이므로 pos 의 왼편에 들어갈 것이다.
           return pair_type(pos._node, pos._node);
         }
       } else {
         return _find_insert_pos(key);
       }
     } else if (_impl._compare(_get_key(pos._node), key)) {
-      // pos < key
       iterator after = pos;
       if (pos._node == _get_right_most()) {
-        // pos 가 right most 이면 right most 뒤에 삽입
         return pair_type(NULL, _get_right_most());
       } else if (_impl._compare(key, _get_key((++after)._node))) {
-        // pos < key < after
         if (_right(pos._node) == NULL) {
-          // pos 의 right 가 없으면 right 자식으로 삽입
           return pair_type(NULL, pos._node);
         } else {
           return pair_type(after._node, after._node);
@@ -710,27 +694,25 @@ class _rb_tree {
    * @return link_type 복사된 node 의 포인터
    */
   link_type _copy_nodes(link_type x, base_ptr p) {
-    // x 는 NULL 이 아닌 것이 보장되어 있다.
     link_type top = _clone_node(x);
     top->parent = p;
 
     try {
       if (x->right) {
-        // right 있을 경우 -> top의 right 도 달아준다.
-        top->right = _copy_nodes(_right(x), top);  // right top 에 copy
+        top->right = _copy_nodes(_right(x), top);
       }
       p = top;
-      x = _left(x);  // 이제 left 할 준비
+      x = _left(x);
 
       while (x != NULL) {
-        link_type y = _clone_node(x);            // 왼쪽거 카피할 거임..
-        p->left = y;                             // 달아줌
-        y->parent = p;                           // 연결해줌
-        if (x->right) {                          // 오른쪽 있어??
-          y->right = _copy_nodes(_right(x), y);  // 오른쪽 달아줘
+        link_type y = _clone_node(x);
+        p->left = y;
+        y->parent = p;
+        if (x->right) {
+          y->right = _copy_nodes(_right(x), y);
         }
         p = y;
-        x = _left(x);  // 다시 left 준비해.
+        x = _left(x);
       }
     } catch (...) {
       _erase_all(top);  // rollback

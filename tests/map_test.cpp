@@ -40,10 +40,21 @@ void map_test(void) {
   std::cout << "\n\n================================ < tree "
                "info > ================================\n\n";
 
-  print_rb_tree(map.end());
+  // print_rb_tree(map.end());
 
   map.erase(map.begin(), map.end());
 
-  std::cout << "size : " << map.size() << '\n';
+  std::cout << "map size after erase begin to end : " << map.size() << '\n';
   print_rb_tree(map.end());
+
+  std::cout << "\n\n================================ map range construct test "
+               "================================\n\n";
+  value_type arr[10] = {value_type(1, "a"), value_type(2, "b"),
+                        value_type(3, "c"), value_type(4, "d"),
+                        value_type(5, "e"), value_type(6, "f"),
+                        value_type(7, "g"), value_type(8, "h"),
+                        value_type(9, "i"), value_type(10, "j")};
+
+  map_type map2(arr, arr + 10);
+  print_rb_tree(map2.end());
 }
