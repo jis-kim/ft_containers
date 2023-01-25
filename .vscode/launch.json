@@ -1,0 +1,37 @@
+{
+	// Use IntelliSense to learn about possible attributes.
+	// Hover to view descriptions of existing attributes.
+	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "cppdbg",
+			"request": "launch",
+			"name": "testainer",
+			"program": "${workspaceFolder}/containers_test/a.out",
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}/",
+			"environment": [],
+			"externalConsole": false,
+			"MIMode": "lldb",
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "Debug",
+			"program": "${workspaceFolder}/ft_containers",
+			"args": [],
+			"cwd": "${workspaceFolder}",
+			"preLaunchTask": "Make debug ft_containers",
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"name": "debug without sanitize",
+			"program": "${workspaceFolder}/ft_containers",
+			"args": [],
+			"cwd": "${workspaceFolder}",
+			"preLaunchTask": "Make ft_containers",
+		},
+	]
+}

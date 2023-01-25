@@ -31,8 +31,8 @@ void map_test(void) {
   srand(time(NULL));
   for (int i = 0; i < NUM; ++i) {
     ft::pair<map_it, bool> result = map.insert(value_type(rand() % RANGE, "a"));
-    std::cout << "insert " << (*(result.first)).first << " : "
-              << ((result.second) ? "successed" : "failed") << '\n';
+    // std::cout << "insert " << (*(result.first)).first << " : "
+    //           << ((result.second) ? "successed" : "failed") << '\n';
   }
 
   std::cout << "\n\ntotal success = " << map.size() << " of " << NUM << "\n\n";

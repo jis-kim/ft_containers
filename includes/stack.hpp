@@ -1,7 +1,7 @@
 /**
  * @file stack.hpp
  * @author jiskim
- * @brief
+ * @brief stack container
  * @date 2022-12-28
  *
  * @copyright Copyright (c) 2022

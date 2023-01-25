@@ -19,8 +19,6 @@
 namespace ft {
 
 // SECTION: vector iterator
-// Random access iterator
-// Iter is pointer of elements
 template <typename Iter>
 class vector_iterator
     : public iterator<typename iterator_traits<Iter>::iterator_category,

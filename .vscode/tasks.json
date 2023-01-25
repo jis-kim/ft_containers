@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Make debug ft_containers",
+			"command": "make",
+			"type": "shell",
+			"args": [
+				"debug"
+			],
+			"problemMatcher": [
+				"$tsc"
+			],
+			"presentation": {
+				"reveal": "always"
+			},
+			"group": "build"
+		},
+		{
+			"label": "Make ft_containers",
+			"command": "make",
+			"type": "shell",
+			"args": [
+				"leaks"
+			],
+			"problemMatcher": [
+				"$tsc"
+			],
+			"presentation": {
+				"reveal": "always"
+			},
+			"group": "build"
+		}
+	]
+}

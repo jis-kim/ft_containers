@@ -1,7 +1,7 @@
 /**
  * @file map.hpp
  * @author jiskim
- * @brief
+ * @brief map container
  * @date 2023-01-02
  *
  * @copyright Copyright (c) 2023
@@ -41,7 +41,6 @@ class map {
   typedef _rb_tree<key_type, value_type, _SelectKey<value_type>, key_compare,
                    allocator_type>
       _rep_type;
-
   _rep_type _tree;  // structure
 
  public:
@@ -78,7 +77,7 @@ class map {
   /**
    * @brief Range constructor. 범위 안에 key 값이 같은 element 가 있다면 어떤
    * element 가 삽입될 지 특정할 수 없다.
-   * @complexity 삽입할 범위가 정력되어 있으면 O(N), 아니면 O(N log N).
+   * @complexity 삽입할 범위가 정렬되어 있으면 O(N), 아니면 O(N log N).
    *             N is distance
    *
    * @tparam InputIterator
@@ -97,6 +96,7 @@ class map {
   /**
    * @brief x의 allocator 와 comparison object 의 복사본을 사용하는 container
    * 생성.
+   * @complexity
    *
    * @param x Key, T, Compare, Alloc 이 같은 map 객체.
    */

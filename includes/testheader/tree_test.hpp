@@ -7,8 +7,8 @@
  * @copyright Copyright (c) 2023
  */
 
-#ifndef TREE_TEST_HPP_
-#define TREE_TEST_HPP_
+#ifndef TREE_TEST_HPP
+#define TREE_TEST_HPP
 
 #include <iostream>
 #include <string>
@@ -27,8 +27,7 @@
 
 namespace ft {
 
-// REVIEW : TEST
-
+// pair operator<< overloading
 template <typename T1, typename T2>
 std::ostream& operator<<(std::ostream& os, const pair<T1, T2>& pr) {
   os << "[" << pr.first << "]";

@@ -1,14 +1,14 @@
 /**
  * @file set.hpp
  * @author jiskim
- * @brief
+ * @brief set container
  * @date 2023-01-23
  *
  * @copyright Copyright (c) 2023
  */
 
-#ifndef SET_HPP_
-#define SET_HPP_
+#ifndef SET_HPP
+#define SET_HPP
 
 #include "_rb_tree.hpp"
 #include "function.hpp"
@@ -212,4 +212,4 @@ void swap(set<T, Compare, Alloc>& lhs, set<T, Compare, Alloc>& rhs) {
 
 }  // namespace ft
 
-#endif  // SET_HPP_
+#endif  // SET_HPP

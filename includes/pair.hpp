@@ -1,14 +1,14 @@
 /**
  * @file pair.hpp
  * @author jiskim
- * @brief
+ * @brief pair
  * @date 2023-01-06
  *
  * @copyright Copyright (c) 2023
  */
 
-#ifndef PAIR_HPP_
-#define PAIR_HPP_
+#ifndef PAIR_HPP
+#define PAIR_HPP
 
 namespace ft {
 template <typename T1, typename T2>
@@ -74,4 +74,4 @@ pair<T1, T2> make_pair(T1 x, T2 y) {
 
 }  // namespace ft
 
-#endif  // PAIR_HPP_
+#endif  // PAIR_HPP

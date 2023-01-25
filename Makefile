@@ -18,24 +18,26 @@ NAME = ft_containers
 
 INCS_DIR = ./includes/
 SRCS_DIR = ./srcs/
-TESTS_DIR = ./tests/
+TEST_DIR = ./tests/
 
 SRCS = $(addprefix $(SRCS_DIR), $(SRCS_FILES))
-TESTS = $(addprefix $(TESTS_DIR), $(TESTS_FILES))
-OBJS = $(SRCS:.cpp=.o) $(TESTS:.cpp=.o)
+ALL_MAIN = $(addprefix $(SRCS_DIR), $(MAIN))
+
+TEST_SRCS = $(addprefix $(TEST_DIR), $(TEST_FILES) $(MAIN)) $(SRCS)
+
+OBJS = $(SRCS:.cpp=.o) $(ALL_MAIN:.cpp=.o)
+TEST_OBJS = $(TEST_SRCS:.cpp=.o)
 
 SRCS_FILES = _rb_tree.cpp
 
-# wild card
-TESTS_FILES = main.cpp\
-vector_test.cpp \
+TEST_FILES = vector_test.cpp \
 vector_iterator_test.cpp \
 type_traits_test.cpp \
 pair_test.cpp \
 tree_test.cpp \
 map_test.cpp \
 
-OBJS_FILES = $(OBJS)
+MAIN = main.cpp
 
 COMPILE_MSG	= @echo $(BOLD)$(L_PURPLE) 📣 ${NAME} Compiled 🥳$(RESET)
 
@@ -53,7 +55,7 @@ $(NAME) : $(OBJS)
 
 .PHONY : clean
 clean :
-	@rm -f $(OBJS)
+	@rm -f $(OBJS) $(TEST_OBJS)
 	@echo $(BOLD)$(L_RED) 🗑️ Removed object files 📁$(RESET)
 
 .PHONY : fclean
@@ -64,6 +66,10 @@ fclean : clean
 .PHONY : re
 re : fclean
 	@make all
+
+.PHONY : test
+test : $(TEST_OBJS)
+	@$(CXX) $(CXXFLAGS) $(TEST_OBJS) -o $(NAME)
 
 .PHONY : debug
 debug : fclean
@@ -86,3 +92,4 @@ L_PURPLE="\033[1;35m"
 L_CYAN="\033[1;96m"
 UP = "\033[A"
 CUT = "\033[K"
+

@@ -7,8 +7,8 @@
  * @copyright Copyright (c) 2023
  */
 
-#ifndef FUNCTION_HPP_
-#define FUNCTION_HPP_
+#ifndef FUNCTION_HPP
+#define FUNCTION_HPP
 
 namespace ft {
 /**
@@ -37,4 +37,4 @@ struct _Identity {
 
 }  // namespace ft
 
-#endif  // FUNCTION_HPP_
+#endif  // FUNCTION_HPP

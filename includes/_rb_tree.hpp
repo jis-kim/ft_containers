@@ -7,8 +7,8 @@
  * @copyright Copyright (c) 2022
  */
 
-#ifndef _RB_TREE_HPP_
-#define _RB_TREE_HPP_
+#ifndef _RB_TREE_HPP
+#define _RB_TREE_HPP
 
 #include "algorithm.hpp"
 #include "pair.hpp"
@@ -206,7 +206,10 @@ struct _rb_tree_const_iterator {
 
 // !SECTION: red-black tree iterator
 
-// 트리 정보를 저장하는 header cell
+/**
+ * @brief 트리 정보를 저장하는 header cell
+ *
+ */
 struct _rb_tree_header {
   _rb_tree_node_base _header;
   size_t _node_count;
@@ -295,16 +298,15 @@ class _rb_tree {
   typedef ft::reverse_iterator<iterator> reverse_iterator;
   typedef ft::reverse_iterator<const_iterator> const_reverse_iterator;
 
-  // rebind for nodes
+ private:
   typedef typename Alloc::template rebind<_rb_tree_node<value_type> >::other
       node_allocator;
 
- private:
   _rb_tree_impl<Compare> _impl;
   node_allocator _alloc;
 
  public:
-  _rb_tree(void) {}
+  _rb_tree(void) : _impl(), _alloc() {}
 
   _rb_tree(const Compare& comp, const node_allocator& alloc = node_allocator())
       : _impl(comp), _alloc(alloc) {}
@@ -328,7 +330,6 @@ class _rb_tree {
     return *this;
   }
 
-  // SECTION: red-black tree operation
   iterator begin(void) { return iterator(_impl._header.left); }
   const_iterator begin(void) const {
     return const_iterator(_impl._header.left);
@@ -378,7 +379,7 @@ class _rb_tree {
   template <typename InputIterator>
   void insert(InputIterator first, InputIterator last) {
     for (; first != last; ++first) {
-      insert(*first);
+      insert(end(), *first);
     }
   }
 
@@ -427,9 +428,6 @@ class _rb_tree {
    */
   iterator find(const key_type& key) {
     iterator gte = lower_bound(key);
-    // 1. gte 가 end 이면 크거나 같은 키가 없음.
-    // 2. 1 에서 || 이므로 key <= gte.
-    // 거기서 key < gte 가 true 이면 같은 것이 아니라 더 큰 것이므로 end return.
     return (gte == end() || _impl._compare(key, KeyOfValue()(*gte))) ? end()
                                                                      : gte;
   }
@@ -805,4 +803,4 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
 
 }  // namespace ft
 
-#endif  // _RB_TREE_HPP_
+#endif  // _RB_TREE_HPP
