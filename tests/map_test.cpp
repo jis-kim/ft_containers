@@ -17,19 +17,20 @@
 #define NUM 1000
 #define RANGE 1000000
 
+typedef ft::map<int, std::string> map_type;
+typedef map_type::value_type value_type;
+typedef map_type::iterator map_it;
+
 void map_test(void) {
-  typedef ft::map<int, std::string> map_type;
-  typedef map_type::value_type value_type;
-  typedef map_type::iterator iterator;
-
   map_type map;
-  iterator map_it;
+  map_it it;
 
-  std::cout << "\n\n============= map random insert test ==============\n";
+  std::cout << "\n\n================================ map N random insert test "
+               "================================n";
 
   srand(time(NULL));
   for (int i = 0; i < NUM; ++i) {
-    pair<iterator, bool> result = map.insert(value_type(rand() % RANGE, "a"));
+    ft::pair<map_it, bool> result = map.insert(value_type(rand() % RANGE, "a"));
     std::cout << "insert " << (*(result.first)).first << " : "
               << ((result.second) ? "successed" : "failed") << '\n';
   }
@@ -39,10 +40,10 @@ void map_test(void) {
   std::cout << "\n\n================================ < tree "
                "info > ================================\n\n";
 
-  print_rb_tree<value_type>(map.end());
+  print_rb_tree(map.end());
 
   map.erase(map.begin(), map.end());
 
   std::cout << "size : " << map.size() << '\n';
-  print_rb_tree<value_type>(map.end());
+  print_rb_tree(map.end());
 }

@@ -14,7 +14,6 @@
 #include <string>
 
 #include "_rb_tree.hpp"
-#include "pair.hpp"
 
 #define PRINT_RED "\033[0;31m"
 #define PRINT_GREEN "\033[0;32m"
@@ -26,9 +25,15 @@
 #define PRINT_GRAY "\033[0;38m"
 #define PRINT_RESET "\033[0m"
 
-using namespace ft;
+namespace ft {
 
 // REVIEW : TEST
+
+template <typename T1, typename T2>
+std::ostream& operator<<(std::ostream& os, const pair<T1, T2>& pr) {
+  os << "[" << pr.first << "]";
+  return os;
+}
 
 template <typename T>
 void print_rb_tree(const std::string& prefix, const _rb_tree_node_base* node,
@@ -50,9 +55,8 @@ void print_rb_tree(const std::string& prefix, const _rb_tree_node_base* node,
     std::cout << color << x->value << PRINT_RESET << std::endl;
 
     // enter the next tree level - left and right branch
-    ::print_rb_tree<T>(prefix + (!isLeft ? "│   " : "    "), node->right,
-                       false);
-    ::print_rb_tree<T>(prefix + (!isLeft ? "│   " : "    "), node->left, true);
+    print_rb_tree<T>(prefix + (!isLeft ? "│   " : "    "), node->right, false);
+    print_rb_tree<T>(prefix + (!isLeft ? "│   " : "    "), node->left, true);
   } else {
     std::cout << prefix;
     std::cout << (!isLeft ? "├── (R) " : "└── (L) ");
@@ -66,9 +70,10 @@ void print_rb_tree(_rb_tree_iterator<T> it) {
 
   if (header->parent == NULL) return;
   // root 시작
-  ::print_rb_tree<T>("", header->parent, false);
+  print_rb_tree<T>("", header->parent, false);
   std::cout << "\n\n";
 }
+}  // namespace ft
 
 void tree_test(void);
 void map_test(void);

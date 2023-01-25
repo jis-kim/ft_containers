@@ -47,28 +47,28 @@ void tree_test(void) {
   std::cout << "\n\n================================ < tree "
                "info > ================================\n\n";
   std::cout << "size : " << tree.size() << "\n\n";
-  ::print_rb_tree<value_type>(tree.end());
+  ::print_rb_tree(tree.end());
   std::cout
       << "\n\n============================================================="
          "==================\n\n";
 
   tree_type tree2;
   insert_print_result(tree2, value_type(20, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
   insert_print_result(tree2, value_type(10, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
   insert_print_result(tree2, value_type(50, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
   insert_print_result(tree2, value_type(30, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
   insert_print_result(tree2, value_type(80, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
   insert_print_result(tree2, value_type(40, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
   insert_print_result(tree2, value_type(35, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
   insert_print_result(tree2, value_type(25, "a"));
-  ::print_rb_tree<value_type>(tree2.end());
+  ::print_rb_tree(tree2.end());
 
   tree.clear();
 

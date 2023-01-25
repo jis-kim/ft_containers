@@ -5,6 +5,8 @@
 #include <iostream>
 #include <utility>
 
+#include "testheader/tree_test.hpp"
+
 void pair_test(void) {
   std::cout << ft::make_pair(10, 12) << '\n';
   std::cout << '\n';

@@ -1,7 +1,7 @@
 /**
  * @file algorithm.hpp
  * @author jiskim
- * @brief
+ * @brief min, max, equal, swap, lexicographical_compare
  * @date 2022-12-16
  *
  * @copyright Copyright (c) 2022
@@ -23,7 +23,7 @@ const T& max(const T& a, const T& b) {
 }
 
 template <typename T>
-void _swap(T& a, T& b) {
+void swap(T& a, T& b) {
   T tmp(a);
   a = b;
   b = tmp;

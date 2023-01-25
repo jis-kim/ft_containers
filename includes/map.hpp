@@ -15,10 +15,10 @@
 
 #include "_rb_tree.hpp"
 #include "function.hpp"
-#include "pair.hpp"
 
 namespace ft {
 
+// SECTION: map
 template <typename Key, typename T, typename Compare = std::less<Key>,
           typename Alloc = std::allocator<pair<const Key, T> > >
 class map {
@@ -62,7 +62,7 @@ class map {
     }
   };
 
-  // SECTION : constructor
+  // SECTION: constructor and destructor
   // STRONG
   // allocator_traits::construct 가 적절한 인자를 받을 수 없거나
   // [first, last) 가 invalid 하면 UB
@@ -104,6 +104,7 @@ class map {
 
   // NOTHROW
   ~map(void) {}
+  // !SECTION: constructor and destructor
 
   // BASIC
   // allocator_traits::construct 가 적절한 인자를 받을 수 없거나
@@ -113,7 +114,7 @@ class map {
     return *this;
   }
 
-  // SECTION : iterators
+  // SECTION: iterators
   // NOTHROW
   /**
    * @brief map 컨테이너는 항상 정렬되어 있으므로 begin 은 가장 앞에 정렬된
@@ -156,10 +157,9 @@ class map {
    */
   reverse_iterator rend(void) { return _tree.rend(); }
   const_reverse_iterator rend(void) const { return _tree.rend(); }
-  // !SECTION : iterators
+  // !SECTION: iterators
 
-  // SECTION : capacity
-
+  // SECTION: capacity
   // NOTHROW
   /**
    * @brief map이 비어 있는지 여부를 리턴한다. 컨테이너를 변경하지는 않는다.
@@ -187,11 +187,9 @@ class map {
    * @return size_type
    */
   size_type max_size(void) const { return _tree.max_size(); }
+  // !SECTION: capacity
 
-  // !SECTION : capacity
-
-  // SECTION : element access
-
+  // SECTION: element access
   // STRONG
   // new element 가 insert 될 떄 allocator_traits::construct 가 k와 기본
   // 생성되는 mapped_type 으로 construct 할 수 없다면 (혹은 mapped type 이
@@ -235,11 +233,9 @@ class map {
     if (it == end()) throw std::out_of_range("ft::map::at key not found");
     return it->second;
   }
-
   // !SECTION:  element access
 
-  // SECTION : modifiers
-
+  // SECTION: modifiers
   // STRONG single element 가 삽입되는 경우
   // BASIC otherwise
   // allocator_traits::construct 가 적절한 인자를 받을 수 없거나
@@ -334,12 +330,10 @@ class map {
    *
    */
   void clear(void) { _tree.clear(); }
+  // !SECTION: modifiers
 
-  // !SECTION : modifiers
-
-  // SECTION : observers
-
-  // STRONG 아니 이게 뭐라고 strong?
+  // SECTION: observers
+  // STRONG
   /**
    * @brief key 를 비교하는 comparison object 를 리턴한다. (std::less<key_type>)
    *
@@ -363,10 +357,9 @@ class map {
    * @return value_compare (nested class type)
    */
   value_compare value_comp(void) const { return value_compare(key_compare()); }
+  // !SECTION: observers
 
-  // !SECTION : observers
-
-  // SECTION : operations
+  // SECTION: operations
 
   // STRONG
   /**
@@ -430,11 +423,9 @@ class map {
   pair<const_iterator, const_iterator> equal_range(const key_type& key) const {
     return _tree.equal_range(key);
   }
+  // !SECTION: operations
 
-  // !SECTION : operations
-
-  // SECTION : allocator
-
+  // SECTION: allocator
   // NOTHROW
   /**
    * @brief Get the allocator object
@@ -442,6 +433,7 @@ class map {
    * @return allocator_type map 의 allocator
    */
   allocator_type get_allocator(void) const { return _tree.get_allocator(); }
+  // !SECTION: allocator
 
   template <typename Key1, typename T1, typename Compare1, typename Alloc1>
   friend bool operator==(const map<Key1, T1, Compare1, Alloc1>& lhs,
@@ -452,7 +444,7 @@ class map {
                         const map<Key1, T1, Compare1, Alloc1>& rhs);
 };
 
-// SECTION : relational operators
+// SECTION: relational operators
 template <typename Key, typename T, typename Compare, typename Alloc>
 bool operator==(const map<Key, T, Compare, Alloc>& lhs,
                 const map<Key, T, Compare, Alloc>& rhs) {
@@ -492,7 +484,8 @@ bool operator>=(const map<Key, T, Compare, Alloc>& lhs,
 template <typename Key, typename T, typename Compare, typename Alloc>
 void swap(map<Key, T, Compare, Alloc>& lhs, map<Key, T, Compare, Alloc>& rhs) {
   lhs.swap(rhs);
-}  // !SECTION : relational operator
+}  // !SECTION: relational operator
+// !SECTION: map
 
 }  // namespace ft
 

@@ -15,6 +15,7 @@
 
 namespace ft {
 
+// SECTION: set
 template <typename T, typename Compare = std::less<T>,
           typename Alloc = std::allocator<T> >
 class set {
@@ -44,7 +45,7 @@ class set {
   typedef typename _rep_type::const_reverse_iterator reverse_iterator;
   typedef typename _rep_type::const_reverse_iterator const_reverse_iterator;
 
-  // SECTION : constructor
+  // SECTION: constructor and destructor
   // STRONG
   set(void) : _tree() {}
 
@@ -62,6 +63,7 @@ class set {
 
   // NOTHROW
   ~set(void) {}
+  // !SECTION: constructor and destructor
 
   // BASIC
   set& operator=(const set& x) {
@@ -69,8 +71,7 @@ class set {
     return *this;
   }
 
-  // SECTION : iterators
-
+  // SECTION: iterators
   iterator begin(void) { return _tree.begin(); }
   const_iterator begin(void) const { return _tree.begin(); }
 
@@ -82,15 +83,17 @@ class set {
 
   reverse_iterator rend(void) { return _tree.rend(); }
   const_reverse_iterator rend(void) const { return _tree.rend(); }
+  // !SECTION: iterators
 
-  // SECTION : capacity
+  // SECTION: capacity
   bool empty(void) const { return _tree.empty(); }
 
   size_type size(void) const { return _tree.size(); }
 
   size_type max_size(void) const { return _tree.max_size(); }
+  // !SECTION: capacity
 
-  // SECTION : modifiers
+  // SECTION: modifiers
   pair<iterator, bool> insert(const value_type& val) {
     return _tree.insert(val);
   }
@@ -117,8 +120,9 @@ class set {
   void swap(set& x) { _tree.swap(x._tree); }
 
   void clear(void) { _tree.clear(); }
+  // !SECTION: modifiers
 
-  // SECTION : observers
+  // SECTION: observers
   key_compare key_comp(void) const { return key_compare(); }
 
   /**
@@ -128,8 +132,9 @@ class set {
    * @return value_compare
    */
   value_compare value_comp(void) const { return key_compare(); }
+  // !SECTION: observers
 
-  // SECTION : operations
+  // SECTION: operations
   iterator find(const value_type& val) const { return _tree.find(val); }
 
   // STRONG
@@ -146,9 +151,11 @@ class set {
   pair<iterator, iterator> equal_range(const value_type& val) const {
     return _tree.equal_range(val);
   }
+  // !SECTION: operations
 
-  // SECTION : allocator
+  // SECTION: allocator
   allocator_type get_allocator(void) const { return _tree.get_allocator(); }
+  // !SECTION: allocator
 
   template <typename T1, typename Compare1, typename Alloc1>
   friend bool operator==(const set<T1, Compare1, Alloc1>& lhs,
@@ -159,7 +166,7 @@ class set {
                         const set<T1, Compare1, Alloc1>& rhs);
 };
 
-// SECTION : non-member function
+// SECTION: non-member function
 template <typename T, typename Compare, typename Alloc>
 bool operator==(const set<T, Compare, Alloc>& lhs,
                 const set<T, Compare, Alloc>& rhs) {
@@ -200,6 +207,8 @@ template <typename T, typename Compare, typename Alloc>
 void swap(set<T, Compare, Alloc>& lhs, set<T, Compare, Alloc>& rhs) {
   lhs.swap(rhs);
 }
+// !SECTION: non-member function
+// !SECTION: set
 
 }  // namespace ft
 

@@ -11,13 +11,6 @@
 
 namespace ft {
 
-/**
- * @brief subtree 를 왼쪽으로 회전
- *  할아버지가 오른쪽 자식, 부모가 루트, 자식이 왼쪽 자식이 된다.
- *
- * @param x 서브트리 root
- * @param root 트리의 root
- */
 static void _rotate_left(_rb_tree_node_base* const x,
                          _rb_tree_node_base*& root) {
   _rb_tree_node_base* const y = x->right;
@@ -155,7 +148,7 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
 
   // insert
   // root, leftmost, rightmost 를 갱신해준다.
-  // empty 이면 left 이다.
+  // tree 가 empty 라면 left 이다.
   if (left) {
     p->left = x;         // also makes leftmost = x when p == header
     if (p == &header) {  // root 자리에 들어갈 경우
@@ -198,7 +191,6 @@ void _insert_rebalance(bool left, _rb_tree_node_base* x, _rb_tree_node_base* p,
         _rotate_right(xpp, root);
       }
     } else {
-      // 좌우만 바뀌고 위랑 똑같!!
       _rb_tree_node_base* const xu = xpp->left;
       if (xu && xu->color == RED) {
         x->parent->color = BLACK;
@@ -237,31 +229,38 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
   _rb_tree_node_base* xp = NULL;
 
   // 자식이 0 또는 1개인 경우 y 는 z 이고, 2개인 경우 y 는 z 의 successor
-  if (y->left == NULL) {  // z 오른쪽 자식이 있을 수도.. 없을 수도...
-    x = y->right;
-  } else if (y->right == NULL) {  // z 왼쪽 자식 있음
+  if (y->left == NULL) {  // z 왼쪽 자식 없음. 오른쪽 자식은 모름
+    x = y->right;         // NULL 일 수도 있다.
+  } else if (y->right == NULL) {  // z 왼쪽 자식 있음, 오른쪽 없음.
     x = y->left;
   } else {  // z 의 자식이 둘 다 있음
     y = _get_subtree_min(z->right);
     x = y->right;
   }
 
+  // z 가 leaf 이거나 오른쪽만 있으면 x 가 null 이다.
+  // 이 경우 y 는 z 와 같다.
+
+  // z 없앨 준비 하는 과정
   if (y != z) {
     // y가 z의 successor 인 경우 relink y in place of z.
     z->left->parent = y;
     y->left = z->left;  // y의 왼쪽 자식을 z의 왼쪽 자식으로 바꿔줌
-    if (y != z->right) {  // y가 z의 오른 자식이 아닌 손자 이상의 successor
-      xp = y->parent;  // y의 부모를 xp에 저장
+    if (y != z->right) {
+      // x 가 y 자리에 갈 것이므로 xp를 y 의 부모로 세팅해야 한다.
+      xp = y->parent;  // y의 부모를 xp에 저장 -> 어차피 y 자리에 x를 넣을 것
       if (x != NULL) {
         x->parent = y->parent;
       }
-      y->parent->left = x;  // y의 부모의 왼쪽 자식을 x로 바꿔줌 -> y의 형제노드
+      y->parent->left = x;
       y->right = z->right;
       z->right->parent = y;
     } else {
+      // z 가 y 의 부모인 경우 x.p 가 z 이면 유감이므로 y 를 x.p 로 세팅.
+      // 어차피 결과적으로 y는 x의 부모가 된다.
       xp = y;
     }
-
+    // 부모와 연결
     if (root == z) {
       root = y;
     } else if (z->parent->left == z) {
@@ -270,13 +269,14 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
       z->parent->right = y;
     }
     y->parent = z->parent;
-    _swap(y->color, z->color);
-    y = z;
-  } else {  // y == z
-    // z의 자식이 0 또는 1개인 경우
-    xp = y->parent;
+
+    swap(y->color, z->color);  // y 가 z 색 상속
+    y = z;                     // 실제 없어질 노드 -> z
+  } else {                     // y == z
+    // z의 자식이 0 또는 1개인 경우 -> x 가 z 자리 바로 대체함.
+    xp = z->parent;
     if (x != NULL) {
-      x->parent = y->parent;
+      x->parent = z->parent;
     }
     if (root == z) {
       root = x;
@@ -285,6 +285,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
     } else {
       z->parent->right = x;
     }
+    // 자식이 있으면 이럴 일이 없다.
     if (leftmost == z) {
       if (z->right == NULL) {
         leftmost = z->parent;
@@ -300,30 +301,39 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
       }
     }
   }
-  // 재정렬
-  // y가 삭제되어야 하는 노드인데 RED 면 이상이 없으므로 BLACK 인 경우만 rotate
-  if (y->color != RED) {
+
+  // doubly black 해결 과정
+  if (y->color != RED) {  // 삭제될 node 의 color 판별
     while (x != root && (x == NULL || x->color == BLACK)) {
+      // red -> black 제거해서 black 설정하면 됨.
+      // root -> extra black 제거하면 됨.
+      // x is always doubly black node which is non-root
       if (x == xp->left) {
-        _rb_tree_node_base* w = xp->right;
-        if (w->color == RED) {
+        _rb_tree_node_base* w = xp->right;  // sibling of x
+        if (w->color == RED) {              // case 1
           w->color = BLACK;
           xp->color = RED;
           _rotate_left(xp, root);
-          w = xp->right;
+          w = xp->right;  // update sibling to new sibling after rotate
         }
         if ((w->left == NULL || w->left->color == BLACK) &&
             (w->right == NULL || w->right->color == BLACK)) {
+          // case 2 (both children of w are black)
           w->color = RED;
-          x = xp;
+          x = xp;  // 대상 노드 (extra black 이 추가된 black node)를 부모로 갱신
           xp = xp->parent;
         } else {
+          // case 3, 4
           if (w->right == NULL || w->right->color == BLACK) {
+            // case 3
+            // w->left 와 w 의 색을 바꾼다.
             w->left->color = BLACK;
             w->color = RED;
             _rotate_right(w, root);
-            w = xp->right;
+            w = xp->right;  // w 새로 설정. (rotate 했기 때문)
+            // case 4로 이어짐
           }
+          // case 4
           w->color = xp->color;
           xp->color = BLACK;
           if (w->right != NULL) {
@@ -363,7 +373,7 @@ _rb_tree_node_base* _rebalance_for_erase(_rb_tree_node_base* const z,
       }
     }
     if (x != NULL) {
-      x->color = BLACK;
+      x->color = BLACK;  // red-and-black or root
     }
   }
   return y;

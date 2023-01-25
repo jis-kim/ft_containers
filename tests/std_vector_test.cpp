@@ -71,7 +71,4 @@ void std_vector_test(void) {
   std::cout << (void *)ca << '\n';
 
   std::vector<int>::iterator it = hihi.begin();
-
-  // if (it == it.base()) {
-  // }
 }

@@ -77,7 +77,7 @@ void vector_iterator_test(void) {
   std::cout << "\nsubstract operator test (iterator - iterator)\n";
   std::cout << "it(4) - tmp(2) = " << it - tmp << '\n';
 
-  // SECTION : std::vector iterator test
+  // SECTION: std::vector iterator test
   std::vector<int> vec;
   for (int i = 0; i < 5; ++i) {
     vec.push_back(i + 1);

@@ -10,16 +10,17 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
-#include <memory>
+#include <memory>  // std::allocator, stdexcept(std::out_of_range)
 
 #include "algorithm.hpp"
 #include "reverse_iterator.hpp"
 #include "type_traits.hpp"
 
 namespace ft {
-// SECTION : vector iterator
+
+// SECTION: vector iterator
 // Random access iterator
-// T is pointer of elements
+// Iter is pointer of elements
 template <typename Iter>
 class vector_iterator
     : public iterator<typename iterator_traits<Iter>::iterator_category,
@@ -81,9 +82,9 @@ class vector_iterator
   reference operator[](difference_type n) const { return _current[n]; }
 
   const Iter& base(void) const { return _current; }
-};  // !SECTION : vector_iterator
+};
 
-// SECTION : arithmetic operators
+// SECTION: arithmetic operators
 template <typename T>
 vector_iterator<T> operator+(
     const typename vector_iterator<T>::difference_type n,
@@ -96,9 +97,9 @@ typename vector_iterator<T>::difference_type operator-(
     const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
   return lhs.base() - rhs.base();
 }
-// !SECTION : arithmetic operators
+// !SECTION: arithmetic operators
 
-// SECTION : comparison operators
+// SECTION: comparison operators
 template <typename T, typename U>
 bool operator==(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
   return lhs.base() == rhs.base();
@@ -128,9 +129,10 @@ template <typename T, typename U>
 bool operator>=(const vector_iterator<T>& lhs, const vector_iterator<U>& rhs) {
   return !(lhs < rhs);
 }
-// !SECTION : comparision operators
+// !SECTION: comparision operators
+// !SECTION: vector_iterator
 
-// SECTION : vector base
+// SECTION: vector base
 template <typename T, typename Alloc = std::allocator<T> >
 class vector_base {
  protected:
@@ -161,9 +163,9 @@ class vector_base {
     }
     _alloc.deallocate(_begin, _end_cap - _begin);  // deallocate 는 capacity 로
   }
-};  // !SECTION : vector_base
+};  // !SECTION: vector_base
 
-// SECTION : vector
+// SECTION: vector
 template <typename T, typename Alloc = std::allocator<T> >
 class vector : private vector_base<T, Alloc> {
  public:
@@ -182,8 +184,8 @@ class vector : private vector_base<T, Alloc> {
   typedef ptrdiff_t difference_type;
   typedef size_t size_type;
 
-  // SECTION : public member functions
-  // SECTION : constructor
+  // SECTION: public member functions
+  // SECTION: constructor and destructor
   // STRONG
   // default
   explicit vector(const allocator_type& alloc = allocator_type())
@@ -202,8 +204,8 @@ class vector : private vector_base<T, Alloc> {
    * @brief InputIterator range 로 새 vector 를 생성한다.
    *
    * @tparam InputIterator 한 번 이동하는 순간 기존 값에 다시 접근할 수 없다.
-   * @param first
-   * @param last
+   * @param first 복사할 범위의 시작
+   * @param last  복사할 범위의 끝
    * @param alloc
    */
   template <typename InputIterator>
@@ -218,14 +220,6 @@ class vector : private vector_base<T, Alloc> {
     }
   }
 
-  /**
-   * @brief ForwardIterator
-   *
-   * @tparam ForwardIterator
-   * @param first
-   * @param last
-   * @param alloc
-   */
   template <typename ForwardIterator>
   vector(ForwardIterator first,
          typename enable_if<is_forward_iterator<ForwardIterator>::value,
@@ -240,7 +234,6 @@ class vector : private vector_base<T, Alloc> {
     this->_end = std::uninitialized_copy(x._begin, x._end, this->_begin);
   }
 
-  // SECTION: destructor
   // NOTHROW
   /**
    * @brief Destroy the vector object
@@ -248,6 +241,7 @@ class vector : private vector_base<T, Alloc> {
    * automatically call ~vector_base()
    */
   ~vector(void) {}
+  // !SECTION: constructor and destructor
 
   // BASIC
   // allocator_traits::construct 가 element 생성에 적절한 대응을 하지 못하거나
@@ -267,7 +261,7 @@ class vector : private vector_base<T, Alloc> {
     return *this;
   }
 
-  // SECTION : iterator
+  // SECTION: iterator
   // NOTHROW
   /**
    * @brief vector 의 첫 번째 element를 가리키는 random access 이터레이터를
@@ -315,8 +309,9 @@ class vector : private vector_base<T, Alloc> {
   const_reverse_iterator rend(void) const {
     return const_reverse_iterator(begin());
   }
+  // !SECTION: iterator
 
-  // SECTION : capacity
+  // SECTION: capacity
 
   // NOTHROW
   /**
@@ -381,7 +376,7 @@ class vector : private vector_base<T, Alloc> {
    * n > capacity 이면 재할당이 필요하다.. 아니면 아무 일도 일어나지 않는다.
    * n > max size 이면 length_error throw.
    * 재할당이 필요할 경우 container 의 allocator를 이용한다.
-   * @complexity 재할당이 일어나면 O(N) 에 가깝다.
+   * @complexity 재할당이 일어나면 O(N)에 가깝다.
    *
    * @param n 벡터의 최소 capacity
    */
@@ -393,8 +388,9 @@ class vector : private vector_base<T, Alloc> {
       swap(tmp);
     }
   }
+  // !SECTION: capacity
 
-  // SECTION : element access
+  // SECTION: element access
 
   // NOTHROW size > n
   // otherwise UB
@@ -444,8 +440,9 @@ class vector : private vector_base<T, Alloc> {
   // NOTHROW
   value_type* data(void) { return this->_begin; }
   const value_type* data(void) const { return this->_begin; }
+  // !SECTION: element access
 
-  // SECTION : modifiers
+  // SECTION: modifiers
   // BASIC
   // if [first, last) is not valid UB
   /**
@@ -743,9 +740,9 @@ class vector : private vector_base<T, Alloc> {
    * @param x
    */
   void swap(vector& x) {
-    _swap(this->_begin, x._begin);
-    _swap(this->_end, x._end);
-    _swap(this->_end_cap, x._end_cap);
+    ft::swap(this->_begin, x._begin);
+    ft::swap(this->_end, x._end);
+    ft::swap(this->_end_cap, x._end_cap);
   }
 
   // NOTHROW
@@ -754,6 +751,7 @@ class vector : private vector_base<T, Alloc> {
    * @complexity O(N)
    */
   void clear(void) { _destroy_at_end(this->_begin); }
+  // !SECTION: modifiers
 
   // NOTHROW
   /**
@@ -763,8 +761,9 @@ class vector : private vector_base<T, Alloc> {
    * @return allocator_type
    */
   allocator_type get_allocator(void) const { return this->_alloc; }
+  // !SECTION: public member functions
 
-  // SECTION : private functions
+  // SECTION: private functions
  private:
   typedef vector_base<T, Alloc> base_;
 
@@ -855,7 +854,7 @@ class vector : private vector_base<T, Alloc> {
   void _destroy_element(pointer p) { this->_alloc.destroy(p); }
 
   /**
-   * @brief copy of std::copy specialization for T*
+   * @brief copy of std::copy
    *
    * @param begin 복사하려는 범위의 첫번째 element
    * @param end 복사하려는 범위의 마지막 element의 다음 위치
@@ -873,7 +872,7 @@ class vector : private vector_base<T, Alloc> {
   }
 
   /**
-   * @brief copy of std::copy_backward.. 근데 내 입맛대로를 곁들인
+   * @brief copy of std::copy_backward
    * [begin, end)
    *
    * @param begin 복사하려는 범위의 마지막 element
@@ -906,11 +905,11 @@ class vector : private vector_base<T, Alloc> {
     }
     return dest;
   }
+  // !SECTION: private member function
+};
 
-};  // !SECTION : vector
-
-// SECTION : non-member function of vector operator
-// SECTION : relational operators
+// SECTION: non-member function of vector operator
+// SECTION: relational operators
 // NOTHROW if the type of elements supports operations
 template <typename T, typename Alloc>
 bool operator==(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
@@ -943,13 +942,14 @@ template <typename T, typename Alloc>
 bool operator>=(const vector<T, Alloc>& lhs, const vector<T, Alloc>& rhs) {
   return !(lhs < rhs);
 }
+// !SECTION: relational operators
 
 // NOTHROW allocator in both vectors compare equal
 // otherwise UB
 /**
  * @brief vector를 swap 한다. 두 벡터는 같은 타입이어야 한다.
- * <algorithm> 에 있는 std::swap 을 오버로딩해서
- *  x.swap(y) 가 불린 것 처럼 작동하도록 한다.
+ * vector 에 specialization 한 swap 함수를 제공하는 역할.
+ * x.swap(y) 가 불린 것 처럼 작동하도록 한다.
  *
  * @tparam T
  * @tparam Alloc
@@ -960,7 +960,8 @@ template <typename T, typename Alloc>
 void swap(vector<T, Alloc>& x, vector<T, Alloc>& y) {
   x.swap(y);
 }
-
+// !SECTION: non-member function of vector operator
+// !SECTION: vector
 }  // namespace ft
 
 #endif  // VECTOR_HPP

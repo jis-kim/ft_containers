@@ -50,8 +50,6 @@ class stack {
                         const stack<T1, Container1>& rhs);
 };
 
-// SECTION : stack non-member function
-
 template <typename T, typename Container>
 bool operator==(const stack<T, Container>& lhs,
                 const stack<T, Container>& rhs) {

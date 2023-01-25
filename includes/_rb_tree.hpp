@@ -18,6 +18,7 @@ namespace ft {
 
 enum _rb_tree_color { RED = 0, BLACK };
 
+// SECTION: rb tree node base
 /**
  * @brief base class of red-black tree node
  * _rb_tree_node 가 이를 상속받는다.
@@ -39,7 +40,9 @@ struct _rb_tree_node_base {
     right = NULL;
   }
 };
+// !SECTION: rb tree node base
 
+// SECTION: rb tree node
 template <typename Val>
 struct _rb_tree_node : public _rb_tree_node_base {
   typedef _rb_tree_node<Val>* link_type;
@@ -49,6 +52,7 @@ struct _rb_tree_node : public _rb_tree_node_base {
 
   _rb_tree_node(const value_type& value = value_type()) : value(value) {}
 };
+// !SECTION: rb tree node
 
 template <typename Compare>
 struct _rb_tree_key_compare {
@@ -58,7 +62,7 @@ struct _rb_tree_key_compare {
   _rb_tree_key_compare(const Compare& comp) : _compare(comp) {}
 };
 
-// SECTION : red-black tree iterator
+// SECTION: red-black tree iterator
 template <typename T>
 struct _rb_tree_iterator {
   typedef T value_type;
@@ -122,8 +126,6 @@ struct _rb_tree_iterator {
   friend bool operator!=(const self& lhs, const self& rhs) {
     return !(lhs == rhs);
   }
-
-  // SECTION : assginment operator
 };
 
 template <typename T>
@@ -215,6 +217,18 @@ struct _rb_tree_header {
   }
 
   /**
+   * @brief tree 가 empty 일 때 header 를 초기화.
+   * 초기 상태 : root 는 NULL, leftmost, rightmost 는 header 자신 (end)
+   *
+   */
+  void _reset(void) {
+    _header.parent = NULL;
+    _header.left = &_header;
+    _header.right = &_header;
+    _node_count = 0;
+  }
+
+  /**
    * @brief tree 가 empty 이고 from 에서 데이터를 받아와야 할 경우 사용.
    *
    * @param from
@@ -227,19 +241,6 @@ struct _rb_tree_header {
     _node_count = from._node_count;
 
     from._reset();
-  }
-
-  /**
-   * @brief
-   * 초기 상태 : root 는 NULL, leftmost, rightmost 는 header 자신 (end)
-   * 삽입 : left-most, right-most 를 갱신
-   *
-   */
-  void _reset(void) {
-    _header.parent = NULL;
-    _header.left = &_header;
-    _header.right = &_header;
-    _node_count = 0;
   }
 };
 
@@ -298,7 +299,6 @@ class _rb_tree {
   typedef typename Alloc::template rebind<_rb_tree_node<value_type> >::other
       node_allocator;
 
-  // SECTION : member
  private:
   _rb_tree_impl<Compare> _impl;
   node_allocator _alloc;
@@ -328,7 +328,7 @@ class _rb_tree {
     return *this;
   }
 
-  // SECTION : red-black tree operation
+  // SECTION: red-black tree operation
   iterator begin(void) { return iterator(_impl._header.left); }
   const_iterator begin(void) const {
     return const_iterator(_impl._header.left);
@@ -351,7 +351,6 @@ class _rb_tree {
   size_type size(void) const { return _impl._node_count; }
   size_type max_size(void) const { return _alloc.max_size(); }
 
-  // SECTION : insert
   pair<iterator, bool> insert(const value_type& val) {
     pair<base_ptr, base_ptr> res = _find_insert_pos(KeyOfValue()(val));
     if (res.second) {
@@ -383,7 +382,6 @@ class _rb_tree {
     }
   }
 
-  // SECTION : erase
   void erase(iterator position) { _erase(position._node); }
 
   size_type erase(const key_type& key) {
@@ -404,14 +402,14 @@ class _rb_tree {
     } else if (x._get_root() == NULL) {
       x._impl._move_data(_impl);
     } else {
-      _swap(_impl._header.parent, x._impl._header.parent);
-      _swap(_impl._header.left, x._impl._header.left);
-      _swap(_impl._header.right, x._impl._header.right);
+      ft::swap(_impl._header.parent, x._impl._header.parent);
+      ft::swap(_impl._header.left, x._impl._header.left);
+      ft::swap(_impl._header.right, x._impl._header.right);
 
       _get_root()->parent = &_impl._header;
       x._get_root()->parent = &x._impl._header;
-      _swap(_impl._node_count, x._impl._node_count);
-      _swap(_impl._compare, x._impl._compare);
+      ft::swap(_impl._node_count, x._impl._node_count);
+      ft::swap(_impl._compare, x._impl._compare);
     }
   }
 
@@ -451,8 +449,7 @@ class _rb_tree {
   /**
    * @brief key 보다 크거나 같은 노드 중 가장 작은 노드 반환.
    * Compare : comp(a,b) 는 a 가 b 보다 앞에 있다고 판단되면 true 를 리턴한다.
-   * 기준은 함수가 정의한 strict weak ordering 에 따른다.
-   * ... 이기 때문에 compare true -> small, false-> big.
+   * ... 이기 때문에 compare true -> small, false-> big or equal.
    *
    * @param key
    * @return iterator
@@ -530,7 +527,7 @@ class _rb_tree {
   node_allocator get_node_allocator(void) { return _alloc; }
 
  private:
-  // SECTION : about elements
+  // SECTION: about elements
   base_ptr _get_root(void) const { return _impl._header.parent; }
   base_ptr _get_left_most(void) const { return _impl._header.left; }
   base_ptr _get_right_most(void) const { return _impl._header.right; }
@@ -553,6 +550,7 @@ class _rb_tree {
   link_type _right(base_ptr x) const {
     return static_cast<link_type>(x->right);
   }
+  // !SECTION: about elements
 
   // copy constructor, assignment operator 에서 호출
   void _copy_tree(const _rb_tree& x) {
@@ -568,7 +566,8 @@ class _rb_tree {
    * @brief find parent's position to insert new node
    *
    * @param key
-   * @return pair<base_ptr, base_ptr> success - first : null, second : parent
+   * @return pair<base_ptr, base_ptr>
+   * success - first : null, second : parent
    * fail - first : equal node, second : null
    */
   pair<base_ptr, base_ptr> _find_insert_pos(const key_type& key) {
@@ -599,11 +598,13 @@ class _rb_tree {
   }
 
   /**
-   * @brief position 과 최대한 가까운 위치에 있는 node 를 찾는다.
+   * @brief position 과 최대한 가까운 위치에 있는 node 를 찾아서 반환.
    *
    * @param position
    * @param key
    * @return pair<base_ptr, base_ptr>
+   * success -  만약 왼쪽 삽입이 확실하면 first 가 parent, 아니면 NULL.
+   * fail - first : equal node, second : null
    */
   pair<base_ptr, base_ptr> _find_insert_hint_pos(const_iterator position,
                                                  const key_type& key) {
@@ -619,10 +620,10 @@ class _rb_tree {
         return _find_insert_pos(key);
       }
     } else if (_impl._compare(key, _get_key(pos._node))) {
-      // key < pos && key != end
+      // key < pos -> pos 의 왼쪽에 삽입
       iterator before = pos;
       if (pos._node == _get_left_most()) {  // begin()
-        // 근데 pos 가 left most 이면 left most 앞에 삽입.
+        // pos 가 left most 이면 left most 앞에 삽입.
         return pair_type(_get_left_most(), _get_left_most());
       } else if (_impl._compare(_get_key((--before)._node), key)) {
         // before < key < pos
@@ -630,8 +631,10 @@ class _rb_tree {
           // before 의 right 가 없으면 before 자식으로 삽입 (오른쪽)
           return pair_type(NULL, before._node);
         } else {
+          // before 의 right 가 있으므로 pos 가 before 의 right. (확실함..)
+          // before 가 pos-- 이다.. 만약 pos 의 왼쪽 자식이 있었으면 before 가
+          // pos->left 였을 것이다.
           // pos._node != NULL 이므로 pos 의 왼편에 들어갈 것이다.
-          // 근데 Pos 왼쪽자식 없는 건 어케 알아?...
           return pair_type(pos._node, pos._node);
         }
       } else {
@@ -738,9 +741,9 @@ class _rb_tree {
     return top;
   }
 
-  // !SECTION : tree modification
+  // !SECTION: tree modification
 
-  // SECTION : node memory management
+  // SECTION: node memory management
   void _construct_node(link_type node, const value_type& value) {
     try {
       _alloc.construct(node, value);
@@ -770,7 +773,7 @@ class _rb_tree {
     tmp->right = NULL;
     return tmp;
   }
-  // !SECTION : node memory management
+  // !SECTION: node memory management
 
   friend bool operator==(const _rb_tree& x, const _rb_tree& y) {
     return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());

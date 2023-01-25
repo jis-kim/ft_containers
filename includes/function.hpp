@@ -11,15 +11,24 @@
 #define FUNCTION_HPP_
 
 namespace ft {
+/**
+ * @brief functor for KeyOfValue of map
+ *
+ * @tparam Pair
+ */
 template <typename Pair>
 struct _SelectKey {
   typename Pair::first_type& operator()(Pair& x) const { return x.first; }
-
   const typename Pair::first_type& operator()(const Pair& x) const {
     return x.first;
   }
 };
 
+/**
+ * @brief functor for KeyOfValue of set
+ *
+ * @tparam T
+ */
 template <typename T>
 struct _Identity {
   T& operator()(T& x) const { return x; }

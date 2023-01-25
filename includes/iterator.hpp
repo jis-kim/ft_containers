@@ -14,7 +14,7 @@
 #include <iterator>  // std::random_access_iterator_tag
 
 namespace ft {
-// SECTION : iterator
+// SECTION: iterator
 template <typename _Category, typename _Tp, typename _Distance = ptrdiff_t,
           typename _Pointer = _Tp*, typename _Reference = _Tp&>
 struct iterator {
@@ -24,8 +24,9 @@ struct iterator {
   typedef _Reference reference;
   typedef _Category iterator_category;
 };
+// !SECTION: iterator
 
-// SECTION : iterator_traits
+// SECTION: iterator_traits
 template <typename Iterator>
 struct iterator_traits {
   typedef typename Iterator::difference_type difference_type;
@@ -55,6 +56,7 @@ class iterator_traits<const T*> {
   typedef const T& reference;
   typedef std::random_access_iterator_tag iterator_category;
 };
+// !SECTION: iterator_traits
 
 }  // namespace ft
 

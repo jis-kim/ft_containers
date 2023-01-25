@@ -49,14 +49,14 @@ struct integral_constant {
 typedef integral_constant<bool, true> true_type;
 typedef integral_constant<bool, false> false_type;
 
-// SECTION : is_same
+// SECTION: is_same
 template <typename T, typename U>
 struct is_same : public false_type {};
 
 template <typename T>
 struct is_same<T, T> : public true_type {};
 
-// SECTION : remove_cv
+// SECTION: remove_cv
 /**
  * @brief const, volatile 타입을 non-cv-qualified 타입으로 변환한다.
  * 이 과정이 없는데 is_integral 에 const, volatile 타입이 들어가면
@@ -133,7 +133,7 @@ struct _is_integral<unsigned long> : public true_type {};
 template <typename T>
 struct is_integral : public _is_integral<typename remove_cv<T>::type> {};
 
-// SECTION : is_*_iterator
+// SECTION: is_*_iterator
 
 template <typename Base, typename Derived>
 struct _is_base_of {
@@ -174,7 +174,7 @@ template <typename Base, typename Derived>
 struct is_base_of
     : public integral_constant<bool, _is_base_of<Base, Derived>::value> {};
 
-// SECTION : iterator_category_t
+// SECTION: iterator_category_t
 
 /**
  * @brief iterator category 가 있으면 yes, 없으면 no 를 리턴한다.
@@ -231,7 +231,7 @@ struct iterator_category_t<Iter *> {
   typedef typename std::random_access_iterator_tag type;
 };
 
-// SECTION : iterator categorize
+// SECTION: iterator categorize
 template <typename InputIterator>
 struct is_input_iterator
     : public is_base_of<std::input_iterator_tag,

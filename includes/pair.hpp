@@ -10,8 +10,6 @@
 #ifndef PAIR_HPP_
 #define PAIR_HPP_
 
-#include <iostream>
-
 namespace ft {
 template <typename T1, typename T2>
 struct pair {
@@ -21,7 +19,6 @@ struct pair {
   T1 first;
   T2 second;
 
-  // SECTION : constructor
   pair(void) : first(), second() {}
 
   template <typename T, typename U>
@@ -31,7 +28,6 @@ struct pair {
 
   ~pair(void) {}
 
-  // SECTION : member function
   pair& operator=(const pair& pr) {
     first = pr.first;
     second = pr.second;
@@ -39,13 +35,6 @@ struct pair {
   }
 };
 
-template <typename T1, typename T2>
-std::ostream& operator<<(std::ostream& os, const pair<T1, T2>& pr) {
-  os << "[" << pr.first << "]";
-  return os;
-}
-
-// SECTION : non-member function
 template <typename T1, typename T2>
 bool operator==(const pair<T1, T2>& lhs, const pair<T1, T2>& rhs) {
   return lhs.first == rhs.first && lhs.second == rhs.second;
