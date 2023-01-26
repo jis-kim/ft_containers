@@ -203,7 +203,7 @@ void type_traits_test(void) {
     std::cout
         << "--------------------------------------------------------------\n";
 
-    std::ifstream source("aaa", std::ios::binary);
+    std::ifstream source("tests/aaa", std::ios::binary);
     std::vector<char> vec((std::istreambuf_iterator<char>(source)),
                           std::istreambuf_iterator<char>());
 
