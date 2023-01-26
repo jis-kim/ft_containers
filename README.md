@@ -129,7 +129,6 @@ public:
 # stack
 
 # red-black tree (map, set)
-# _rb_tree 구현
 
 ## 1. structs
 
